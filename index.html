@@ -2,6 +2,21 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>CHARGING EV SCM - PPA BIB</title>
+
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1329">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="CHARGING EV">
+
+  <!-- Apple iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CHARGING EV">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <script>
     // Instant Zero-Flicker check & Top-Level Global Login Handlers
     window.MASTER_OPERATORS = [
@@ -24480,6 +24495,76 @@ if (typeof window.updateDbStorageUI === 'function') {
   window.updateDbStorageUI();
 }
 
+</script>
+
+<!-- PWA Service Worker & Install Handler -->
+<div id="pwaInstallBanner" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999999; background:linear-gradient(135deg, #0f172a, #1e293b); border:1px solid #38bdf8; border-radius:12px; padding:12px 18px; box-shadow:0 10px 25px rgba(0,0,0,0.5); align-items:center; gap:12px; color:#f8fafc; font-family:sans-serif; backdrop-filter:blur(8px);">
+  <img src="assets/icon-192.png" alt="App Icon" style="width:36px; height:36px; border-radius:8px;">
+  <div>
+    <div style="font-weight:700; font-size:13px; color:#38bdf8;">Instal Aplikasi PWA</div>
+    <div style="font-size:11px; color:#94a3b8;">Akses cepat & layar penuh tanpa browser</div>
+  </div>
+  <button id="btnPwaInstall" style="background:#0284c7; color:#fff; border:none; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; cursor:pointer; transition:background 0.2s;">Instal</button>
+  <button id="btnPwaDismiss" style="background:transparent; color:#64748b; border:none; font-size:16px; cursor:pointer; padding:0 4px;" title="Tutup">&times;</button>
+</div>
+
+<script>
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js')
+        .then(function(reg) {
+          console.log('[PWA] Service Worker registered with scope:', reg.scope);
+        })
+        .catch(function(err) {
+          console.warn('[PWA] Service Worker registration failed:', err);
+        });
+    });
+  }
+
+  // PWA Install Prompt Banner Handler
+  var deferredPwaPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPwaPrompt = e;
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner && !window.matchMedia('(display-mode: standalone)').matches) {
+      banner.style.display = 'flex';
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var btnInstall = document.getElementById('btnPwaInstall');
+    var btnDismiss = document.getElementById('btnPwaDismiss');
+    var banner = document.getElementById('pwaInstallBanner');
+
+    if (btnInstall) {
+      btnInstall.addEventListener('click', function() {
+        if (deferredPwaPrompt) {
+          deferredPwaPrompt.prompt();
+          deferredPwaPrompt.userChoice.then(function(choiceResult) {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('[PWA] User accepted install prompt');
+            }
+            deferredPwaPrompt = null;
+            if (banner) banner.style.display = 'none';
+          });
+        }
+      });
+    }
+
+    if (btnDismiss) {
+      btnDismiss.addEventListener('click', function() {
+        if (banner) banner.style.display = 'none';
+      });
+    }
+
+    window.addEventListener('appinstalled', function() {
+      console.log('[PWA] App successfully installed');
+      if (banner) banner.style.display = 'none';
+      deferredPwaPrompt = null;
+    });
+  });
 </script>
 
 </body>
