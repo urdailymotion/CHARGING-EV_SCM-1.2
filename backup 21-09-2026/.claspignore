@@ -1,0 +1,10 @@
+*.txt
+*.bat
+*.ps1
+*.md
+*.log
+*.zip
+*.js
+.git/**
+scratch/**
+backup*/**
