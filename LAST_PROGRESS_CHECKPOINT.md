@@ -46,16 +46,26 @@
   - Memverifikasi live API fetch via `scratch/test_get_all.js`: status `200 OK`, `8233` swaps, `2` problems, `56` unit populasi, `7` jadwal, `17` user berhasil dibaca secara utuh.
   - Menaikkan versi cache Service Worker pada `sw.js` ke **`charging-ev-v4`** agar cache lama di browser HP/PWA otomatis dibersihkan dan langsung mengambil perbaikan baru.
 
+#### 5. ⏱️ Penyesuaian Rentang Toleransi On Time Jadwal Menjadi 55 Menit (27 September 2026, 07:45 WITA):
+- **Kebutuhan:** Pengguna meminta penyesuaian batas waktu On Time dari jadwal swap yang ditentukan menjadi **55 menit**.
+- **Pembaruan Sistem:**
+  - Menetapkan konstanta universal `SCHEDULE_ON_TIME_TOLERANCE_MINS = 55` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+  - Mengubah evaluasi keterlambatan `isLate` pada Form Input Swap Modal dan Dedicated Swap menjadi `Math.abs(diffMins) > 55`.
+  - Mengubah evaluasi kesesuaian pada Schedule Tracker (Table & Mobile Cards) menjadi batas toleransi 55 menit.
+  - Memperbarui status antrean `isExpired`: antrean yang belum swap kini baru berubah menjadi `⛔ No Swap On time sch` jika waktu operasional telah melewati jadwal lebih dari 55 menit.
+  - Menaikkan versi cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) ke **`charging-ev-v5`**.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 44** (Auto Deploy 27 September 2026, 06:51 WITA)
+   - **Versi Terpasang:** **Versi 45**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v4`
+   - **Service Worker Cache:** `charging-ev-v5`
+
 

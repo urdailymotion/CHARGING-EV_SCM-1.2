@@ -16116,7 +16116,7 @@ function initTableControls() {
       if (jamInInput && jamInInput.value && jamInInput.value !== '--:--') {
         const jamInTime = jamInInput.value.trim();
         const diffMins = calculateMinutesDifference(jamInTime, displayTime);
-        const isLate = Math.abs(diffMins) > 15;
+        const isLate = Math.abs(diffMins) > 55;
         if (statusSelect) statusSelect.value = isLate ? 'Out Off Time' : 'On Time';
         if (!isLate && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
 
@@ -20434,6 +20434,10 @@ function normalizeScheduleTime(t) {
 }
 window.normalizeScheduleTime = normalizeScheduleTime;
 
+// Toleransi waktu On Time jadwal (dalam menit)
+const SCHEDULE_ON_TIME_TOLERANCE_MINS = 55;
+window.SCHEDULE_ON_TIME_TOLERANCE_MINS = SCHEDULE_ON_TIME_TOLERANCE_MINS;
+
 function calculateMinutesDifference(timeA, timeB) {
   if (!timeA || !timeB) return 0;
   const parse = (t) => {
@@ -20613,7 +20617,7 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   // Evaluasi On Time vs Out Off Time
   if (jamInTime) {
     const diffMins = calculateMinutesDifference(jamInTime, displayTime);
-    const isLate = Math.abs(diffMins) > 15;
+    const isLate = Math.abs(diffMins) > 55;
     if (statusSelect) statusSelect.value = isLate ? 'Out Off Time' : 'On Time';
     if (!isLate && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
 
@@ -21195,7 +21199,7 @@ function renderScheduleTable() {
         // Fallback untuk rekaman lawas tanpa field timeSch
         if (sw.jamIn && itemTime) {
           const diff = Math.abs(calculateMinutesDifference(sw.jamIn, itemTime));
-          return diff <= 45;
+          return diff <= 55;
         }
         return false;
       });
@@ -21204,7 +21208,7 @@ function renderScheduleTable() {
       let keteranganHtml = '-';
 
       if (matchedSwap) {
-        const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 15);
+        const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
         if (isLate) {
           statusBadge = `<span class="status-pill" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700;">⚠️ Out Off Time (${matchedSwap.jamIn || '-'})</span>`;
         } else {
@@ -21235,7 +21239,7 @@ function renderScheduleTable() {
           return calculateMinutesDifference(swTime, itemTime) > 0;
         });
 
-        const isExpired = hasLaterSwap || diffFromDeadline > 15;
+        const isExpired = hasLaterSwap || diffFromDeadline > 55;
 
         if (isExpired) {
           statusBadge = `<span class="status-pill" style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; font-weight: 700; white-space: nowrap;">⛔ No Swap On time sch</span>`;
@@ -21346,7 +21350,7 @@ function exportScheduleToExcel() {
       const swTime = normalizeScheduleTime(sw.timeSch);
       if (swTime && itemTime) return swTime === itemTime;
       if (sw.jamIn && itemTime) {
-        return Math.abs(calculateMinutesDifference(sw.jamIn, itemTime)) <= 45;
+        return Math.abs(calculateMinutesDifference(sw.jamIn, itemTime)) <= 55;
       }
       return false;
     });
@@ -21355,7 +21359,7 @@ function exportScheduleToExcel() {
     let ketText = '-';
 
     if (matchedSwap) {
-      const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 15);
+      const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
       statusText = isLate ? `Out Off Time (${matchedSwap.jamIn})` : `On Time (${matchedSwap.jamIn})`;
       
       const parts = [];
@@ -21375,7 +21379,7 @@ function exportScheduleToExcel() {
         const swTime = normalizeScheduleTime(sw.timeSch || sw.jamIn);
         return calculateMinutesDifference(swTime, itemTime) > 0;
       });
-      const isExpired = hasLaterSwap || diffFromDeadline > 15;
+      const isExpired = hasLaterSwap || diffFromDeadline > 55;
       if (isExpired) {
         statusText = 'No Swap On time sch';
         ketText = 'No Swap On time sch' + (hasLaterSwap ? ' (Unit swap di jadwal berikutnya)' : '');
