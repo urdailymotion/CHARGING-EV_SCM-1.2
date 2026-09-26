@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>CHARGING EV SCM - PPA BIB</title>
 
   <!-- PWA & Mobile Meta Tags -->
@@ -4041,11 +4041,13 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .compact-logsheet-grid .form-control-ent:not(#dedSwapUnit) {
-    height: 38px !important;
-    font-size: 13px !important;
-    padding: 4px 6px !important;
-    border-radius: 6px !important;
+  .compact-logsheet-grid .form-control-ent:not(#dedSwapUnit),
+  form#formDedicatedInputSwap input,
+  form#formDedicatedInputSwap select {
+    height: 40px !important;
+    font-size: 16px !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
     width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
@@ -4054,12 +4056,14 @@ body {
     display: flex !important;
     gap: 3px !important;
     min-width: 0 !important;
+    height: 40px !important;
   }
   .compact-logsheet-grid .time-input-wrap input {
     min-width: 0 !important;
     flex: 1 !important;
-    padding: 4px 4px !important;
-    font-size: 12px !important;
+    padding: 6px 10px !important;
+    font-size: 16px !important;
+    height: 40px !important;
   }
   .compact-logsheet-grid .btn-now-compact {
     height: 38px !important;
@@ -8514,6 +8518,216 @@ html.needs-login .sidebar-backdrop {
 @keyframes intelSpin {
   to { transform: rotate(360deg); }
 }
+
+
+/* ==========================================================================
+   UNIVERSAL MOBILE RESPONSIVENESS & ZERO-ZOOM ENGINE (ALL DEVICES)
+   Guarantees 100% consistent display across Android, iPhone, 360px - 430px+
+   ========================================================================== */
+
+/* Universal Safe Area Variables */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+@media (max-width: 768px) {
+  /* 1. Header Safe Area adaptation (iPhone notch / Android camera cutout) */
+  .main-header {
+    padding-top: var(--safe-top) !important;
+    padding-left: calc(10px + var(--safe-left)) !important;
+    padding-right: calc(10px + var(--safe-right)) !important;
+    height: calc(58px + var(--safe-top)) !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-wrapper {
+    margin-top: calc(58px + var(--safe-top)) !important;
+    padding-bottom: calc(16px + var(--safe-bottom)) !important;
+    padding-left: var(--safe-left) !important;
+    padding-right: var(--safe-right) !important;
+    min-height: calc(100vh - 58px - var(--safe-top)) !important;
+    min-height: calc(100dvh - 58px - var(--safe-top)) !important;
+    box-sizing: border-box !important;
+  }
+
+  .main-sidebar {
+    top: calc(58px + var(--safe-top)) !important;
+    height: calc(100vh - 58px - var(--safe-top)) !important;
+    height: calc(100dvh - 58px - var(--safe-top)) !important;
+    padding-bottom: calc(24px + var(--safe-bottom)) !important;
+  }
+
+  /* 2. THE 16px FONT-SIZE RULE: 
+     iOS WebKit & Android Chrome automatically pinch-zoom ANY input with font < 16px.
+     Enforcing 16px on mobile inputs COMPLETELY ELIMINATES auto-zoom jumps! */
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="password"],
+  select,
+  textarea,
+  .form-control-ent,
+  .compact-logsheet-grid .form-control-ent,
+  .compact-logsheet-grid input,
+  .compact-logsheet-grid select,
+  .compact-logsheet-grid .time-input-wrap input,
+  .search-form-row input,
+  .search-form-row select,
+  .input-date-box,
+  .input-select-box,
+  .login-text-input,
+  .login-select-input,
+  .login-date-input,
+  #dedSwapUnit,
+  #dedSwapHM,
+  #dedSwapEnergy,
+  #dedSwapJamIn,
+  #dedSwapJamOut,
+  #dedSwapBatIn,
+  #dedSwapBatOut,
+  #dedSwapStatus,
+  #dedSwapRemark2,
+  #filterStartDate,
+  #filterEndDate,
+  #filterShiftSelect,
+  #filterLocationSelect {
+    font-size: 16px !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Balanced height & padding so 16px font fits elegantly */
+  .compact-logsheet-grid .form-control-ent:not(#dedSwapUnit) {
+    height: 40px !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .compact-logsheet-grid .time-input-wrap {
+    height: 40px !important;
+  }
+
+  .compact-logsheet-grid .time-input-wrap input {
+    height: 40px !important;
+    padding: 6px 10px !important;
+    border-radius: 8px 0 0 8px !important;
+  }
+
+  .compact-logsheet-grid .btn-now-compact {
+    height: 40px !important;
+    padding: 0 10px !important;
+    border-radius: 0 8px 8px 0 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+
+  /* 3. Search Form 360px Adaptation (Zero Overflow) */
+  .search-form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-field-item {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .search-field-item .input-date-box,
+  .search-field-item .input-select-box {
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .search-form-row > div:has(.btn-show),
+  .search-form-row div[style*="display: flex; gap: 6px; align-items: flex-end"] {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+    margin-top: 4px !important;
+  }
+
+  .search-form-row > div:has(.btn-show) .btn-show,
+  .search-form-row div[style*="display: flex; gap: 6px; align-items: flex-end"] .btn-show {
+    flex: 1 !important;
+    width: 100% !important;
+    height: 40px !important;
+    margin: 0 !important;
+  }
+
+  /* 4. Locked Session Row Adaptation (Small Screens) */
+  @media (max-width: 520px) {
+    .locked-session-row {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .locked-session-row .form-group-ent:first-child {
+      grid-column: 1 / -1 !important; /* Tanggal gets full width for calendar picker */
+    }
+
+    .locked-session-row .form-control-ent {
+      height: 38px !important;
+      font-size: 14px !important;
+      padding: 6px 8px !important;
+    }
+  }
+
+  /* 5. Modal Dialogs Universal Containment (Zero 360px Bleed) */
+  .modal-dialog {
+    max-width: calc(100vw - 20px) !important;
+    width: 100% !important;
+    margin: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .modal-footer-ent {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .modal-footer-ent > div {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: stretch !important;
+  }
+
+  .modal-footer-ent button,
+  .modal-footer-ent .btn-show,
+  .modal-footer-ent .btn-export-green,
+  .modal-footer-ent .btn-tp-now {
+    flex: 1 1 auto !important;
+    min-width: 90px !important;
+    height: 40px !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Form container isolation & touch scrolling */
+  .panel-card,
+  .compact-logsheet-panel {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+}
+
 </style>
   <!-- Chart.js for analytics tab loaded with defer so it never blocks mobile layout rendering -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
@@ -8522,6 +8736,30 @@ html.needs-login .sidebar-backdrop {
   <!-- Firebase SDK v10 (Cloud Firestore & Realtime Engine) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Anti-Zoom & Gesture Lock for Universal Mobile/PWA Consistency
+    (function() {
+      // Prevent multi-touch pinch zoom on mobile WebKit/Blink in PWA
+      document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+      document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+      document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+      
+      // Prevent iOS double-tap auto zoom
+      var lastTouchEnd = 0;
+      document.addEventListener('touchend', function(event) {
+        var now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+          // Allow normal buttons but prevent window zoom
+          if (!event.target.closest('button, a, input, select, textarea, .btn-show, .btn-export-green')) {
+            event.preventDefault();
+          }
+        }
+        lastTouchEnd = now;
+      }, false);
+    })();
+  </script>
+
 </head>
 <body>
 
@@ -17222,7 +17460,14 @@ function selectComboboxUnit(code) {
   }
   if (listEl) listEl.style.display = 'none';
   updateDedSwapScheduleTarget();
-  document.getElementById('dedSwapHM')?.focus();
+  const hmTarget = document.getElementById('dedSwapHM');
+  if (hmTarget) {
+    try {
+      hmTarget.focus({ preventScroll: true });
+    } catch (e) {
+      hmTarget.focus();
+    }
+  }
 }
 
 function initSearchableUnitCombobox() {
