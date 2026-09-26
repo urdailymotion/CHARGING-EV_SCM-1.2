@@ -47,6 +47,73 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Direct HTTP API Endpoints for PWA / Netlify External Clients
+    if (body.action === 'save_swap' || body.action === 'push_transaction') {
+      const rec = body.record || body.payload || body.data || body;
+      const result = apiSaveSwapTransaction(rec);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'update_swap' || body.action === 'update_transaction') {
+      const rec = body.record || body.payload || body.data || body;
+      const result = apiUpdateTransaction(rec);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_swap' || body.action === 'delete_transaction') {
+      const txId = body.id || body.txId;
+      const result = apiDeleteTransaction(txId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'save_problem') {
+      const prob = body.problem || body.record || body.data || body;
+      const result = apiSaveProblemLog(prob);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'update_problem') {
+      const prob = body.problem || body.record || body.data || body;
+      const result = apiUpdateProblem(prob);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_problem') {
+      const probId = body.id || body.probId;
+      const result = apiDeleteProblem(probId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'save_schedules') {
+      const result = apiSaveUploadedSchedules(body.schedulesList || body.schedules, body.importMode || 'append');
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'add_unit') {
+      const result = apiAddUnit(body.code || body.unitCode);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_unit') {
+      const result = apiDeleteUnit(body.code || body.unitCode);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'validate_login') {
+      const result = apiValidateLogin(body.nik, body.password);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (body.action === 'setup_database') {
       const result = setupDatabaseSheets();
       return ContentService.createTextOutput(JSON.stringify(result))

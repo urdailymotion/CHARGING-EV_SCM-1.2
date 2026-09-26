@@ -14044,82 +14044,55 @@ function sortTransactionsLatestFirst(a, b) {
 }
 window.sortTransactionsLatestFirst = sortTransactionsLatestFirst;
 
-const gasSync = {
+const GAS_BACKEND_ENDPOINT = 'https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec';
 
-  _processResult: function(result) {
-    if (!result) return;
-    if (Array.isArray(result.swaps)) {
-      swapsData = result.swaps.filter(s => s && (s.unit || s.date)).map((s, idx) => ({
-        ...s,
-        id: canonicalSwapId(s.id),
-        _sheetRow: idx + 2
-      }));
-      swapsData.sort(sortTransactionsLatestFirst);
-      window.swapsData = swapsData;
-    }
-    if (Array.isArray(result.problems)) {
-      problemsData = result.problems;
-      window.problemsData = problemsData;
-    }
-    if (result.populasi && result.populasi.length > 0) {
-      fleetUnits = result.populasi.map(code => ({
-        code: typeof code === 'object' ? String(code.code || code.unit || '').trim() : String(code).trim(),
-        type: typeof code === 'object' && code.type ? code.type : 'EV Dump Truck 90T',
-        status: typeof code === 'object' && code.status ? code.status : 'Aktif',
-        note: typeof code === 'object' && code.note ? code.note : 'Operasional Normal'
-      })).filter(u => !!u.code);
-      window.fleetUnits = fleetUnits;
-    } else if (!fleetUnits || fleetUnits.length === 0) {
-      fleetUnits = (typeof buildDefaultFleet === 'function') ? buildDefaultFleet() : [];
-      window.fleetUnits = fleetUnits;
-    }
-    if (Array.isArray(result.schedules)) {
-      schedulesData = result.schedules;
-      window.schedulesData = schedulesData;
-    }
-    if (result.users && result.users.length > 0) {
-      if (typeof window.saveAppUsers === 'function') window.saveAppUsers(result.users, false);
-    }
-    window._gasDataLoaded = true;
-    gasSync._showSyncBadge('✅ Terhubung ke Google Sheets', 'success');
-    if (typeof window.syncAndRenderAllViews === 'function') {
-      window.syncAndRenderAllViews();
-    }
+const gasSync = {
+  endpoint: GAS_BACKEND_ENDPOINT,
+
+  // Unified HTTP API Caller for Netlify, PWA Standalone & External Domains
+  _callGasApi: function(action, payload, onSuccess, onFailure) {
+    const body = Object.assign({ action: action }, payload || {});
+    fetch(GAS_BACKEND_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res && res.status === 'success') {
+        if (typeof onSuccess === 'function') onSuccess(res);
+      } else {
+        const msg = (res && res.message) ? res.message : 'Gagal memproses permintaan di Google Sheets';
+        if (typeof onFailure === 'function') onFailure(msg);
+      }
+    })
+    .catch(err => {
+      if (typeof onFailure === 'function') onFailure(err.message || String(err));
+    });
   },
 
   /**
-   * Load semua data dari GAS (dipanggil saat app init jika di GAS)
-   * Menyimpan data langsung ke in-memory state tanpa menyentuh localStorage
+   * Load semua data dari GAS (Google Sheets Master)
+   * Mendukung Google Apps Script iframe maupun PWA di Netlify / domain luar
    */
   loadAll: function(onComplete, retryCount) {
     retryCount = retryCount || 0;
-    // Deteksi google.script.run dengan mekanisme retry
-    if (typeof google === 'undefined' || typeof google.script === 'undefined' || typeof google.script.run === 'undefined') {
-      if (retryCount < 15) {
+    const isDirectExternal = (!IS_GAS_ENV && (location.hostname !== 'script.google.com' && !location.hostname.includes('googleusercontent.com')));
+
+    if (isDirectExternal || typeof google === 'undefined' || typeof google.script === 'undefined' || typeof google.script.run === 'undefined') {
+      if (!isDirectExternal && retryCount < 10) {
         setTimeout(function() {
           gasSync.loadAll(onComplete, retryCount + 1);
-        }, 300);
+        }, 250);
         return;
       }
-      // Fallback: Direct fetch if outside GAS iframe
-      console.warn('google.script.run tidak tersedia, mencoba direct API fetch fallback...');
+      
+      // Jalur PWA Netlify / External Host
       gasSync._showSyncBadge('⏳ Menghubungkan ke API Cloud...', 'loading');
-      fetch('https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'get_all' })
-      })
-      .then(r => r.json())
-      .then(result => {
-        if (result && result.status === 'success') {
-          gasSync._processResult(result);
-          if (typeof onComplete === 'function') onComplete(true);
-        } else {
-          gasSync._showSyncBadge('⚠️ Gagal memuat dari API', 'warn');
-          if (typeof onComplete === 'function') onComplete(false);
-        }
-      })
-            .catch(err => {
+      gasSync._callGasApi('get_all', {}, function(result) {
+        gasSync._processResult(result);
+        if (typeof onComplete === 'function') onComplete(true);
+      }, function(err) {
         console.error('Direct fetch error:', err);
         gasSync._showSyncBadge('❌ Error koneksi API', 'error');
         if (typeof onComplete === 'function') onComplete(false);
@@ -14127,6 +14100,7 @@ const gasSync = {
       return;
     }
 
+    // Jalur Native Google Apps Script
     gasSync._showSyncBadge('⏳ Memuat data dari Google Sheets...', 'loading');
     google.script.run
       .withSuccessHandler(function(result) {
@@ -14144,22 +14118,31 @@ const gasSync = {
       .apiGetAllSheetsData();
   },
 
-  // Arsitektur Penyimpanan Enterprise Dual-Sync:
-  // Primary (Utama): Firebase Cloud Firestore (Realtime, zero-latency)
-  // Secondary (Cadangan): Google Spreadsheet Master (Sinkron otomatis & dapat dicadangkan melalui Database Manager)
   autoSyncPerTransaction: true,
 
   pushTransaction: function(rec, callback) {
     if (!gasSync.autoSyncPerTransaction) {
-      // Mode Cadangan: Transaksi tersimpan di Cloud Firestore, siap dicadangkan secara berkala ke Google Sheets
       if (typeof callback === 'function') callback({ status: 'success', local: true, backupQueued: true });
       return;
     }
+
+    gasSync._showSyncBadge('⏳ Menyimpan transaksi ke Google Sheets...', 'loading');
+
+    // 1. Jalur PWA Netlify (HTTP API)
     if (!IS_GAS_ENV) {
-      if (typeof callback === 'function') callback({ status: 'success', local: true });
+      gasSync._callGasApi('save_swap', { record: rec }, function(result) {
+        gasSync._showSyncBadge('✅ Transaksi tersimpan di Sheets', 'success');
+        showToast('☁️ Transaksi tersinkron ke Google Sheets!', 'success');
+        if (typeof callback === 'function') callback(result);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('⚠️ Gagal sync ke Sheets', 'warn');
+        showToast('⚠️ Gagal sync ke Sheets: ' + errMsg, 'warning');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
       return;
     }
-    gasSync._showSyncBadge('⏳ Menyimpan transaksi ke Google Sheets...', 'loading');
+
+    // 2. Jalur Native Google Apps Script
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14184,8 +14167,23 @@ const gasSync = {
       if (typeof callback === 'function') callback({ status: 'success', local: true, backupQueued: true });
       return;
     }
-    if (!IS_GAS_ENV) return;
+
     gasSync._showSyncBadge('⏳ Memperbarui transaksi di Google Sheets...', 'loading');
+
+    // 1. Jalur PWA Netlify (HTTP API)
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('update_swap', { record: rec }, function(result) {
+        gasSync._showSyncBadge('✅ Transaksi diperbarui di Sheets', 'success');
+        showToast('☁️ Transaksi diperbarui di Google Sheets!', 'success');
+        if (typeof callback === 'function') callback(result);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('⚠️ Gagal update di Sheets', 'warn');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
+      return;
+    }
+
+    // 2. Jalur Native Google Apps Script
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14202,10 +14200,57 @@ const gasSync = {
       .apiUpdateTransaction(rec);
   },
 
+  deleteTransaction: function(id, callback) {
+    if (!gasSync.autoSyncPerTransaction) return;
+    gasSync._showSyncBadge('⏳ Menghapus transaksi di Google Sheets...', 'loading');
+
+    // 1. Jalur PWA Netlify (HTTP API)
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('delete_swap', { id: id }, function(res) {
+        gasSync._showSyncBadge('✅ Transaksi dihapus dari Google Sheets', 'success');
+        showToast(`☁️ Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
+        if (typeof callback === 'function') callback(res);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('⚠️ Gagal hapus di Sheets', 'warn');
+        showToast(`⚠️ Gagal hapus di Sheets: ${errMsg}`, 'warning');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
+      return;
+    }
+
+    // 2. Jalur Native Google Apps Script
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.status === 'success') {
+          gasSync._showSyncBadge('✅ Transaksi dihapus dari Google Sheets', 'success');
+          showToast(`☁️ Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
+        } else {
+          gasSync._showSyncBadge('⚠️ Gagal hapus di Sheets', 'warn');
+        }
+        if (typeof callback === 'function') callback(res);
+      })
+      .withFailureHandler(function(err) {
+        showToast('❌ GAS Error: ' + err, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: String(err) });
+      })
+      .apiDeleteTransaction(id);
+  },
+
   pushProblem: function(prob) {
     if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
     gasSync._showSyncBadge('⏳ Menyimpan problem ke Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('save_problem', { problem: prob }, function(result) {
+        gasSync._showSyncBadge('✅ Problem tersimpan di Sheets', 'success');
+        showToast('☁️ Log gangguan tersinkron ke Google Sheets!', 'success');
+      }, function(errMsg) {
+        gasSync._showSyncBadge('❌ Error sync problem', 'error');
+        showToast('❌ GAS Error saat simpan problem: ' + errMsg, 'danger');
+      });
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14225,8 +14270,18 @@ const gasSync = {
 
   updateProblem: function(prob) {
     if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
     gasSync._showSyncBadge('⏳ Memperbarui problem di Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('update_problem', { problem: prob }, function(result) {
+        gasSync._showSyncBadge('✅ Problem diperbarui di Sheets', 'success');
+        showToast('☁️ Perubahan log gangguan tersinkron ke Google Sheets!', 'success');
+      }, function(errMsg) {
+        gasSync._showSyncBadge('❌ Error update problem', 'error');
+      });
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14244,8 +14299,18 @@ const gasSync = {
 
   deleteProblem: function(probId) {
     if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
     gasSync._showSyncBadge('⏳ Menghapus problem di Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('delete_problem', { id: probId }, function(result) {
+        gasSync._showSyncBadge('✅ Problem dihapus dari Sheets', 'success');
+        showToast('☁️ Log gangguan dihapus dari Google Sheets!', 'info');
+      }, function(errMsg) {
+        gasSync._showSyncBadge('❌ Error hapus problem', 'error');
+      });
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14266,11 +14331,21 @@ const gasSync = {
       if (typeof callback === 'function') callback({ status: 'success', local: true, backupQueued: true });
       return;
     }
+    gasSync._showSyncBadge('⏳ Menyimpan jadwal ke Google Sheets...', 'loading');
+
     if (!IS_GAS_ENV) {
-      if (typeof callback === 'function') callback({ status: 'success', local: true });
+      gasSync._callGasApi('save_schedules', { schedulesList: schedulesList, importMode: importMode }, function(result) {
+        gasSync._showSyncBadge('✅ Jadwal tersimpan di Sheets', 'success');
+        showToast(`☁️ ${result.count || schedulesList.length} data jadwal tersinkron ke Google Sheets!`, 'success');
+        if (typeof callback === 'function') callback(result);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('❌ Error sync jadwal', 'error');
+        showToast('❌ GAS Error saat simpan jadwal: ' + errMsg, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: String(errMsg) });
+      });
       return;
     }
-    gasSync._showSyncBadge('⏳ Menyimpan jadwal ke Google Sheets...', 'loading');
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (result && result.status === 'success') {
@@ -14290,13 +14365,21 @@ const gasSync = {
       .apiSaveUploadedSchedules(schedulesList, importMode);
   },
 
-  /**
-   * Hapus unit dari sheet POPULASI UNIT di Google Sheets
-   */
   deleteUnit: function(code) {
     if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
     gasSync._showSyncBadge('⏳ Menghapus unit di Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('delete_unit', { code: code }, function(res) {
+        gasSync._showSyncBadge('✅ Unit dihapus dari Google Sheets', 'success');
+        showToast(`☁️ Unit DT ${code} berhasil dihapus dari Google Sheets!`, 'success');
+      }, function(errMsg) {
+        gasSync._showSyncBadge('❌ Error sync', 'error');
+        showToast('❌ GAS Error saat hapus unit: ' + errMsg, 'danger');
+      });
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(function(res) {
         if (res && res.status === 'success') {
@@ -14314,13 +14397,20 @@ const gasSync = {
       .apiDeleteUnit(code);
   },
 
-  /**
-   * Tambah unit ke sheet POPULASI UNIT di Google Sheets
-   */
   addUnit: function(code) {
     if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
     gasSync._showSyncBadge('⏳ Menambah unit ke Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('add_unit', { code: code }, function(res) {
+        gasSync._showSyncBadge('✅ Unit tersimpan di Google Sheets', 'success');
+        showToast(`☁️ Unit DT ${code} tersinkron ke Google Sheets!`, 'success');
+      }, function(errMsg) {
+        showToast('❌ GAS Error saat tambah unit: ' + errMsg, 'danger');
+      });
+      return;
+    }
+
     google.script.run
       .withSuccessHandler(function(res) {
         if (res && res.status === 'success') {
@@ -14336,37 +14426,18 @@ const gasSync = {
       .apiAddUnit(code);
   },
 
-  /**
-   * Hapus transaksi dari sheet DATA INPUT di Google Sheets
-   */
-    deleteTransaction: function(id) {
-    if (!gasSync.autoSyncPerTransaction) return;
-    if (!IS_GAS_ENV) return;
-    gasSync._showSyncBadge('⏳ Menghapus transaksi di Google Sheets...', 'loading');
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (res && res.status === 'success') {
-          gasSync._showSyncBadge('✅ Transaksi dihapus dari Google Sheets', 'success');
-          showToast(`☁️ Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
-        } else {
-          gasSync._showSyncBadge('⚠️  Gagal hapus di Sheets', 'warn');
-        }
-      })
-      .withFailureHandler(function(err) {
-        showToast('❌ GAS Error: ' + err, 'danger');
-      })
-      .apiDeleteTransaction(id);
-  },
-
-  /**
-   * Validasi login via GAS (cek password dari sheet USER)
-   */
   validateLogin: function(nik, password, onResult) {
     if (!IS_GAS_ENV) {
-      // Local mode: password = NIK
-      if (typeof onResult === 'function') onResult(password === nik || password === '' ? 'ok' : 'wrong_password');
+      // Direct API validation on Netlify
+      gasSync._callGasApi('validate_login', { nik: nik, password: password }, function(result) {
+        if (typeof onResult === 'function') onResult(result);
+      }, function() {
+        // Fallback local password = NIK if API connection offline
+        if (typeof onResult === 'function') onResult(password === nik || password === '' ? 'ok' : 'wrong_password');
+      });
       return;
     }
+
     google.script.run
       .withSuccessHandler(function(result) {
         if (typeof onResult === 'function') onResult(result);
@@ -14375,55 +14446,9 @@ const gasSync = {
         if (typeof onResult === 'function') onResult({ status: 'error', message: 'GAS error' });
       })
       .apiValidateLogin(nik, password);
-  },
-
-  _showSyncBadge: function(msg, type) {
-    const badge = document.getElementById('gasSyncStatusBadge');
-    if (!badge) return;
-    type = type || 'loading';
-    badge.style.display = 'inline-flex';
-    badge.className = 'gas-sync-badge ' + type;
-    badge.style.opacity = '1';
-    badge.style.transform = 'none';
-
-    const cleanMsg = msg ? msg.replace(/^[⏳✅⚠️❌]\s*/, '') : '';
-    badge.setAttribute('title', cleanMsg || msg);
-
-    if (type === 'loading') {
-      badge.innerHTML = '<div class="electric-sync-core" aria-label="Loading">' +
-        '<div class="electric-plasma-aura"></div>' +
-        '<div class="electric-pulse-ring"></div>' +
-        '<div class="electric-pulse-ring ring-2"></div>' +
-        '<svg class="electric-bolt-svg" viewBox="0 0 24 24"><path d="M13 2L3 14h8l-2 8 11-12h-8l2-8z"/></svg>' +
-        '<div class="electric-sparks">' +
-          '<span class="spark s1"></span>' +
-          '<span class="spark s2"></span>' +
-          '<span class="spark s3"></span>' +
-        '</div>' +
-      '</div>' +
-      '<span class="gas-sync-label">' + (cleanMsg || 'Memuat data dari Google Sheets...') + '</span>';
-    } else if (type === 'success') {
-      badge.innerHTML = '<div class="electric-sync-core">' +
-        '<svg class="electric-bolt-svg success-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h8l-2 8 11-12h-8l2-8z"/></svg>' +
-      '</div>' +
-      '<span class="gas-sync-label">' + (cleanMsg || 'Terhubung ke Google Sheets') + '</span>';
-      setTimeout(() => {
-        badge.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-        badge.style.opacity = '0';
-        badge.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-          badge.style.display = 'none';
-          badge.style.opacity = '1';
-          badge.style.transform = 'none';
-        }, 400);
-      }, 3000);
-    } else {
-      const icon = (type === 'warn' ? '⚠️' : '❌');
-      badge.innerHTML = '<span style="font-size: 13px; line-height: 1;">' + icon + '</span>' +
-        '<span class="gas-sync-label">' + (cleanMsg || msg) + '</span>';
-    }
   }
 };
+
 window.gasSync = gasSync;
 
 
