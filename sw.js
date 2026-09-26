@@ -1,5 +1,5 @@
-// CHARGING EV SCM - Service Worker v3.0
-const CACHE_NAME = 'charging-ev-v3';
+// CHARGING EV SCM - Service Worker v4.0
+const CACHE_NAME = 'charging-ev-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',

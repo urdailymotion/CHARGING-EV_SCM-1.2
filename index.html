@@ -14071,6 +14071,49 @@ const gasSync = {
     });
   },
 
+  _processResult: function(result) {
+    if (!result) return;
+    if (Array.isArray(result.swaps)) {
+      swapsData = result.swaps.filter(s => s && (s.unit || s.date)).map((s, idx) => ({
+        ...s,
+        id: (typeof canonicalSwapId === 'function') ? canonicalSwapId(s.id) : (s.id || ''),
+        _sheetRow: idx + 2
+      }));
+      if (typeof sortTransactionsLatestFirst === 'function') {
+        swapsData.sort(sortTransactionsLatestFirst);
+      }
+      window.swapsData = swapsData;
+    }
+    if (Array.isArray(result.problems)) {
+      problemsData = result.problems;
+      window.problemsData = problemsData;
+    }
+    if (result.populasi && result.populasi.length > 0) {
+      fleetUnits = result.populasi.map(code => ({
+        code: typeof code === 'object' ? String(code.code || code.unit || '').trim() : String(code).trim(),
+        type: typeof code === 'object' && code.type ? code.type : 'EV Dump Truck 90T',
+        status: typeof code === 'object' && code.status ? code.status : 'Aktif',
+        note: typeof code === 'object' && code.note ? code.note : 'Operasional Normal'
+      })).filter(u => !!u.code);
+      window.fleetUnits = fleetUnits;
+    } else if (!fleetUnits || fleetUnits.length === 0) {
+      fleetUnits = (typeof buildDefaultFleet === 'function') ? buildDefaultFleet() : [];
+      window.fleetUnits = fleetUnits;
+    }
+    if (Array.isArray(result.schedules)) {
+      schedulesData = result.schedules;
+      window.schedulesData = schedulesData;
+    }
+    if (result.users && result.users.length > 0) {
+      if (typeof window.saveAppUsers === 'function') window.saveAppUsers(result.users, false);
+    }
+    window._gasDataLoaded = true;
+    gasSync._showSyncBadge('✅ Terhubung ke Google Sheets', 'success');
+    if (typeof window.syncAndRenderAllViews === 'function') {
+      window.syncAndRenderAllViews();
+    }
+  },
+
   /**
    * Load semua data dari GAS (Google Sheets Master)
    * Mendukung Google Apps Script iframe maupun PWA di Netlify / domain luar
@@ -14446,6 +14489,53 @@ const gasSync = {
         if (typeof onResult === 'function') onResult({ status: 'error', message: 'GAS error' });
       })
       .apiValidateLogin(nik, password);
+  },
+
+  _showSyncBadge: function(msg, type) {
+    const badge = document.getElementById('gasSyncStatusBadge');
+    if (!badge) return;
+    type = type || 'loading';
+    badge.style.display = 'inline-flex';
+    badge.className = 'gas-sync-badge ' + type;
+    badge.style.opacity = '1';
+    badge.style.transform = 'none';
+
+    const cleanMsg = msg ? msg.replace(/^[⏳✅⚠️❌]\s*/, '') : '';
+    badge.setAttribute('title', cleanMsg || msg);
+
+    if (type === 'loading') {
+      badge.innerHTML = '<div class="electric-sync-core" aria-label="Loading">' +
+        '<div class="electric-plasma-aura"></div>' +
+        '<div class="electric-pulse-ring"></div>' +
+        '<div class="electric-pulse-ring ring-2"></div>' +
+        '<svg class="electric-bolt-svg" viewBox="0 0 24 24"><path d="M13 2L3 14h8l-2 8 11-12h-8l2-8z"/></svg>' +
+        '<div class="electric-sparks">' +
+          '<span class="spark s1"></span>' +
+          '<span class="spark s2"></span>' +
+          '<span class="spark s3"></span>' +
+        '</div>' +
+      '</div>' +
+      '<span class="gas-sync-label">' + (cleanMsg || 'Memuat data dari Google Sheets...') + '</span>';
+    } else if (type === 'success') {
+      badge.innerHTML = '<div class="electric-sync-core">' +
+        '<svg class="electric-bolt-svg success-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h8l-2 8 11-12h-8l2-8z"/></svg>' +
+      '</div>' +
+      '<span class="gas-sync-label">' + (cleanMsg || 'Terhubung ke Google Sheets') + '</span>';
+      setTimeout(() => {
+        badge.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        badge.style.opacity = '0';
+        badge.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+          badge.style.display = 'none';
+          badge.style.opacity = '1';
+          badge.style.transform = 'none';
+        }, 400);
+      }, 3000);
+    } else {
+      const icon = (type === 'warn' ? '⚠️' : '❌');
+      badge.innerHTML = '<span style="font-size: 13px; line-height: 1;">' + icon + '</span>' +
+        '<span class="gas-sync-label">' + (cleanMsg || msg) + '</span>';
+    }
   }
 };
 

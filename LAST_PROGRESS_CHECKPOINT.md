@@ -35,6 +35,17 @@
   - **Uji Simpan Transaksi (`save_swap`):** Status `200 OK`, respon `{ status: 'success', message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', row: 8235, id: 'TEST_PWA_...' }`.
   - **Uji Hapus Transaksi (`delete_swap`):** Status `200 OK`, respon `{ status: 'success', message: 'Transaksi TEST_PWA_... berhasil dihapus dari Google Sheets & Firebase' }`.
 
+#### 4. 🛠️ Perbaikan Data Tidak Terbaca Pada PWA Netlify (27 September 2026, 07:25 WITA):
+- **Gejala:** Saat PWA dibuka di Netlify, data di database Google Sheets (8.200+ transaksi) tidak tampil / tidak terbaca di tabel dan kartu dashboard.
+- **Penyebab Utama (Root Cause):**
+  - Pada penyesuaian REST API sebelumnya, fungsi `gasSync._processResult` dan `gasSync._showSyncBadge` terpotong dari objek `gasSync` di `index.html`.
+  - Akibatnya, saat `gasSync.loadAll()` berhasil menerima 8.233 data dari Google Sheets API via `fetch('.../exec')`, pemanggilan `gasSync._processResult(result)` menghasilkan error JavaScript runtime (`TypeError: gasSync._processResult is not a function`), sehingga data tidak sempat dimasukkan ke `swapsData` dan `syncAndRenderAllViews()` tidak terpanggil.
+- **Tindakan Perbaikan:**
+  - Mengembalikan dan menyempurnakan implementasi `_processResult` dan `_showSyncBadge` di `index.html`.
+  - Memvalidasi seluruh inline script (7 script blocks) dengan parser Node VM tanpa error sintaks.
+  - Memverifikasi live API fetch via `scratch/test_get_all.js`: status `200 OK`, `8233` swaps, `2` problems, `56` unit populasi, `7` jadwal, `17` user berhasil dibaca secara utuh.
+  - Menaikkan versi cache Service Worker pada `sw.js` ke **`charging-ev-v4`** agar cache lama di browser HP/PWA otomatis dibersihkan dan langsung mengambil perbaikan baru.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
@@ -46,3 +57,5 @@
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
+   - **Service Worker Cache:** `charging-ev-v4`
+
