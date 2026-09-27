@@ -2027,7 +2027,6 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       s.timeSch || s.time || '07:00:00'
     ]);
 
-    const mode = importMode || 'overwrite';
 
     if (mode === 'overwrite') {
       const lastR = Math.max(sheet.getLastRow(), 2);
