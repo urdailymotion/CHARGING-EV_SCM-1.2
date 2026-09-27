@@ -107,18 +107,38 @@
   5. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v7`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 8. 📋 Pemisahan Kolom Loc & Swap Station dan Manpower Nama-Saja di Tabel Transaksi (27 September 2026, 09:55 WITA):
+- **Kebutuhan Pengguna (Berdasarkan Screenshot):**
+  1. Manpower hanya menampilkan **Nama Operator** saja (tidak perlu menampilkan NIK).
+  2. Kolom `Loc` dipisahkan menjadi dua kolom mandiri:
+     - Kolom **`Loc`** ➔ Khusus menampilkan `ROOM A1` atau `ROOM A2`.
+     - Kolom **`Swap Station`** ➔ Kolom baru di samping Loc khusus menampilkan `SWAP 01`, `SWAP 02`, atau `SWAP 03`.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Tabel Data Transaksi (`enterprise-data-table`):**
+     - Di `<thead>`: Menambahkan header `Swap Station` (`sortIconTxStation`) dengan fitur pengurutan (sorting) tersendiri.
+     - Di `<tbody>`:
+       - Sel Manpower kini murni menampilkan nama: `<div style="font-weight: 700; color: #1e293b;">${row.operator || '-'}</div>` tanpa teks NIK.
+       - Sel `Loc` murni menampilkan ruangan: `<td style="text-align: center; font-weight: 700;">${row.location || 'ROOM A1'}</td>`.
+       - Sel `Swap Station` mandiri: `<td style="text-align: center;"><span class="badge-station">${row.swapStation || 'SWAP 01'}</span></td>`.
+     - Colspan baris data kosong disesuaikan menjadi `18`.
+  2. **Modal Edit Transaksi (`modalEditSwap`):**
+     - Ditambahkan dropdown **Mesin Swap (Station)** di samping dropdown Lokasi sehingga operator/supervisor dapat mengubah data mesin secara spesifik.
+  3. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v8`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 48**
+   - **Versi Terpasang:** **Versi 50**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v7`
+   - **Service Worker Cache:** `charging-ev-v8`
+
 
 
 

@@ -9550,6 +9550,7 @@ html.needs-login .sidebar-backdrop {
                     <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('batteryBefore')" title="Urutkan Bat In">Bat In <span class="sort-icon" id="sortIconTxBatIn">⇅</span></th>
                     <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('batteryAfter')" title="Urutkan Bat Out">Bat Out <span class="sort-icon" id="sortIconTxBatOut">⇅</span></th>
                     <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('location')" title="Urutkan Lokasi">Loc <span class="sort-icon" id="sortIconTxLoc">⇅</span></th>
+                    <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('swapStation')" title="Urutkan Swap Station">Swap Station <span class="sort-icon" id="sortIconTxStation">⇅</span></th>
                     <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('statusRemark')" title="Urutkan Status">Status <span class="sort-icon" id="sortIconTxStatus">⇅</span></th>
                     <th style="text-align: center; cursor: pointer; user-select: none;" onclick="window.handleMainTableSort && window.handleMainTableSort('problemRemark')" title="Urutkan Remark">Remark <span class="sort-icon" id="sortIconTxRemark">⇅</span></th>
                     <th style="text-align: center;">Aksi</th>
@@ -11503,6 +11504,14 @@ html.needs-login .sidebar-backdrop {
               <select id="editLocation" class="form-control-ent" required>
                 <option value="ROOM A1">ROOM A1</option>
                 <option value="ROOM A2">ROOM A2</option>
+              </select>
+            </div>
+            <div class="form-group-ent">
+              <label class="form-label-ent">Mesin Swap (Station)</label>
+              <select id="editSwapStation" class="form-control-ent" required>
+                <option value="SWAP 01">SWAP 01</option>
+                <option value="SWAP 02">SWAP 02</option>
+                <option value="SWAP 03">SWAP 03</option>
               </select>
             </div>
             <div class="form-group-ent">
@@ -16612,6 +16621,7 @@ function initTableControls() {
         rec.date = formatDateDisplay(document.getElementById('editDate').value);
         rec.shift = document.getElementById('editShift').value;
         rec.location = document.getElementById('editLocation').value;
+        rec.swapStation = document.getElementById('editSwapStation')?.value || (rec.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
         rec.unit = document.getElementById('editUnit').value;
         rec.hm = document.getElementById('editHM').value;
         rec.energyKwh = parseFloat(document.getElementById('editEnergy').value) || 0;
@@ -16686,6 +16696,7 @@ function updateMainTableSortIcons() {
     batteryBefore: 'sortIconTxBatIn',
     batteryAfter: 'sortIconTxBatOut',
     location: 'sortIconTxLoc',
+    swapStation: 'sortIconTxStation',
     statusRemark: 'sortIconTxStatus',
     problemRemark: 'sortIconTxRemark'
   };
@@ -16805,6 +16816,10 @@ function renderMainTable() {
           valA = String(a.location || '').toLowerCase();
           valB = String(b.location || '').toLowerCase();
           break;
+        case 'swapStation':
+          valA = String(a.swapStation || (String(a.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')).toLowerCase();
+          valB = String(b.swapStation || (String(b.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')).toLowerCase();
+          break;
         case 'statusRemark':
           valA = String(a.statusRemark || '').toLowerCase();
           valB = String(b.statusRemark || '').toLowerCase();
@@ -16842,14 +16857,14 @@ function renderMainTable() {
 
   if (pageItems.length === 0) {
     if (swapsData.length > 0) {
-      tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 25px; color:#475569;">
+      tbody.innerHTML = `<tr><td colspan="18" style="text-align:center; padding: 25px; color:#475569;">
         <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px;">⚠️ Ditemukan ${swapsData.length} transaksi di database, namun terfilter oleh kriteria pencarian / tanggal (${filterStart || 'Semua'} s/d ${filterEnd || 'Semua'}).</div>
         <button type="button" class="btn-show" onclick="document.getElementById('btnResetSearchFilter').click()" style="background:#2563eb; color:#fff; border-color:#1d4ed8; padding: 6px 14px; font-size: 12px; cursor: pointer; border-radius: 6px;">
           🔄 Reset Filter &amp; Tampilkan Semua Transaksi (${swapsData.length} Data)
         </button>
       </td></tr>`;
     } else {
-      tbody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 25px; color:#888;">Tidak ada data transaksi di database.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="18" style="text-align:center; padding: 25px; color:#888;">Tidak ada data transaksi di database.</td></tr>`;
     }
   } else {
     pageItems.forEach((row) => {
@@ -16865,8 +16880,7 @@ function renderMainTable() {
 
       tr.innerHTML = `
         <td style="white-space: nowrap; text-align: center; vertical-align: middle;">
-          <div style="font-weight: 700; color: #1e293b; font-size: 11.5px; letter-spacing: 0.01em; text-align: center;">${row.operator || 'ZAKARIYA ABIDIN'}</div>
-          <div style="font-size: 9.5px; color: #64748b; font-family: var(--font-mono); text-align: center;">${row.operatorNik ? 'NIK: ' + row.operatorNik : '81230529'}</div>
+          <div style="font-weight: 700; color: #1e293b; font-size: 11.5px; letter-spacing: 0.01em; text-align: center;">${row.operator || '-'}</div>
         </td>
         <td style="font-family: var(--font-mono); font-weight:600; color: #0b5394; text-align: center; vertical-align: middle;">${formattedTxId}</td>
         <td style="text-align: center; vertical-align: middle;">
@@ -16882,9 +16896,9 @@ function renderMainTable() {
         <td style="font-family: var(--font-mono); text-align: center; vertical-align: middle;">${row.hm || '-'}</td>
         <td style="color:#d32f2f; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryBefore)}</td>
         <td style="color:#00a65a; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryAfter)}</td>
+        <td style="text-align: center; vertical-align: middle; font-weight: 700; color: #1e293b; font-size: 11.5px;">${row.location || 'ROOM A1'}</td>
         <td style="text-align: center; vertical-align: middle;">
-          <div style="font-weight: 700; color: #1e293b; font-size: 11.5px;">${row.location || 'ROOM A1'}</div>
-          <div style="font-size: 10px; color: #0284c7; font-family: var(--font-mono); font-weight: 700;">${row.swapStation || (String(row.location).includes('A2') ? 'SWAP 02' : 'SWAP 01')}</div>
+          <span style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono); border: 1px solid #bae6fd;">${row.swapStation || (String(row.location).includes('A2') ? 'SWAP 02' : 'SWAP 01')}</span>
         </td>
         <td style="text-align: center; vertical-align: middle;">${statusPillHtml}</td>
         <td style="font-size:11px; color:#666; text-align: center; vertical-align: middle;">${row.problemRemark}</td>
@@ -17062,6 +17076,10 @@ window.editRecord = function(id) {
   document.getElementById('editDate').value = formattedDate;
   document.getElementById('editShift').value = rec.shift;
   document.getElementById('editLocation').value = rec.location;
+  const editStnEl = document.getElementById('editSwapStation');
+  if (editStnEl) {
+    editStnEl.value = rec.swapStation || (rec.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
+  }
   document.getElementById('editUnit').value = rec.unit;
   document.getElementById('editHM').value = rec.hm || '';
   document.getElementById('editEnergy').value = rec.energyKwh;
