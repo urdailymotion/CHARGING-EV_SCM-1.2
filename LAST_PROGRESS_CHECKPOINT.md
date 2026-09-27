@@ -55,17 +55,41 @@
   - Memperbarui status antrean `isExpired`: antrean yang belum swap kini baru berubah menjadi `⛔ No Swap On time sch` jika waktu operasional telah melewati jadwal lebih dari 55 menit.
   - Menaikkan versi cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) ke **`charging-ev-v5`**.
 
+#### 6. 🚀 Fitur Pemisahan Mode Operasional (Scheduled / Room A1 vs On-Demand / Room A2) di Input & Visual KPI (27 September 2026, 08:25 WITA):
+- **Kebutuhan:** Pemisahan alur dan visualisasi data:
+  - **ROOM A1:** Beroperasi menggunakan **SCHEDULE** (jadwal terjadwal dengan target waktu & evaluasi toleransi 55 menit).
+  - **ROOM A2:** Beroperasi **TANPA JADWAL (On-Demand / Non-Schedule)** untuk melayani unit insidentil, baterai drop, atau antrean limpahan tanpa penalti jadwal.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Formulir Input (Modal & Dedicated Swap):**
+     - Otomatis mendeteksi jika lokasi adalah `ROOM A2`: target jadwal dinonaktifkan (`⚡ ROOM A2: NON-SCHEDULED`), field `timeSch` diisi `-`, status otomatis `Non-Schedule`, dan `13.NO PROBLEM`.
+     - Validasi `Out Off Time` tidak membebani operator Room A2.
+     - Di `ROOM A1`, pencocokan jadwal dan toleransi 55 menit tetap aktif presisi.
+  2. **Tampilan Riwayat Input & Tabel Transaksi:**
+     - Menampilkan badge khusus `<span class="status-tag ondemand">⚡ Non-Schedule</span>` untuk unit Room A2 baik di tabel maupun tampilan mobile card.
+  3. **Visual Analytics & KPI Dashboard:**
+     - Ditambahkan **Segmented Operational Mode Switcher (Pill Tabs)** di atas filter dashboard:
+       - `[ 🌐 Semua Operasional (Overview) ]`
+       - `[ 🎯 Terjadwal / Scheduled (ROOM A1) ]`
+       - `[ ⚡ On-Demand / Bebas Jadwal (ROOM A2) ]`
+     - Saat mode dipilih, 5 KPI Card dan grafik Donut otomatis menyesuaikan konteksnya:
+       - Mode **SCHEDULED**: Menampilkan Total Unit Terjadwal, Frekuensi Terjadwal, Total Energi A1, dan **On-Time Performance (OTP %)** murni dari Room A1.
+       - Mode **ON_DEMAND**: Menampilkan Total Unit On-Demand, Frekuensi A2, Total Energi A2, **Rata-rata SoC Masuk (%)**, dan Donut Chart rasio Baterai Normal vs Baterai Kritis ($\le$ 20%).
+       - Mode **ALL**: Menampilkan gambaran site keseluruhan dan proporsi 3 irisan (A1 On Schedule, A1 Out Off Time, A2 On-Demand).
+  4. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v6`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 45**
+   - **Versi Terpasang:** **Versi 47**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v5`
+   - **Service Worker Cache:** `charging-ev-v6`
+
 
 

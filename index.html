@@ -9342,6 +9342,7 @@ html.needs-login .sidebar-backdrop {
                   <select id="dedSwapStatus" class="form-control-ent">
                     <option value="On Time" selected>On Time</option>
                     <option value="Out Off Time">Out Off Time</option>
+                    <option value="Non-Schedule">⚡ Non-Schedule (On-Demand)</option>
                   </select>
                   
                 </div>
@@ -9993,6 +9994,24 @@ html.needs-login .sidebar-backdrop {
             </div>
           </div>
 
+          <!-- Segmented Operational Mode Switcher: ALL vs SCHEDULED vs ON-DEMAND -->
+          <div class="ppa-opmode-switcher-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 12px 0 14px 0; gap: 6px;">
+            <div class="ppa-opmode-pills" style="display: inline-flex; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 4px; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); max-width: 100%; overflow-x: auto;">
+              <button type="button" class="ppa-opmode-btn active" id="btnPpaModeAll" onclick="setPpaOperationalMode('ALL')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; box-shadow: 0 2px 5px rgba(15,23,42,0.25); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                🌐 Semua Operasional (Overview)
+              </button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeScheduled" onclick="setPpaOperationalMode('SCHEDULED')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                🎯 Terjadwal / Scheduled (ROOM A1)
+              </button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeOnDemand" onclick="setPpaOperationalMode('ON_DEMAND')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                ⚡ On-Demand / Bebas Jadwal (ROOM A2)
+              </button>
+            </div>
+            <div id="ppaModeDescriptionNotice" style="font-size: 11.5px; font-weight: 600; color: #64748b; text-align: center;">
+              Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)
+            </div>
+          </div>
+
           <!-- White Filter Bar (Date, Week, Shift, Lokasi, ID Unit, Status, Problem) -->
           <div class="ppa-filters-row">
             <div style="display:flex; align-items:center; gap:4px;">
@@ -10044,6 +10063,7 @@ html.needs-login .sidebar-backdrop {
                 <option value="ALL">Semua Status</option>
                 <option value="On Time">On Time</option>
                 <option value="Out Off Time">Out Off Time</option>
+                <option value="Non-Schedule">Non-Schedule</option>
               </select>
             </div>
 
@@ -10068,7 +10088,7 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-red-card">
               <div class="ppa-card-icon-circle">🔌</div>
               <div class="ppa-card-content">
-                <span class="ppa-card-label">Total Unit</span>
+                <span class="ppa-card-label" id="ppaKpiLabel1">Total Unit</span>
                 <span class="ppa-card-number" id="ppaKpiTotalUnit">56</span>
               </div>
             </div>
@@ -10077,7 +10097,7 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-red-card">
               <div class="ppa-card-icon-circle">📈</div>
               <div class="ppa-card-content">
-                <span class="ppa-card-label">Frekuensi Swab</span>
+                <span class="ppa-card-label" id="ppaKpiLabel2">Frekuensi Swab</span>
                 <span class="ppa-card-number" id="ppaKpiFreqSwab">173</span>
               </div>
             </div>
@@ -10086,7 +10106,7 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-red-card">
               <div class="ppa-card-icon-circle">⚡</div>
               <div class="ppa-card-content">
-                <span class="ppa-card-label">Total Energi (Kwh)</span>
+                <span class="ppa-card-label" id="ppaKpiLabel3">Total Energi (Kwh)</span>
                 <span class="ppa-card-number" id="ppaKpiTotalEnergy">53,305</span>
               </div>
             </div>
@@ -10095,7 +10115,7 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-red-card">
               <div class="ppa-card-icon-circle">⚡</div>
               <div class="ppa-card-content">
-                <span class="ppa-card-label">Average Usage (Kwh)</span>
+                <span class="ppa-card-label" id="ppaKpiLabel4">Average Usage (Kwh)</span>
                 <span class="ppa-card-number" id="ppaKpiAvgUsage">308.12</span>
               </div>
             </div>
@@ -10104,7 +10124,7 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-red-card">
               <div class="ppa-card-icon-circle">⏱️</div>
               <div class="ppa-card-content">
-                <span class="ppa-card-label">CHARGING TIME (MENIT)</span>
+                <span class="ppa-card-label" id="ppaKpiLabel5">CHARGING TIME (MENIT)</span>
                 <span class="ppa-card-number" id="ppaKpiChargingTime">6.18</span>
               </div>
             </div>
@@ -10114,7 +10134,7 @@ html.needs-login .sidebar-backdrop {
           <div class="ppa-charts-quad-grid">
             <!-- Chart 1: Ach Ketepatan Sch Swab -->
             <div class="ppa-chart-card-box">
-              <div class="ppa-chart-title-italic">Ach Ketepatan Sch Swab</div>
+              <div class="ppa-chart-title-italic" id="ppaChartTitleKetepatan">Ach Ketepatan Sch Swab</div>
               <div class="ppa-canvas-wrapper">
                 <canvas id="ppaChartKetepatan"></canvas>
               </div>
@@ -11294,6 +11314,7 @@ html.needs-login .sidebar-backdrop {
               <select id="newSwapStatus" class="form-control-ent">
                 <option value="On Time" selected>On Time</option>
                 <option value="Out Off Time">Out Off Time</option>
+                <option value="Non-Schedule">⚡ Non-Schedule (On-Demand)</option>
               </select>
               
             </div>
@@ -16014,11 +16035,11 @@ function initTableControls() {
     const statusVal = sEl.value || 'On Time';
     const remarkVal = rEl ? rEl.value : '';
 
-    if (statusVal === 'On Time') {
+    if (statusVal === 'On Time' || statusVal === 'Non-Schedule') {
       badge.style.background = '#e2e8f0';
       badge.style.color = '#475569';
-      badge.innerHTML = 'ℹ️  Opsional (On Time)';
-      input.placeholder = 'Catatan / keterangan operasional (opsional jika On Time)...';
+      badge.innerHTML = (statusVal === 'Non-Schedule') ? '⚡ Opsional (Non-Schedule)' : 'ℹ️  Opsional (On Time)';
+      input.placeholder = (statusVal === 'Non-Schedule') ? 'Catatan unit non-jadwal / ad-hoc (opsional)...' : 'Catatan / keterangan operasional (opsional jika On Time)...';
       input.style.borderColor = '#cbd5e1';
       input.style.boxShadow = 'none';
       return;
@@ -16053,6 +16074,24 @@ function initTableControls() {
     const jamInInput = document.getElementById('newSwapJamIn');
     const schInput = document.getElementById('newSwapTimeSch');
     const schNotice = document.getElementById('newSwapSchNotice');
+
+    // Cek Lokasi: ROOM A2 beroperasi On-Demand (Bebas Jadwal)
+    const locInput = document.getElementById('newSwapLoc');
+    const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
+    const isRoomA2 = (String(locVal).trim().toUpperCase() === 'ROOM A2');
+
+    if (isRoomA2) {
+      if (groupSch) groupSch.style.display = 'block';
+      if (schInput) schInput.value = '-';
+      if (schNotice) {
+        schNotice.innerHTML = `⚡ <strong>ROOM A2: NON-SCHEDULED</strong> (Jalur Fleksibel / Bebas Target Jadwal)`;
+        schNotice.style.color = '#4338ca';
+      }
+      if (statusSelect) statusSelect.value = 'Non-Schedule';
+      if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+      window.updateNewSwapKeteranganRequirement();
+      return;
+    }
 
     if (!isScheduleOn) {
       if (groupSch) groupSch.style.display = 'none';
@@ -16684,7 +16723,11 @@ function renderMainTable() {
   } else {
     pageItems.forEach((row) => {
       const tr = document.createElement('tr');
+      const isNonSch = (row.statusRemark === 'Non-Schedule' || String(row.location || '').toUpperCase() === 'ROOM A2');
       const isOnTime = (row.statusRemark === 'On Time');
+      const statusPillHtml = isNonSch 
+        ? '<span class="status-tag ondemand" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight:700;">⚡ Non-Schedule</span>'
+        : ('<span class="status-tag ' + (isOnTime ? 'ontime' : 'outtime') + '">' + (row.statusRemark || (isOnTime ? 'On Time' : 'Out Off Time')) + '</span>');
       const formattedTxId = String(row.id || '').includes('DA01') ? row.id : ('DA01/CHG/2026/SWAP/' + String(row.id || '').replace('SWP-', ''));
       const isPile = (row.category || '').toUpperCase().includes('PILE');
       const catLabel = row.category || 'CHARGING SWAP';
@@ -16709,7 +16752,7 @@ function renderMainTable() {
         <td style="color:#d32f2f; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryBefore)}</td>
         <td style="color:#00a65a; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryAfter)}</td>
         <td style="text-align: center; vertical-align: middle;"><span style="font-weight:600;">${row.location}</span></td>
-        <td style="text-align: center; vertical-align: middle;"><span class="status-tag ${isOnTime ? 'ontime' : 'outtime'}">${row.statusRemark}</span></td>
+        <td style="text-align: center; vertical-align: middle;">${statusPillHtml}</td>
         <td style="font-size:11px; color:#666; text-align: center; vertical-align: middle;">${row.problemRemark}</td>
         <td style="text-align: center; vertical-align: middle;">
           <div class="table-actions-cell" style="justify-content: center;">
@@ -16731,7 +16774,11 @@ function renderMainTable() {
       mobileCardsContainer.innerHTML = `<div class="mobile-empty-alert">Tidak ada transaksi yang cocok dengan filter pencarian.</div>`;
     } else {
       pageItems.forEach((row) => {
+        const isNonSch = (row.statusRemark === 'Non-Schedule' || String(row.location || '').toUpperCase() === 'ROOM A2');
         const isOnTime = (row.statusRemark === 'On Time');
+        const statusPillHtml = isNonSch 
+          ? '<span class="status-tag ondemand" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight:700;">⚡ Non-Schedule</span>'
+          : ('<span class="status-tag ' + (isOnTime ? 'ontime' : 'outtime') + '">' + (row.statusRemark || (isOnTime ? 'On Time' : 'Out Off Time')) + '</span>');
         const formattedTxId = String(row.id || '').includes('DA01') ? row.id : `DA01/CHG/2026/SWAP/${String(row.id || '').replace('SWP-', '')}`;
         const card = document.createElement('div');
         card.className = 'mobile-swap-card';
@@ -16742,7 +16789,7 @@ function renderMainTable() {
               <strong class="m-unit-title">DT ${row.unit}</strong>
               <span class="m-loc-pill">${row.location}</span>
             </div>
-            <span class="status-tag ${isOnTime ? 'ontime' : 'outtime'}">${row.statusRemark}</span>
+            ${statusPillHtml}
           </div>
 
           <div class="m-card-body-grid">
@@ -17814,11 +17861,11 @@ function initDedicatedInputForm() {
     const statusVal = sEl.value || 'On Time';
     const remarkVal = rEl ? rEl.value : '';
 
-    if (statusVal === 'On Time') {
+    if (statusVal === 'On Time' || statusVal === 'Non-Schedule') {
       badge.style.background = '#e2e8f0';
       badge.style.color = '#475569';
-      badge.innerHTML = 'ℹ️ Opsional (On Time)';
-      input.placeholder = 'Catatan / keterangan operasional (opsional jika On Time)...';
+      badge.innerHTML = (statusVal === 'Non-Schedule') ? '⚡ Opsional (Non-Schedule)' : 'ℹ️  Opsional (On Time)';
+      input.placeholder = (statusVal === 'Non-Schedule') ? 'Catatan unit non-jadwal / ad-hoc (opsional)...' : 'Catatan / keterangan operasional (opsional jika On Time)...';
       input.style.borderColor = '#cbd5e1';
       input.style.boxShadow = 'none';
       return;
@@ -19256,6 +19303,39 @@ function renderPpaExecutiveDashboard() {
   updatePpaExecutiveDashboard();
 }
 
+window.ppaOperationalMode = window.ppaOperationalMode || 'ALL';
+
+window.setPpaOperationalMode = function(mode) {
+  window.ppaOperationalMode = mode || 'ALL';
+
+  const btnAll = document.getElementById('btnPpaModeAll');
+  const btnSch = document.getElementById('btnPpaModeScheduled');
+  const btnOd = document.getElementById('btnPpaModeOnDemand');
+  const noticeEl = document.getElementById('ppaModeDescriptionNotice');
+
+  const activeStyle = 'padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; box-shadow: 0 2px 5px rgba(15,23,42,0.25); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;';
+  const inactiveStyle = 'padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;';
+
+  if (btnAll) btnAll.setAttribute('style', mode === 'ALL' ? activeStyle : inactiveStyle);
+  if (btnSch) btnSch.setAttribute('style', mode === 'SCHEDULED' ? activeStyle : inactiveStyle);
+  if (btnOd) btnOd.setAttribute('style', mode === 'ON_DEMAND' ? activeStyle : inactiveStyle);
+
+  if (noticeEl) {
+    if (mode === 'SCHEDULED') {
+      noticeEl.innerHTML = '🎯 <strong>Fokus Operasional Terjadwal (ROOM A1)</strong> — Memantau kepatuhan jam &amp; ketepatan waktu armada';
+      noticeEl.style.color = '#0369a1';
+    } else if (mode === 'ON_DEMAND') {
+      noticeEl.innerHTML = '⚡ <strong>Fokus Operasional On-Demand / Bebas Jadwal (ROOM A2)</strong> — Memantau swap insidentil, baterai drop &amp; fleksibel';
+      noticeEl.style.color = '#4338ca';
+    } else {
+      noticeEl.innerHTML = '🌐 Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)';
+      noticeEl.style.color = '#64748b';
+    }
+  }
+
+  updatePpaExecutiveDashboard();
+};
+
 function updatePpaExecutiveDashboard() {
   // Read Filter Values
   const shiftVal = document.getElementById('ppaFilterShift')?.value || 'ALL';
@@ -19264,9 +19344,24 @@ function updatePpaExecutiveDashboard() {
   const statusVal = document.getElementById('ppaFilterStatus')?.value || 'ALL';
   const probVal = document.getElementById('ppaFilterProblem')?.value || 'ALL';
   const dateVal = document.getElementById('ppaFilterDate')?.value || 'ALL';
+  const opMode = window.ppaOperationalMode || 'ALL';
 
   // Filter Data with robust normalization
   ppaFilteredSwaps = (swapsData || []).filter(s => {
+    if (!s) return false;
+
+    // Filter Mode Operasional (ALL vs SCHEDULED vs ON_DEMAND)
+    const sLoc = String(s.location || '').trim().toUpperCase();
+    const hasSch = s.timeSch && s.timeSch !== '-' && s.timeSch !== 'NON-SCH';
+    const isA2 = (sLoc === 'ROOM A2') || String(s.statusRemark || '').toLowerCase().includes('non');
+
+    if (opMode === 'SCHEDULED') {
+      if (sLoc === 'ROOM A2') return false;
+      if (!hasSch && sLoc !== 'ROOM A1') return false;
+    } else if (opMode === 'ON_DEMAND') {
+      if (sLoc === 'ROOM A1') return false;
+      if (hasSch && !isA2) return false;
+    }
     if (!s) return false;
     
     // 1. Shift filter (supports '1', '2', 'Shift 1', 'Shift 2', 'SIANG', 'MALAM')
@@ -19336,17 +19431,55 @@ function updatePpaExecutiveDashboard() {
   const totalDur = ppaFilteredSwaps.reduce((acc, s) => acc + (parseFloat(s.durationMin) || 0), 0);
   const avgChargingTime = totalSwaps > 0 ? (totalDur / totalSwaps).toFixed(2) : '0.00';
 
-  // Update KPI Cards DOM
+  // Hitung Nilai Spesifik per Mode
+  const onTimeCount = ppaFilteredSwaps.filter(s => {
+    const st = String(s.statusRemark || 'On Time').trim().toUpperCase();
+    return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
+  }).length;
+  const otpPct = totalSwaps > 0 ? (onTimeCount / totalSwaps) * 100 : 100;
+
+  const validBatIn = ppaFilteredSwaps.map(s => parseFloat(s.batteryBefore)).filter(n => !isNaN(n));
+  const avgBatIn = validBatIn.length > 0 ? (validBatIn.reduce((a, b) => a + b, 0) / validBatIn.length) : 25;
+
+  // Update KPI Cards DOM & Labels dynamically
   const kpiUnit = document.getElementById('ppaKpiTotalUnit');
   const kpiFreq = document.getElementById('ppaKpiFreqSwab');
   const kpiEnergy = document.getElementById('ppaKpiTotalEnergy');
   const kpiAvg = document.getElementById('ppaKpiAvgUsage');
   const kpiTime = document.getElementById('ppaKpiChargingTime');
 
+  const lbl1 = document.getElementById('ppaKpiLabel1');
+  const lbl2 = document.getElementById('ppaKpiLabel2');
+  const lbl3 = document.getElementById('ppaKpiLabel3');
+  const lbl4 = document.getElementById('ppaKpiLabel4');
+  const lbl5 = document.getElementById('ppaKpiLabel5');
+
+  if (opMode === 'SCHEDULED') {
+    if (lbl1) lbl1.textContent = 'Total Unit Terjadwal';
+    if (lbl2) lbl2.textContent = 'Frekuensi Terjadwal';
+    if (lbl3) lbl3.textContent = 'Total Energi A1 (Kwh)';
+    if (lbl4) lbl4.textContent = 'On-Time Performance';
+    if (lbl5) lbl5.textContent = 'CHARGING TIME (MENIT)';
+    if (kpiAvg) kpiAvg.textContent = otpPct.toFixed(1) + '%';
+  } else if (opMode === 'ON_DEMAND') {
+    if (lbl1) lbl1.textContent = 'Total Unit On-Demand';
+    if (lbl2) lbl2.textContent = 'Frekuensi On-Demand';
+    if (lbl3) lbl3.textContent = 'Total Energi A2 (Kwh)';
+    if (lbl4) lbl4.textContent = 'Rata-rata SoC Masuk';
+    if (lbl5) lbl5.textContent = 'CHARGING TIME (MENIT)';
+    if (kpiAvg) kpiAvg.textContent = avgBatIn.toFixed(1) + '%';
+  } else {
+    if (lbl1) lbl1.textContent = 'Total Unit';
+    if (lbl2) lbl2.textContent = 'Frekuensi Swab';
+    if (lbl3) lbl3.textContent = 'Total Energi (Kwh)';
+    if (lbl4) lbl4.textContent = 'Average Usage (Kwh)';
+    if (lbl5) lbl5.textContent = 'CHARGING TIME (MENIT)';
+    if (kpiAvg) kpiAvg.textContent = avgUsage;
+  }
+
   if (kpiUnit) kpiUnit.textContent = displayUnitCount;
   if (kpiFreq) kpiFreq.textContent = totalSwaps.toLocaleString('id-ID');
   if (kpiEnergy) kpiEnergy.textContent = totalEnergy.toLocaleString('id-ID');
-  if (kpiAvg) kpiAvg.textContent = avgUsage;
   if (kpiTime) kpiTime.textContent = avgChargingTime;
 
   // Render 8 Charts with 100% Real Synchronized Data
@@ -19369,21 +19502,75 @@ function renderChartKetepatan() {
   if (!canvas) return;
   if (chartPpaKetepatan) chartPpaKetepatan.destroy();
 
-  const onTimeCount = ppaFilteredSwaps.filter(s => {
-    const st = (s.statusRemark || 'On Time').trim().toUpperCase();
-    return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
-  }).length;
+  const opMode = window.ppaOperationalMode || 'ALL';
+  const titleEl = document.getElementById('ppaChartTitleKetepatan');
   const total = ppaFilteredSwaps.length;
-  const pct = total > 0 ? Math.round((onTimeCount / total) * 100) : 100;
-  const outCount = total > 0 ? (total - onTimeCount) : 0;
+
+  let labels = [];
+  let dataVals = [];
+  let bgColors = [];
+  let centerVal = '0%';
+
+  if (opMode === 'SCHEDULED') {
+    if (titleEl) titleEl.textContent = 'Ach Ketepatan Sch Swab (ROOM A1)';
+    const onTimeCount = ppaFilteredSwaps.filter(s => {
+      const st = String(s.statusRemark || 'On Time').trim().toUpperCase();
+      return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
+    }).length;
+    const outCount = total > 0 ? (total - onTimeCount) : 0;
+    const pct = total > 0 ? Math.round((onTimeCount / total) * 100) : 100;
+
+    labels = ['ON SCHEDULE', 'OUT OFF TIME'];
+    dataVals = [total > 0 ? onTimeCount : 1, total > 0 ? outCount : 0];
+    bgColors = ['#16a34a', '#dc2626'];
+    centerVal = total > 0 ? (pct + '%') : '0%';
+  } else if (opMode === 'ON_DEMAND') {
+    if (titleEl) titleEl.textContent = 'Kondisi Baterai Masuk (ROOM A2)';
+    let normalCount = 0;
+    let lowCount = 0;
+    ppaFilteredSwaps.forEach(s => {
+      const b = parseFloat(s.batteryBefore);
+      if (!isNaN(b) && b <= 20) lowCount++;
+      else normalCount++;
+    });
+
+    labels = ['BATERAI NORMAL (>20%)', 'BATERAI KRITIS (≤20%)'];
+    dataVals = [total > 0 ? normalCount : 1, total > 0 ? lowCount : 0];
+    bgColors = ['#4f46e5', '#f59e0b'];
+    centerVal = total > 0 ? String(total) : '0';
+  } else {
+    if (titleEl) titleEl.textContent = 'Proporsi Operasional (A1 vs A2)';
+    let a1On = 0;
+    let a1Out = 0;
+    let a2Count = 0;
+    ppaFilteredSwaps.forEach(s => {
+      const loc = String(s.location || '').toUpperCase();
+      const isNon = String(s.statusRemark || '').toLowerCase().includes('non') || (loc === 'ROOM A2');
+      if (isNon) {
+        a2Count++;
+      } else {
+        const isOt = String(s.statusRemark || 'On Time').trim().toUpperCase().includes('ON');
+        if (isOt) a1On++;
+        else a1Out++;
+      }
+    });
+
+    const schTotal = a1On + a1Out;
+    const schPct = schTotal > 0 ? Math.round((a1On / schTotal) * 100) : 100;
+
+    labels = ['A1 ON SCHEDULE', 'A1 OUT OFF TIME', 'A2 ON-DEMAND'];
+    dataVals = [total > 0 ? a1On : 1, total > 0 ? a1Out : 0, total > 0 ? a2Count : 0];
+    bgColors = ['#16a34a', '#dc2626', '#4f46e5'];
+    centerVal = schTotal > 0 ? (schPct + '%') : (total > 0 ? String(total) : '0%');
+  }
 
   chartPpaKetepatan = new Chart(canvas.getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['ON SCHEDULE', 'OUT OFF TIME'],
+      labels: labels,
       datasets: [{
-        data: [total > 0 ? onTimeCount : 1, total > 0 ? outCount : 0],
-        backgroundColor: ['#2979ff', '#e0e0e0'],
+        data: dataVals,
+        backgroundColor: bgColors,
         borderWidth: 0
       }]
     },
@@ -19398,28 +19585,10 @@ function renderChartKetepatan() {
           labels: {
             boxWidth: 8,
             boxHeight: 8,
-            font: { size: 9.5, weight: 'bold' },
-            generateLabels: function(chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                const dataset = data.datasets[0];
-                return data.labels.map((label, i) => {
-                  const isHidden = typeof chart.getDataVisibility === 'function' ? !chart.getDataVisibility(i) : false;
-                  return {
-                    text: label,
-                    fillStyle: dataset.backgroundColor[i],
-                    strokeStyle: i === 1 ? '#9e9e9e' : dataset.backgroundColor[i],
-                    lineWidth: i === 1 ? 1 : 0,
-                    hidden: isHidden,
-                    index: i
-                  };
-                });
-              }
-              return [];
-            }
+            font: { size: 9.5, weight: 'bold' }
           }
         },
-        centerValue: total > 0 ? (pct + '%') : '0%',
+        centerValue: centerVal,
         tooltip: {
           enabled: true,
           callbacks: {
@@ -19866,9 +20035,10 @@ function renderPpaExecTable() {
   const pageItems = ppaFilteredSwaps.slice(startIdx, endIdx);
 
   pageItems.forEach((s, i) => {
-    const isLate = String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late');
-    const statusColor = isLate ? '#d32f2f' : '#2e7d32';
-    const statusText = s.statusRemark || 'ON SCHEDULE';
+    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (String(s.location || '').toUpperCase() === 'ROOM A2');
+    const isLate = !isNonSch && (String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late'));
+    const statusColor = isNonSch ? '#4338ca' : (isLate ? '#d32f2f' : '#2e7d32');
+    const statusText = isNonSch ? '⚡ NON-SCHEDULE' : (s.statusRemark || 'ON SCHEDULE');
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="text-align: center;">${s.dateDisplay || s.date || '-'}</td>
@@ -20448,6 +20618,8 @@ function calculateMinutesDifference(timeA, timeB) {
 }
 
 function getSwapScheduleTime(s) {
+  if (!s) return '-';
+  if (String(s.location || '').toUpperCase() === 'ROOM A2' || String(s.statusRemark || '').toLowerCase().includes('non')) return '-';
   if (s && s.timeSch && s.timeSch !== '-' && s.timeSch !== 'null' && s.timeSch !== 'undefined') {
     return s.timeSch;
   }
@@ -20489,6 +20661,24 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   const unitSelect = document.getElementById('dedSwapUnit');
   const shiftSelect = document.getElementById('dedSwapShift');
   const jamInInput = document.getElementById('dedSwapJamIn');
+
+  // Cek Lokasi: ROOM A2 beroperasi On-Demand (Bebas Jadwal)
+  const locInput = document.getElementById('dedSwapLoc');
+  const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
+  const isRoomA2 = (String(locVal).trim().toUpperCase() === 'ROOM A2');
+
+  if (isRoomA2) {
+    if (groupSch) groupSch.style.display = 'block';
+    if (schInput) schInput.value = '-';
+    if (schNotice) {
+      schNotice.innerHTML = '⚡ <strong>ROOM A2: NON-SCHEDULED</strong> (Jalur Fleksibel / Bebas Target Jadwal)';
+      schNotice.style.color = '#4338ca';
+    }
+    if (statusSelect) statusSelect.value = 'Non-Schedule';
+    if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+    if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
+    return;
+  }
 
   if (!isScheduleOn) {
     if (groupSch) groupSch.style.display = 'none';
