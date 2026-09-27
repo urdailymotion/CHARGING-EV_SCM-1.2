@@ -78,18 +78,48 @@
   4. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v6`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 7. 🔌 Penambahan Dimensi Mesin Swap (SWAP 01, SWAP 02, SWAP 03) Terpisah dari Lokasi (27 September 2026, 08:55 WITA):
+- **Kebutuhan Pengguna:** 
+  - `ROOM A1` memiliki mesin: `SWAP 01`.
+  - `ROOM A2` memiliki mesin: `SWAP 02` dan `SWAP 03`.
+  - Operator saat login dapat memilih Lokasi (`ROOM A1` / `ROOM A2`), Mesin Swap (`SWAP 01` / `SWAP 02` / `SWAP 03`), dan Mode Operasional (`Mode Schedule` / `Mode Demand`).
+  - Di database, identitas `Lokasi / Room` dan `Mesin Swap` dipisahkan menjadi **dua kolom terpisah** untuk mempermudah pivot table dan analisis utilisasi mesin.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Layar Login (`splitLogin`):**
+     - Ditambahkan dropdown **Mesin Swap** (`splitLoginMachine`) berisi `SWAP 01`, `SWAP 02`, dan `SWAP 03`.
+     - Ditambahkan **Smart Auto-Default**:
+       - Memilih `ROOM A1` ➔ Otomatis memilih `SWAP 01` dan `Mode Schedule`.
+       - Memilih `ROOM A2` ➔ Otomatis memilih `SWAP 02` dan `Mode Demand`.
+       - Operator tetap bebas mengubah pilihan jika ada kondisi khusus (misal mesin rusak/tukar jalur).
+     - Parameter tersimpan ke user session: `location`, `swapStation`, `scheduleMode`.
+  2. **Formulir Input (Modal & Dedicated Swap):**
+     - Sesi operator menampilkan identitas lengkap: `📍 ROOM .. • 🔌 SWAP ..`.
+     - Form mengirimkan data `location` dan `swapStation` secara terpisah ke backend API.
+  3. **Struktur Database (Google Sheets & Firebase):**
+     - **Kolom E (ke-5):** `Location` ➔ Menyimpan `ROOM A1` atau `ROOM A2`.
+     - **Kolom T (ke-20 - BARU):** `SWAP STATION` ➔ Menyimpan `SWAP 01`, `SWAP 02`, atau `SWAP 03`.
+     - Penempatan di Kolom T menjamin 8.233 data transaksi lama aman 100% tanpa pergeseran kolom (zero-risk).
+     - Auto-fallback cerdas: jika data lama kolom T-nya kosong, otomatis diidentifikasi (`ROOM A1` ➔ `SWAP 01`, `ROOM A2` ➔ `SWAP 02`).
+     - Di `Code.gs`: fungsi `apiReadTransactions_`, `apiSaveTransaction`, dan `apiUpdateTransaction` membaca & menulis 20 kolom penuh ke Google Sheets dan Firestore.
+  4. **Tampilan Riwayat & Visual KPI:**
+     - Di tabel riwayat transaksi, kolom lokasi menampilkan dua badge elegan: `ROOM ..` dan `SWAP ..`.
+     - Di Visual KPI, ditambahkan filter dropdown **Mesin Swap** (`SWAP 01`, `SWAP 02`, `SWAP 03`) untuk melihat komparasi beban mesin.
+  5. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v7`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 47**
+   - **Versi Terpasang:** **Versi 48**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v6`
+   - **Service Worker Cache:** `charging-ev-v7`
+
 
 
 

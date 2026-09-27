@@ -290,7 +290,7 @@ function ensureDatabaseStructure_(ss, forceFormat) {
     'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION',
     'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN SWAP', 'BATTERY AFTER',
     'JAM OUT SWAP', 'CHARGING TIME (MENIT)', 'ENERGY (KWH)', 'STATUS REMARK',
-    'PROBLEM REMARK', 'MANPOWER', 'NIK', 'KETERANGAN', 'TIME SCH'
+    'PROBLEM REMARK', 'MANPOWER', 'NIK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION'
   ];
   let sheetInput = ss.getSheetByName('DATA INPUT');
   if (!sheetInput) {
@@ -1212,7 +1212,8 @@ function apiReadTransactions_(ss) {
       operator:      String(r[15] || '-').trim(),
       operatorNik:   String(r[16] || '-').trim(),
       keterangan:    String(r[17] || '-').trim(),
-      timeSch:       formatTimeCell(r[18]) || '-'
+      timeSch:       formatTimeCell(r[18]) || '-',
+      swapStation:   String(r[19] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim()
     });
   }
   return swaps;
@@ -1786,6 +1787,13 @@ function apiSaveSwapTransaction(rec) {
     const targetRow = getFirstEmptySwapRow_(sheet);
     const finalId = rec.id || `DA01/CHG/2026/SWAP/${String(targetRow - 1).padStart(4, '0')}`;
 
+    // Pastikan header Kolom 20 (Swap Station) terpasang jika belum ada
+    if (sheet.getLastColumn() < 20 || !sheet.getRange(1, 20).getValue()) {
+      sheet.getRange(1, 20).setValue('SWAP STATION');
+    }
+
+    const finalStation = rec.swapStation || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
+
     const row = [
       finalId,
       rec.date          || '',
@@ -1805,11 +1813,12 @@ function apiSaveSwapTransaction(rec) {
       rec.operator      || '',
       rec.operatorNik   || '',
       rec.keterangan    || '-',
-      rec.timeSch       || '-'
+      rec.timeSch       || '-',
+      finalStation
     ];
 
-    // Tulis langsung ke targetRow secara presisi (hindari appendRow ke baris 500+)
-    sheet.getRange(targetRow, 1, 1, 19).setValues([row]);
+    // Tulis langsung ke targetRow secara presisi (20 Kolom lengkap)
+    sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
 
     // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
     syncToFirestoreFromGas_('swaps', finalId, rec);
@@ -1832,6 +1841,7 @@ function apiUpdateTransaction(rec) {
 
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]).trim() === cleanId) {
+        const finalStation = rec.swapStation || rows[i][19] || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
         const row = [
           cleanId,
           rec.date          || '',
@@ -1851,9 +1861,10 @@ function apiUpdateTransaction(rec) {
           rec.operator      || '',
           rec.operatorNik   || '',
           rec.keterangan    || '-',
-          rec.timeSch       || '-'
+          rec.timeSch       || '-',
+          finalStation
         ];
-        sheet.getRange(i + 1, 1, 1, 19).setValues([row]);
+        sheet.getRange(i + 1, 1, 1, 20).setValues([row]);
         updated = true;
         break;
       }

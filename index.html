@@ -860,6 +860,9 @@
           sessionStorage.setItem('voltswap_is_logged_in', 'true');
           sessionStorage.setItem('voltswap_auth_user', JSON.stringify(userSession));
           sessionStorage.setItem('voltswap_location', selectedLoc);
+      const selMach = (document.getElementById('splitLoginMachine')?.value || (selectedLoc === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01'));
+      sessionStorage.setItem('voltswap_swap_station', selMach);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('voltswap_swap_station', selMach);
           sessionStorage.setItem('voltswap_shift', selectedShift);
           sessionStorage.setItem('voltswap_category', selectedCategory);
           sessionStorage.setItem('voltswap_date', selectedDate);
@@ -8879,7 +8882,7 @@ html.needs-login .sidebar-backdrop {
             <option value="81230177">81230177 - SRIYANTO (Admin / Supervisor)</option>
           </datalist>
 
-          <!-- 3 & 4. PILIH LOKASI & PILIH SHIFT -->
+          <!-- 3 & 4. PILIH LOKASI & PILIH MESIN SWAP -->
           <div class="login-grid-2col">
             <div class="login-input-group" style="margin-bottom: 0;">
               <label class="login-input-label" for="splitLoginStation">Pilih Lokasi</label>
@@ -8894,14 +8897,26 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div class="login-input-group" style="margin-bottom: 0;">
-              <label class="login-input-label" for="splitLoginShift">Pilih Shift</label>
+              <label class="login-input-label" for="splitLoginMachine">Mesin Swap</label>
               <div class="login-input-wrap">
-                <select id="splitLoginShift" class="login-select-input" required>
-                  <option value="" disabled selected hidden></option>
-                  <option value="1">Shift 1</option>
-                  <option value="2">Shift 2</option>
+                <select id="splitLoginMachine" class="login-select-input" required>
+                  <option value="SWAP 01" selected>SWAP 01</option>
+                  <option value="SWAP 02">SWAP 02</option>
+                  <option value="SWAP 03">SWAP 03</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          <!-- SHIFT (1 Kolom Kompak) -->
+          <div class="login-input-group" style="margin-top: 10px; margin-bottom: 0;">
+            <label class="login-input-label" for="splitLoginShift">Pilih Shift</label>
+            <div class="login-input-wrap">
+              <select id="splitLoginShift" class="login-select-input" required>
+                <option value="" disabled selected hidden></option>
+                <option value="1">Shift 1</option>
+                <option value="2">Shift 2</option>
+              </select>
             </div>
           </div>
 
@@ -9212,6 +9227,7 @@ html.needs-login .sidebar-backdrop {
           <div class="panel-body compact-form-body">
             <!-- Hidden input for Location (locked to session) so JS always gets dedSwapLoc.value -->
             <input type="hidden" id="dedSwapLoc" value="ROOM A1">
+            <input type="hidden" id="dedSwapStation" value="SWAP 01">
 
             <form id="formDedicatedInputSwap">
               <div class="compact-logsheet-grid">
@@ -10047,6 +10063,16 @@ html.needs-login .sidebar-backdrop {
                 <option value="ROOM A2">ROOM A2</option>
                 <option value="ROOM B1">ROOM B1</option>
                 <option value="ROOM B2">ROOM B2</option>
+              </select>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-weight:700; font-size:11px; color:#555;">Mesin:</span>
+              <select id="ppaFilterStation" class="ppa-filter-item-control" style="min-width: 90px;">
+                <option value="ALL">Semua Mesin</option>
+                <option value="SWAP 01">SWAP 01</option>
+                <option value="SWAP 02">SWAP 02</option>
+                <option value="SWAP 03">SWAP 03</option>
               </select>
             </div>
 
@@ -11214,6 +11240,7 @@ html.needs-login .sidebar-backdrop {
                 <input type="text" id="newSwapCategoryDisplay" class="form-control-ent" readonly style="background: #f8fafc; font-weight: 700; color: #0b5394; cursor: not-allowed; text-transform: uppercase; text-align: center;" value="CHARGING SWAP">
                 <input type="hidden" id="newSwapCategory" value="CHARGING SWAP">
                 <input type="hidden" id="newSwapLoc" value="ROOM A1">
+                <input type="hidden" id="newSwapStation" value="SWAP 01">
               </div>
             </div>
 
@@ -15013,12 +15040,15 @@ function applyAuthUserSession(user) {
       formOpShift.textContent = `SHIFT ${activeShift}`;
       formOpShift.className = `status-pill ${activeShift === '2' ? 'amber' : 'purple'}`;
     }
+    const userMach = user.swapStation || (user.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
     if (formOpLoc) {
-      formOpLoc.textContent = `🏢 ${user.location === 'SUPERVISOR' ? 'ROOM A1' : user.location}`;
+      formOpLoc.textContent = `🏢 ${user.location === 'SUPERVISOR' ? 'ROOM A1' : user.location} • 🔌 ${userMach}`;
     }
     if (dedSwapLoc) {
       dedSwapLoc.value = (user.location === 'SUPERVISOR') ? 'ROOM A1' : user.location;
     }
+    const dedStn = document.getElementById('dedSwapStation');
+    if (dedStn) dedStn.value = userMach;
     if (dedSwapShift) {
       dedSwapShift.value = activeShift;
     }
@@ -15045,6 +15075,10 @@ function applyAuthUserSession(user) {
     }
     if (newSwapLoc) {
       newSwapLoc.value = (user.location === 'SUPERVISOR') ? 'ROOM A1' : user.location;
+    }
+    const newSwapStation = document.getElementById('newSwapStation');
+    if (newSwapStation) {
+      newSwapStation.value = userMach;
     }
     if (newSwapShift) {
       newSwapShift.value = activeShift;
@@ -15277,7 +15311,33 @@ function initSplitCardLogin() {
   const nikInput = document.getElementById('splitLoginNik');
   const dateInput = document.getElementById('splitLoginDate');
   const stationSelect = document.getElementById('splitLoginStation');
+  const machineSelect = document.getElementById('splitLoginMachine');
   const shiftSelect = document.getElementById('splitLoginShift');
+
+  // Smart Auto-Default saat operator memilih Lokasi
+  if (stationSelect && machineSelect) {
+    stationSelect.addEventListener('change', () => {
+      const loc = stationSelect.value;
+      if (loc === 'ROOM A1') {
+        machineSelect.value = 'SWAP 01';
+        updateLoginModeUI('ON');
+      } else if (loc === 'ROOM A2') {
+        if (machineSelect.value === 'SWAP 01') machineSelect.value = 'SWAP 02';
+        updateLoginModeUI('OFF');
+      }
+    });
+
+    machineSelect.addEventListener('change', () => {
+      const mach = machineSelect.value;
+      if (mach === 'SWAP 01' && stationSelect.value === 'ROOM A2') {
+        stationSelect.value = 'ROOM A1';
+        updateLoginModeUI('ON');
+      } else if ((mach === 'SWAP 02' || mach === 'SWAP 03') && stationSelect.value === 'ROOM A1') {
+        stationSelect.value = 'ROOM A2';
+        updateLoginModeUI('OFF');
+      }
+    });
+  }
   const categorySelect = document.getElementById('splitLoginCategory');
   const optSpv = document.getElementById('splitOptStationSpv');
   const pwdInput = document.getElementById('splitLoginPassword');
@@ -15547,6 +15607,7 @@ function initSplitCardLogin() {
         dept: matched.dept || '',
         date: selectedDate,
         location: selectedLoc,
+        swapStation: (document.getElementById('splitLoginMachine')?.value || (selectedLoc === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01')),
         shift: selectedShift,
         category: selectedCategory,
         scheduleMode: selectedScheduleMode
@@ -16388,6 +16449,7 @@ function initTableControls() {
         shift: activeShiftVal,
         category: activeCategoryVal,
         location: document.getElementById('newSwapLoc')?.value || 'ROOM A1',
+        swapStation: document.getElementById('newSwapStation')?.value || (document.getElementById('newSwapLoc')?.value === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01'),
         unit: selectedUnit,
         hm: document.getElementById('newSwapHM')?.value || '-',
         batteryBefore: formattedBatIn,
@@ -16751,7 +16813,10 @@ function renderMainTable() {
         <td style="font-family: var(--font-mono); text-align: center; vertical-align: middle;">${row.hm || '-'}</td>
         <td style="color:#d32f2f; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryBefore)}</td>
         <td style="color:#00a65a; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryAfter)}</td>
-        <td style="text-align: center; vertical-align: middle;"><span style="font-weight:600;">${row.location}</span></td>
+        <td style="text-align: center; vertical-align: middle;">
+          <div style="font-weight: 700; color: #1e293b; font-size: 11.5px;">${row.location || 'ROOM A1'}</div>
+          <div style="font-size: 10px; color: #0284c7; font-family: var(--font-mono); font-weight: 700;">${row.swapStation || (String(row.location).includes('A2') ? 'SWAP 02' : 'SWAP 01')}</div>
+        </td>
         <td style="text-align: center; vertical-align: middle;">${statusPillHtml}</td>
         <td style="font-size:11px; color:#666; text-align: center; vertical-align: middle;">${row.problemRemark}</td>
         <td style="text-align: center; vertical-align: middle;">
@@ -18002,6 +18067,7 @@ function initDedicatedInputForm() {
         shift: activeShiftVal,
         category: activeCategoryVal,
         location: document.getElementById('dedSwapLoc')?.value || 'ROOM A1',
+        swapStation: document.getElementById('dedSwapStation')?.value || (document.getElementById('dedSwapLoc')?.value === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01'),
         unit: selectedUnit,
         hm: document.getElementById('dedSwapHM').value || '-',
         batteryBefore: formattedBatIn,
@@ -19249,7 +19315,7 @@ function initPpaDashboardControls() {
   const btnReset = document.getElementById('btnResetPpaFilters');
   if (btnReset) {
     btnReset.addEventListener('click', () => {
-      ['ppaFilterShift', 'ppaFilterLocation', 'ppaFilterUnit', 'ppaFilterStatus', 'ppaFilterProblem', 'ppaFilterDate', 'ppaFilterWeek'].forEach(id => {
+      ['ppaFilterShift', 'ppaFilterLocation', 'ppaFilterStation', 'ppaFilterUnit', 'ppaFilterStatus', 'ppaFilterProblem', 'ppaFilterDate', 'ppaFilterWeek'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = 'ALL';
       });
@@ -19260,7 +19326,7 @@ function initPpaDashboardControls() {
   }
 
   // Bind change listeners to all filter controls
-  ['ppaFilterShift', 'ppaFilterLocation', 'ppaFilterUnit', 'ppaFilterStatus', 'ppaFilterProblem', 'ppaFilterDate', 'ppaFilterWeek'].forEach(id => {
+  ['ppaFilterShift', 'ppaFilterLocation', 'ppaFilterStation', 'ppaFilterUnit', 'ppaFilterStatus', 'ppaFilterProblem', 'ppaFilterDate', 'ppaFilterWeek'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', () => {
@@ -19340,6 +19406,7 @@ function updatePpaExecutiveDashboard() {
   // Read Filter Values
   const shiftVal = document.getElementById('ppaFilterShift')?.value || 'ALL';
   const locVal = document.getElementById('ppaFilterLocation')?.value || 'ALL';
+  const stationVal = document.getElementById('ppaFilterStation')?.value || 'ALL';
   const unitVal = document.getElementById('ppaFilterUnit')?.value || 'ALL';
   const statusVal = document.getElementById('ppaFilterStatus')?.value || 'ALL';
   const probVal = document.getElementById('ppaFilterProblem')?.value || 'ALL';
@@ -19380,6 +19447,12 @@ function updatePpaExecutiveDashboard() {
     if (locVal !== 'ALL') {
       const sLoc = String(s.location || '').trim().toLowerCase();
       if (sLoc !== locVal.trim().toLowerCase()) return false;
+    }
+
+    // 2b. Mesin Swap filter
+    if (stationVal !== 'ALL') {
+      const sMach = String(s.swapStation || (String(s.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim().toUpperCase();
+      if (sMach !== stationVal.trim().toUpperCase()) return false;
     }
 
     // 3. Unit filter (supports with or without 'DT')
