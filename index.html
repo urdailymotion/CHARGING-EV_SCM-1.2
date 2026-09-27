@@ -9229,6 +9229,18 @@ html.needs-login .sidebar-backdrop {
             <input type="hidden" id="dedSwapLoc" value="ROOM A1">
             <input type="hidden" id="dedSwapStation" value="SWAP 01">
 
+            <!-- Quick Machine Switcher Khusus ROOM A2 (SWAP 02 vs SWAP 03) -->
+            <div id="quickRoomA2MachineSwitch" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe; border-radius: 9px; padding: 8px 12px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px;">🔌</span>
+                <span style="font-size: 11.5px; font-weight: 700; color: #1e3a8a;">PILIH MESIN AKTIF (ROOM A2):</span>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-sm" id="btnQuickMach02" onclick="window.setSwapMachine('SWAP 02')" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #3b82f6; background: #3b82f6; color: #ffffff; cursor: pointer; transition: all 0.2s;">⚡ SWAP 02</button>
+                <button type="button" class="btn btn-sm" id="btnQuickMach03" onclick="window.setSwapMachine('SWAP 03')" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.2s;">⚡ SWAP 03</button>
+              </div>
+            </div>
+
             <form id="formDedicatedInputSwap">
               <div class="compact-logsheet-grid">
                 
@@ -11212,6 +11224,18 @@ html.needs-login .sidebar-backdrop {
       <form id="formNewSwap">
         <div class="modal-body-ent" style="padding: 14px 18px; max-height: calc(88vh - 130px); overflow-y: auto;">
           <div class="compact-logsheet-grid">
+
+            <!-- Quick Machine Switcher Khusus ROOM A2 di Modal -->
+            <div id="modalRoomA2MachineSwitch" class="form-full-width" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe; border-radius: 9px; padding: 8px 12px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 13px;">🔌</span>
+                <span style="font-size: 11.5px; font-weight: 700; color: #1e3a8a;">PILIH MESIN AKTIF (ROOM A2):</span>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-sm" id="btnModalMach02" onclick="window.setSwapMachine('SWAP 02')" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #3b82f6; background: #3b82f6; color: #ffffff; cursor: pointer; transition: all 0.2s;">⚡ SWAP 02</button>
+                <button type="button" class="btn btn-sm" id="btnModalMach03" onclick="window.setSwapMachine('SWAP 03')" style="font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.2s;">⚡ SWAP 03</button>
+              </div>
+            </div>
             
             <!-- Row 1: Data Terkunci Sesi Login (Tanggal, Shift, Kategori Sejajar 3 Kolom) -->
             <div class="form-full-width locked-session-row">
@@ -14960,6 +14984,44 @@ function getSavedAuthUser() {
 }
 window.getSavedAuthUser = getSavedAuthUser;
 
+window.setSwapMachine = function(mach) {
+  const dedStn = document.getElementById('dedSwapStation');
+  const newStn = document.getElementById('newSwapStation');
+  if (dedStn) dedStn.value = mach;
+  if (newStn) newStn.value = mach;
+  if (window.currentAuthUser) window.currentAuthUser.swapStation = mach;
+  try {
+    sessionStorage.setItem('voltswap_swap_station', mach);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('voltswap_swap_station', mach);
+  } catch (e) {}
+
+  const is02 = (mach === 'SWAP 02');
+  const activeStyle = 'font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #3b82f6; background: #3b82f6; color: #ffffff; cursor: pointer; transition: all 0.2s;';
+  const inactiveStyle = 'font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.2s;';
+
+  ['btnQuickMach02', 'btnModalMach02'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('style', is02 ? activeStyle : inactiveStyle);
+  });
+  ['btnQuickMach03', 'btnModalMach03'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('style', !is02 ? activeStyle : inactiveStyle);
+  });
+
+  const formOpLoc = document.getElementById('formDedOperatorLoc');
+  if (formOpLoc && window.currentAuthUser) {
+    formOpLoc.textContent = `🏢 ${window.currentAuthUser.location === 'SUPERVISOR' ? 'ROOM A1' : window.currentAuthUser.location} • 🔌 ${mach}`;
+  }
+  const topBadge = document.getElementById('topStationBadge');
+  if (topBadge && window.currentAuthUser) {
+    const isSmallScreen = window.innerWidth <= 600;
+    topBadge.textContent = isSmallScreen ? `${window.currentAuthUser.location} (${mach}) • S${window.currentAuthUser.shift || '1'}` : `${window.currentAuthUser.location} (${mach}) • SHIFT ${window.currentAuthUser.shift || '1'}`;
+  }
+  if (typeof showToast === 'function') {
+    showToast(`⚡ Mesin aktif diubah ke: ${mach}`, 'info');
+  }
+};
+
 function applyAuthUserSession(user) {
   try {
     if (!user || !user.nik) return;
@@ -14999,9 +15061,10 @@ function applyAuthUserSession(user) {
 
     if (topName) topName.textContent = user.name;
     if (topNikRole) topNikRole.textContent = `NIK: ${user.nik} | ${user.role}`;
+    const userMach = user.swapStation || (user.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
     if (topBadge) {
       const isSmallScreen = window.innerWidth <= 600;
-      topBadge.textContent = isSmallScreen ? `${user.location} • S${activeShift}` : `${user.location} • SHIFT ${activeShift}`;
+      topBadge.textContent = isSmallScreen ? `${user.location} (${userMach}) • S${activeShift}` : `${user.location} (${userMach}) • SHIFT ${activeShift}`;
     }
 
     // Sidebar drawer user identity
@@ -15010,7 +15073,14 @@ function applyAuthUserSession(user) {
     const sidePill = document.getElementById('sidebarStationPill');
     if (sideName) sideName.textContent = user.name;
     if (sideNikRole) sideNikRole.textContent = `NIK: ${user.nik} • ${user.role}`;
-    if (sidePill) sidePill.textContent = `${user.location} • S${activeShift}`;
+    if (sidePill) sidePill.textContent = `${user.location} (${userMach}) • S${activeShift}`;
+
+    // Tampilkan tombol pemilih mesin cepat jika ROOM A2
+    const isRoomA2 = (user.location === 'ROOM A2');
+    const quickSwitch = document.getElementById('quickRoomA2MachineSwitch');
+    const modalSwitch = document.getElementById('modalRoomA2MachineSwitch');
+    if (quickSwitch) quickSwitch.style.display = isRoomA2 ? 'flex' : 'none';
+    if (modalSwitch) modalSwitch.style.display = isRoomA2 ? 'flex' : 'none';
 
     // Logout Modal user identity
     const modalLogoutName = document.getElementById('logoutModalUserName');
@@ -15040,7 +15110,6 @@ function applyAuthUserSession(user) {
       formOpShift.textContent = `SHIFT ${activeShift}`;
       formOpShift.className = `status-pill ${activeShift === '2' ? 'amber' : 'purple'}`;
     }
-    const userMach = user.swapStation || (user.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
     if (formOpLoc) {
       formOpLoc.textContent = `🏢 ${user.location === 'SUPERVISOR' ? 'ROOM A1' : user.location} • 🔌 ${userMach}`;
     }
