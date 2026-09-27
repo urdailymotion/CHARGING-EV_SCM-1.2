@@ -242,23 +242,27 @@
   5. **Pembaruan Cache PWA & Service Worker:**
      - Cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dinaikkan ke versi **`charging-ev-v15`** dengan seluruh aset logo baru terdaftar ke dalam *pre-cache* agar langsung terunduh di HP/laptop pengguna.
   6. **Deployment:**
-     - Berhasil dideploy ke Google Apps Script Production Versi 61 (`@61`) dan disinkronkan ke GitHub repository `main`.
+     - Berhasil dideploy ke Google Apps Script Production Versi 62 (`@62`) dan disinkronkan ke GitHub repository `main`.
   7. **Konfigurasi Anti-Cache Netlify & PWA Instant Reload:**
      - Ditambahkan file `_headers` khusus Netlify dengan header `Cache-Control: no-cache, no-store, must-revalidate` untuk `/sw.js` dan `/index.html` agar browser HP tidak menahan cache HTTP basi.
      - Penambahan trigger `reg.update()`, event listener `updatefound`, dan `controllerchange` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) sehingga PWA yang dibuka di HP otomatis memeriksa pembaruan dan memuat ulang aset terbaru secara instan.
+  8. **Suite Ikon PWA Lengkap & Pembersihan Duplikasi Tag Ikon:**
+     - Ditemukan dan dibersihkan duplikasi tag `<link rel="icon" href="icon.svg">` dan `<link rel="apple-touch-icon" href="icon-192.png">` di baris 931-932 [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) yang menimpa ikon resmi.
+     - Dibuat suite ikon lengkap: `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png` (dengan safe-zone padding untuk Android Adaptive Icon), `apple-touch-icon.png` (180x180), `favicon-32x32.png`, dan `favicon-16x16.png` baik di folder `assets/` maupun di root directory sebagai fallback.
+     - Ditambahkan cache-busting query parameter `?v=17` pada `manifest.json`, icon link, dan Service Worker cache dinaikkan ke **`charging-ev-v17`**.
 
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@61`
+   - **Versi Rilis:** `@62`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v16`
+   - **Service Worker Cache:** `charging-ev-v17`
    - **Anti-Cache Headers:** Aktif via `_headers` Netlify (Instant PWA update)
 
 

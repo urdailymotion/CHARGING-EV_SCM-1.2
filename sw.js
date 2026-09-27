@@ -1,5 +1,5 @@
-// CHARGING EV SCM - Service Worker v14.0
-const CACHE_NAME = 'charging-ev-v16';
+// CHARGING EV SCM - Service Worker v17.0
+const CACHE_NAME = 'charging-ev-v17';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,9 +7,17 @@ const STATIC_ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
+  './assets/icon-maskable-192.png',
+  './assets/icon-maskable-512.png',
+  './assets/favicon-32x32.png',
+  './assets/favicon-16x16.png',
   './assets/logo_ppa.png',
   './assets/logo_ppa_circle.png',
-  './assets/logo_ppa_hd.png'
+  './assets/logo_ppa_hd.png',
+  './favicon.ico',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
