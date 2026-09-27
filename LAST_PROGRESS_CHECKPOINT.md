@@ -137,18 +137,36 @@
   2. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v9`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 10. 📊 Penyeragaman Gaya Teks Bersih (Sesuai Kolom Date) pada Seluruh Menu Operation (27 September 2026, 10:20 WITA):
+- **Kebutuhan Pengguna:**
+  - Menerapkan format teks bersih dan seragam (seperti kolom `Date`, tanpa warna-warni/pill badges) pada tabel-tabel di menu **Operation**:
+    1. **History Daily** (Rekap Harian Swap Unit)
+    2. **Problem Log** (Log Gangguan / Downtime)
+    3. **Swap Schedule** (Pelacak Jadwal Swap Unit)
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **History Daily (`renderDailyTable`):**
+     - Seluruh sel (No, Unit DT, Frekuensi, Total Energi, Total Durasi, Timeline Swap, dan Tombol Rincian) diubah ke gaya teks standar bersih `#333` terpusat (`text-align: center; vertical-align: middle;`).
+     - Timeline swap disajikan dalam teks ringkas rapi: `09:40 (ROOM A1 - SWAP 01); 23:44 (ROOM A2 - SWAP 02)` tanpa pill warna-warni bertumpuk.
+  2. **Problem Log (`renderProblemTable`):**
+     - Seluruh sel (No, Date, Shift, Unit, Deskripsi Gangguan, Jam Open, Jam Close, Durasi) diseragamkan dengan teks netral gelap standar.
+  3. **Swap Schedule (`renderScheduleTable`):**
+     - Seluruh sel (No, Tanggal, Shift, Unit, Target Jam Jadwal, Status Kepatuhan, Keterangan) diseragamkan dengan teks netral gelap standar.
+  4. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v10`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 51**
+   - **Versi Terpasang:** **Versi 52**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v9`
+   - **Service Worker Cache:** `charging-ev-v10`
+
 
 
 
