@@ -25978,16 +25978,40 @@ if (typeof window.updateDbStorageUI === 'function') {
 </div>
 
 <script>
-  // PWA Service Worker Registration
+  // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('./sw.js')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
+          // Paksa periksa update setiap kali aplikasi dibuka
+          if (typeof reg.update === 'function') {
+            reg.update();
+          }
+          reg.addEventListener('updatefound', function() {
+            var newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('[PWA] Versi baru terdeteksi! Memuat ulang aset...');
+                  window.location.reload();
+                }
+              });
+            }
+          });
         })
         .catch(function(err) {
           console.warn('[PWA] Service Worker registration failed:', err);
         });
+
+      var pwaRefreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!pwaRefreshing) {
+          pwaRefreshing = true;
+          console.log('[PWA] Controller changed, me-refresh aplikasi...');
+          window.location.reload();
+        }
+      });
     });
   }
 

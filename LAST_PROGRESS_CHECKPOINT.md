@@ -242,20 +242,24 @@
   5. **Pembaruan Cache PWA & Service Worker:**
      - Cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dinaikkan ke versi **`charging-ev-v15`** dengan seluruh aset logo baru terdaftar ke dalam *pre-cache* agar langsung terunduh di HP/laptop pengguna.
   6. **Deployment:**
-     - Berhasil dideploy ke Google Apps Script Production Versi 59 (`@59`) dan disinkronkan ke GitHub repository `main`.
+     - Berhasil dideploy ke Google Apps Script Production Versi 61 (`@61`) dan disinkronkan ke GitHub repository `main`.
+  7. **Konfigurasi Anti-Cache Netlify & PWA Instant Reload:**
+     - Ditambahkan file `_headers` khusus Netlify dengan header `Cache-Control: no-cache, no-store, must-revalidate` untuk `/sw.js` dan `/index.html` agar browser HP tidak menahan cache HTTP basi.
+     - Penambahan trigger `reg.update()`, event listener `updatefound`, dan `controllerchange` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) sehingga PWA yang dibuka di HP otomatis memeriksa pembaruan dan memuat ulang aset terbaru secara instan.
 
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@59`
+   - **Versi Rilis:** `@61`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v15`
+   - **Service Worker Cache:** `charging-ev-v16`
+   - **Anti-Cache Headers:** Aktif via `_headers` Netlify (Instant PWA update)
 
 
 
