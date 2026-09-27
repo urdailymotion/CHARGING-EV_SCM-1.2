@@ -154,18 +154,34 @@
   4. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v10`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 11. ⏱️ Perbaikan Total Data Jadwal Kosong pada Menu Swap Schedule (27 September 2026, 11:05 WITA):
+- **Akar Penyebab Masalah:**
+  1. Firestore snapshot listener untuk koleksi `schedules` tidak memiliki pengecekan `!snapshot.empty`. Saat inisialisasi awal, koleksi Firestore yang masih kosong mengirimkan `[]` yang secara tidak sengaja mengosongkan array `schedulesData`.
+  2. Fallback generator jadwal default untuk armada belum terpasang otomatis saat data dari Google Sheets kosong atau belum terisi lengkap.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Proteksi Listener Firestore (`index.html`):**
+     - Ditambahkan proteksi `if (snapshot && !snapshot.empty)` pada snapshot listener `db.collection('schedules')`.
+     - Fungsi `handleFirestoreSchedulesUpdate` diproteksi agar tidak pernah menimpa data jadwal lokal dengan array kosong (`if (!Array.isArray(remoteSchedules) || remoteSchedules.length === 0) return;`).
+  2. **Smart Default Schedule Generator (`buildDefaultSchedules`):**
+     - Mengotomatiskan pembuatan rencana jadwal swap harian untuk seluruh armada aktif (56 unit DT EV) terbagi merata pada Shift 1 (07:00 - 17:30) dan Shift 2 (19:00 - 05:00) dengan interval teratur.
+     - Dipasang otomatis sebagai fallback cerdas pada `initDataSync()`, `_processResult()`, dan `initScheduleModule()` jika data dari Google Sheets masih kosong.
+     - Operator/Supervisor tetap bebas mengunggah jadwal kustom melalui fitur **`[ Upload File Jadwal ]`**.
+  3. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v11`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 52**
+   - **Versi Terpasang:** **Versi 53**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v10`
+   - **Service Worker Cache:** `charging-ev-v11`
+
 
 
 

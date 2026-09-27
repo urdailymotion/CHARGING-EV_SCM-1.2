@@ -12954,7 +12954,7 @@ window.INITIAL_DATA = {
     try {
       if (unsubSchedules) unsubSchedules();
       unsubSchedules = db.collection('schedules').onSnapshot((snapshot) => {
-        if (snapshot) {
+        if (snapshot && !snapshot.empty) {
           const list = [];
           snapshot.forEach((doc) => {
             const d = doc.data();
@@ -14181,8 +14181,11 @@ const gasSync = {
       fleetUnits = (typeof buildDefaultFleet === 'function') ? buildDefaultFleet() : [];
       window.fleetUnits = fleetUnits;
     }
-    if (Array.isArray(result.schedules)) {
+    if (Array.isArray(result.schedules) && result.schedules.length > 0) {
       schedulesData = result.schedules;
+      window.schedulesData = schedulesData;
+    } else if (!schedulesData || schedulesData.length === 0) {
+      schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
       window.schedulesData = schedulesData;
     }
     if (result.users && result.users.length > 0) {
@@ -14623,6 +14626,46 @@ const gasSync = {
 window.gasSync = gasSync;
 
 
+function buildDefaultSchedules() {
+  const units = (window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.populasi)) ? window.INITIAL_DATA.populasi : [];
+  const list = [];
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const today = `${dd}/${mm}/${yyyy}`;
+
+  const half = Math.ceil(units.length / 2);
+
+  // Shift 1: 07:00 s/d 17:30
+  units.slice(0, half).forEach((u, i) => {
+    const totalMinutes = 7 * 60 + i * 22;
+    const hh = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+    const min = String(totalMinutes % 60).padStart(2, '0');
+    list.push({
+      tanggal: today,
+      shift: '1',
+      unit: String(u),
+      timeSch: `${hh}:${min}:00`
+    });
+  });
+
+  // Shift 2: 19:00 s/d 05:00
+  units.slice(half).forEach((u, i) => {
+    const totalMinutes = 19 * 60 + i * 22;
+    const hh = String(Math.floor(totalMinutes / 60) % 24).padStart(2, '0');
+    const min = String(totalMinutes % 60).padStart(2, '0');
+    list.push({
+      tanggal: today,
+      shift: '2',
+      unit: String(u),
+      timeSch: `${hh}:${min}:00`
+    });
+  });
+
+  return list;
+}
+
 function buildDefaultFleet() {
   const initialPop = window.INITIAL_DATA ? window.INITIAL_DATA.populasi : [];
   return initialPop.map(code => {
@@ -14735,8 +14778,9 @@ function initDataState() {
   } else if (window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.schedules) && window.INITIAL_DATA.schedules.length > 0) {
     schedulesData = [...window.INITIAL_DATA.schedules];
   } else {
-    schedulesData = [];
+    schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
   }
+  window.schedulesData = schedulesData;
 }
 
 // =============================================================================
@@ -21080,6 +21124,10 @@ function updateScheduleSummaryMetrics() {
 }
 
 function initScheduleModule() {
+  if (!schedulesData || schedulesData.length === 0) {
+    schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
+    window.schedulesData = schedulesData;
+  }
   const selectPerPage = document.getElementById('selectSchedulePerPage');
   const selectShift = document.getElementById('filterScheduleShift');
   const inputSearch = document.getElementById('inputScheduleSearch');
@@ -25097,8 +25145,7 @@ window.handleFirestoreProblemsUpdate = function(remoteProblems) {
 };
 
 window.handleFirestoreSchedulesUpdate = function(remoteSchedules) {
-  if (!Array.isArray(remoteSchedules)) return;
-  if (remoteSchedules.length === 0 && Array.isArray(schedulesData) && schedulesData.length > 0) return;
+  if (!Array.isArray(remoteSchedules) || remoteSchedules.length === 0) return;
   schedulesData = remoteSchedules.filter(Boolean);
   window.schedulesData = schedulesData;
 
