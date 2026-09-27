@@ -1,5 +1,5 @@
 // CHARGING EV SCM - Service Worker v14.0
-const CACHE_NAME = 'charging-ev-v14';
+const CACHE_NAME = 'charging-ev-v15';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const STATIC_ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
+  './assets/logo_ppa.png',
+  './assets/logo_ppa_circle.png',
   './assets/logo_ppa_hd.png'
 ];
 
