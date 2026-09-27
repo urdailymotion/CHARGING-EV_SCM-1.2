@@ -1999,7 +1999,24 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       sheet.getRange(1, 1, 1, 4).setBackground('#003366').setFontColor('#ffffff').setFontWeight('bold');
     }
 
-    if (!Array.isArray(schedulesList) || schedulesList.length === 0) {
+    if (!Array.isArray(schedulesList)) {
+      return { status: 'error', message: 'Format data jadwal tidak valid' };
+    }
+
+    const mode = importMode || 'overwrite';
+
+    if (schedulesList.length === 0) {
+      if (mode === 'overwrite') {
+        const lastR = Math.max(sheet.getLastRow(), 2);
+        if (lastR > 1) {
+          sheet.getRange(2, 1, lastR - 1, 4).clearContent();
+        }
+        return { 
+          status: 'success', 
+          message: 'Seluruh data jadwal di sheet SCEDHULE berhasil dikosongkan',
+          count: 0 
+        };
+      }
       return { status: 'error', message: 'Daftar jadwal kosong' };
     }
 

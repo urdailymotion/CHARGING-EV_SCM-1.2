@@ -9939,6 +9939,15 @@ html.needs-login .sidebar-backdrop {
           <div class="panel-header">
             <div class="panel-title" id="schedulePanelTitle">Daftar Rencana Jadwal Swap Unit DT EV</div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn-show" id="btnAddSingleSchedule" onclick="window.openSingleScheduleEdit(-1)" style="background: #10b981; border: 1px solid #059669; color: #ffffff; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Tambah jadwal baru satuan secara manual">
+                <span>➕</span> Tambah Jadwal
+              </button>
+              <button type="button" class="btn-show" id="btnBulkEditSchedule" onclick="window.openBulkEditScheduleModal()" style="display: none; background: #0284c7; border: 1px solid #0369a1; color: #ffffff; align-items: center; gap: 6px; font-weight: 600;" title="Edit jadwal yang dipilih sekaligus">
+                <span>✏️</span> Edit Kolektif (<span id="countBulkEditBadge">0</span>)
+              </button>
+              <button type="button" class="btn-show" id="btnBulkDeleteSchedule" onclick="window.confirmBulkDeleteSchedules()" style="display: none; background: #dc2626; border: 1px solid #b91c1c; color: #ffffff; align-items: center; gap: 6px; font-weight: 600;" title="Hapus jadwal yang dipilih sekaligus">
+                <span>🗑️</span> Hapus Kolektif (<span id="countBulkDeleteBadge">0</span>)
+              </button>
               <button type="button" class="btn-show" id="btnDownloadScheduleTemplate" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" title="Unduh format template Excel untuk pengisian jadwal">
                 <span>📥</span> Template Excel
               </button>
@@ -9976,18 +9985,40 @@ html.needs-login .sidebar-backdrop {
               </div>
             </div>
 
+            <!-- Active Bulk Selection Action Ribbon -->
+            <div id="scheduleBulkActionBar" class="schedule-bulk-bar" style="display: none; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px 16px; margin: 10px 0 14px 0; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 6px rgba(22, 101, 52, 0.08);">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: #15803d; color: #ffffff; font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 9999px;" id="scheduleBulkSelectedCount">0 Jadwal Terpilih</span>
+                <span style="font-size: 12.5px; color: #166534; font-weight: 600;" id="scheduleBulkUnitsList">Unit: -</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-show" onclick="window.openBulkEditScheduleModal()" style="background: #0284c7; border: 1px solid #0369a1; color: #ffffff; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>✏️</span> Edit Kolektif
+                </button>
+                <button type="button" class="btn-show" onclick="window.confirmBulkDeleteSchedules()" style="background: #dc2626; border: 1px solid #b91c1c; color: #ffffff; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>🗑️</span> Hapus Kolektif
+                </button>
+                <button type="button" class="btn-show" onclick="window.deselectAllSchedules()" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                  ✕ Batal Pilih
+                </button>
+              </div>
+            </div>
+
             <div class="table-responsive-box">
               <table class="enterprise-data-table" id="mainScheduleTable">
                 <thead>
                   <tr>
-                    <th style="width: 50px; text-align: center;">No</th>
-                    <th style="width: 110px;">Tanggal</th>
-                    <th style="width: 85px; text-align: center;">Shift</th>
-                    <th style="width: 120px;">Unit DT EV</th>
+                    <th style="width: 40px; text-align: center; vertical-align: middle;">
+                      <input type="checkbox" id="checkAllSchedules" onchange="window.handleScheduleSelectAll(this.checked)" style="width: 16px; height: 16px; cursor: pointer;" title="Pilih Semua Jadwal">
+                    </th>
+                    <th style="width: 45px; text-align: center;">No</th>
+                    <th style="width: 105px;">Tanggal</th>
+                    <th style="width: 80px; text-align: center;">Shift</th>
+                    <th style="width: 110px;">Unit DT EV</th>
                     <th style="width: 130px; font-family: var(--font-mono);">Target Jam (Time Sch)</th>
-                    <th style="width: 175px;">Status Realisasi</th>
-                    <th style="min-width: 180px;">Keterangan</th>
-                    <th style="text-align: center; width: 130px;">Aksi Cepat</th>
+                    <th style="width: 160px;">Status Realisasi</th>
+                    <th style="min-width: 170px;">Keterangan</th>
+                    <th style="text-align: center; width: 145px;">Aksi Cepat</th>
                   </tr>
                 </thead>
                 <tbody id="scheduleTableBody">
@@ -12509,6 +12540,189 @@ html.needs-login .sidebar-backdrop {
             <span>🚀</span> Terapkan ke Jadwal Operasional
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL: EDIT KOLEKTIF JADWAL SWAP (BULK EDIT)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modalBulkEditSchedule" style="z-index: 9998;">
+    <div class="modal-dialog" style="max-width: 820px; width: 95vw; border-radius: 14px; overflow: hidden; background: #ffffff; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);">
+      <div class="modal-header-ent" style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(2, 132, 199, 0.25); display: flex; align-items: center; justify-content: center; font-size: 18px; color: #38bdf8;">
+            ✏️
+          </div>
+          <div>
+            <h4 class="modal-title-ent" style="color: #ffffff; font-size: 15px; font-weight: 700; margin: 0;">Edit Kolektif Jadwal Swap</h4>
+            <div style="color: #94a3b8; font-size: 11.5px; margin-top: 2px;">
+              Memperbarui <strong id="bulkEditSummaryBadge" style="color: #38bdf8;">0 Jadwal Terpilih</strong> sekaligus
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-close-ent" style="color: #ffffff; background: none; border: none; font-size: 24px; cursor: pointer; line-height: 1;" onclick="closeModal('modalBulkEditSchedule')">&times;</button>
+      </div>
+
+      <!-- Mode Tabs: Parameter Serentak vs Edit Langsung di Tabel -->
+      <div style="display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; padding: 0 16px;">
+        <button type="button" id="tabBulkModeBatch" class="bulk-tab-btn active" onclick="switchBulkEditTab('batch')" style="padding: 10px 16px; font-size: 12.5px; font-weight: 700; border: none; background: none; border-bottom: 2.5px solid #0284c7; color: #0284c7; cursor: pointer;">
+          ⚙️ Parameter Serentak
+        </button>
+        <button type="button" id="tabBulkModeTable" class="bulk-tab-btn" onclick="switchBulkEditTab('table')" style="padding: 10px 16px; font-size: 12.5px; font-weight: 600; border: none; background: none; border-bottom: 2.5px solid transparent; color: #64748b; cursor: pointer;">
+          📋 Edit Tabel Langsung
+        </button>
+      </div>
+
+      <div class="modal-body-ent" style="padding: 18px 20px; max-height: 65vh; overflow-y: auto;">
+        
+        <!-- Info Unit Terpilih -->
+        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 12px; color: #334155; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+          <span>Unit Terpilih: <strong id="bulkEditUnitsPreview" style="color: #0284c7;">-</strong></span>
+          <span style="font-size: 11px; color: #64748b;">Pilih opsi yang ingin diperbarui</span>
+        </div>
+
+        <!-- TAB 1: PARAMETER SERENTAK -->
+        <div id="bulkTabBatchContent">
+          <!-- Opsi 1: Tanggal -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">
+              <input type="checkbox" id="chkBulkApplyDate" style="width: 17px; height: 17px; cursor: pointer;" onchange="toggleBulkDateInput(this.checked)">
+              <span>📅 Ubah Tanggal untuk Semua Jadwal Terpilih</span>
+            </label>
+            <div id="boxBulkDateInput" style="display: none; padding-left: 25px;">
+              <input type="text" id="inputBulkNewDate" class="form-control-ent" placeholder="DD/MM/YYYY (contoh: 27/09/2026)" style="max-width: 240px;">
+              <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Format tanggal: DD/MM/YYYY</span>
+            </div>
+          </div>
+
+          <!-- Opsi 2: Shift -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">
+              <input type="checkbox" id="chkBulkApplyShift" style="width: 17px; height: 17px; cursor: pointer;" onchange="toggleBulkShiftInput(this.checked)">
+              <span>🔄 Ubah Shift untuk Semua Jadwal Terpilih</span>
+            </label>
+            <div id="boxBulkShiftInput" style="display: none; padding-left: 25px;">
+              <select id="selectBulkNewShift" class="form-control-ent" style="max-width: 240px;">
+                <option value="1">Shift 1 (Siang) - 07:00 s/d 18:00</option>
+                <option value="2">Shift 2 (Malam) - 19:00 s/d 06:00</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Opsi 3: Target Jam (Time Sch) -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 8px;">
+              <input type="checkbox" id="chkBulkApplyTime" style="width: 17px; height: 17px; cursor: pointer;" onchange="toggleBulkTimeInput(this.checked)">
+              <span>⏰ Atur Target Jam (Time Sch)</span>
+            </label>
+            <div id="boxBulkTimeInput" style="display: none; padding-left: 25px; flex-direction: column; gap: 8px;">
+              <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px;">
+                  <input type="radio" name="bulkTimeMode" value="fixed" checked onchange="toggleBulkTimeSubMode()">
+                  <span>Jam Sama untuk Semua</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px;">
+                  <input type="radio" name="bulkTimeMode" value="sequence" onchange="toggleBulkTimeSubMode()">
+                  <span>Jam Bertahap (Interval Teratur)</span>
+                </label>
+              </div>
+
+              <!-- Sub Mode Fixed -->
+              <div id="boxBulkTimeFixed" style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <span style="font-size: 12px; color: #475569;">Target Jam:</span>
+                <input type="text" id="inputBulkTimeFixed" class="form-control-ent" placeholder="HH:MM:SS (contoh: 07:30:00)" value="07:00:00" style="max-width: 180px;">
+              </div>
+
+              <!-- Sub Mode Sequence -->
+              <div id="boxBulkTimeSequence" style="display: none; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 12px; color: #475569;">Mulai Jam:</span>
+                  <input type="text" id="inputBulkTimeStart" class="form-control-ent" value="07:00:00" style="max-width: 130px;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 12px; color: #475569;">Interval:</span>
+                  <select id="selectBulkTimeInterval" class="form-control-ent" style="max-width: 140px;">
+                    <option value="10">10 Menit</option>
+                    <option value="15">15 Menit</option>
+                    <option value="20" selected>20 Menit</option>
+                    <option value="25">25 Menit</option>
+                    <option value="30">30 Menit</option>
+                    <option value="45">45 Menit</option>
+                    <option value="60">60 Menit</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: EDIT TABEL LANGSUNG -->
+        <div id="bulkTabTableContent" style="display: none;">
+          <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">
+            💡 Anda dapat mengedit tanggal, shift, unit, atau target jam masing-masing jadwal langsung pada tabel berikut:
+          </div>
+          <div style="overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <table class="enterprise-data-table" style="margin: 0; min-width: 600px;">
+              <thead style="background: #f1f5f9;">
+                <tr>
+                  <th style="width: 45px; text-align: center;">No</th>
+                  <th style="width: 110px;">Unit</th>
+                  <th style="width: 140px;">Tanggal</th>
+                  <th style="width: 120px;">Shift</th>
+                  <th style="width: 140px;">Target Jam</th>
+                </tr>
+              </thead>
+              <tbody id="bulkEditTableRows">
+                <!-- Dynamically populated rows with inputs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer-ent" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+        <button type="button" class="btn-show" onclick="closeModal('modalBulkEditSchedule')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #475569;">
+          Batal
+        </button>
+        <button type="button" class="btn-export-green" onclick="window.saveBulkScheduleEdit()" style="display: inline-flex; align-items: center; gap: 6px;">
+          <span>💾</span> Terapkan Perubahan Kolektif
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL: KONFIRMASI HAPUS KOLEKTIF JADWAL SWAP (BULK DELETE)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modalBulkDeleteSchedule" style="z-index: 9999;">
+    <div class="modal-dialog" style="max-width: 460px; width: 92vw; border-radius: 14px; overflow: hidden; background: #ffffff; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);">
+      <div class="modal-header-ent" style="background: #dc2626; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <h4 class="modal-title-ent" style="color: #ffffff; font-size: 15px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>🗑️</span> Konfirmasi Hapus Kolektif
+        </h4>
+        <button type="button" class="btn-close-ent" style="color: #ffffff; background: none; border: none; font-size: 24px; cursor: pointer; line-height: 1;" onclick="closeModal('modalBulkDeleteSchedule')">&times;</button>
+      </div>
+      <div class="modal-body-ent" style="padding: 20px; text-align: center;">
+        <div style="font-size: 44px; margin-bottom: 8px;">⚠️</div>
+        <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+          Hapus <span id="modalBulkDeleteCountNumber" style="color: #dc2626;">0</span> Jadwal Terpilih?
+        </h3>
+        <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin-bottom: 12px;">
+          Jadwal swap yang dipilih akan dihapus permanen dari antrean operasional dan disinkronkan ke Google Sheets serta Cloud Firebase.
+        </p>
+        <div id="modalBulkDeleteUnitChips" style="max-height: 100px; overflow-y: auto; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #334155; font-weight: 600; text-align: left;">
+          Unit terpilih: -
+        </div>
+      </div>
+      <div class="modal-footer-ent" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+        <button type="button" class="btn-show" onclick="closeModal('modalBulkDeleteSchedule')" style="background: #ffffff; border: 1px solid #cbd5e1; color: #475569;">
+          Batal
+        </button>
+        <button type="button" class="btn-action-view" onclick="window.executeBulkDeleteSchedules()" style="background: #dc2626; color: #ffffff; border: none; padding: 8px 16px; font-weight: 700; font-size: 13px; border-radius: 6px; cursor: pointer;">
+          🗑️ Ya, Hapus Sekarang
+        </button>
       </div>
     </div>
   </div>
@@ -21520,6 +21734,13 @@ function applyIntelImport() {
   tempParsedIntelList = [];
 }
 
+// State Kolektif (Bulk Selection) untuk Jadwal Swap
+window.selectedScheduleIndices = window.selectedScheduleIndices || new Set();
+var selectedScheduleIndices = window.selectedScheduleIndices;
+window.currentFilteredScheduleItems = window.currentFilteredScheduleItems || [];
+var currentFilteredScheduleItems = window.currentFilteredScheduleItems;
+window._bulkEditActiveTab = 'batch';
+
 function renderScheduleTable() {
   const tbody = document.getElementById('scheduleTableBody');
   const recordInfo = document.getElementById('scheduleRecordInfo');
@@ -21541,7 +21762,7 @@ function renderScheduleTable() {
   }
 
   try {
-    let filtered = (schedulesData || []).filter(item => {
+    let filtered = (schedulesData || []).map((item, origIdx) => ({ ...item, origIdx })).filter(item => {
       if (scheduleFilterShift !== 'ALL' && String(item.shift) !== String(scheduleFilterShift)) {
         return false;
       }
@@ -21563,6 +21784,8 @@ function renderScheduleTable() {
       return String(a.timeSch || '').localeCompare(String(b.timeSch || ''));
     });
 
+    currentFilteredScheduleItems = filtered;
+
     const totalEntries = filtered.length;
     const totalPages = Math.ceil(totalEntries / schedulePerPage) || 1;
     if (scheduleCurrentPage > totalPages) scheduleCurrentPage = totalPages;
@@ -21575,13 +21798,14 @@ function renderScheduleTable() {
     const currentClockStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     if (pageItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;">Tidak ada data jadwal yang sesuai.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 25px; color: #64748b;">Tidak ada data jadwal yang sesuai.</td></tr>';
     } else {
       tbody.innerHTML = pageItems.map((item, idx) => {
         const globalNo = startIdx + idx + 1;
         const itemUnit = String(item.unit || '').replace(/^DT[- ]?/i, '').trim();
         const itemShift = String(item.shift || '').replace(/[^0-9]/g, '') || '1';
         const itemTime = (typeof normalizeScheduleTime === 'function') ? normalizeScheduleTime(item.timeSch) : String(item.timeSch || '');
+        const isSelected = selectedScheduleIndices.has(item.origIdx);
 
         // Cari swap transaksi yang cocok dengan unit, shift, tanggal, dan jadwal spesifik ini
         const matchedSwap = (swapsData || []).find(sw => {
@@ -21636,7 +21860,10 @@ function renderScheduleTable() {
         }
 
         return `
-          <tr>
+          <tr style="${isSelected ? 'background: #f0fdf4;' : ''}">
+            <td style="text-align: center; vertical-align: middle;">
+              <input type="checkbox" class="check-schedule-item" data-orig-idx="${item.origIdx}" ${isSelected ? 'checked' : ''} onchange="window.handleScheduleCheckboxChange(${item.origIdx}, this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+            </td>
             <td style="text-align: center; vertical-align: middle;">${globalNo}</td>
             <td style="text-align: center; vertical-align: middle;">${item.tanggal || '-'}</td>
             <td style="text-align: center; vertical-align: middle;">Shift ${item.shift}</td>
@@ -21644,10 +21871,18 @@ function renderScheduleTable() {
             <td style="text-align: center; vertical-align: middle;">${itemTime || item.timeSch || '-'}</td>
             <td style="text-align: center; vertical-align: middle;">${cleanStatus}</td>
             <td style="text-align: center; vertical-align: middle;">${cleanKet}</td>
-            <td style="text-align: center; vertical-align: middle;">
-              <button type="button" class="btn-action-view" onclick="quickInputSwapForUnit('${itemUnit}', '${itemShift}', '${itemTime}')" title="Input transaksi swap untuk unit ini" style="font-size: 11px; padding: 4px 8px;">
-                ➕ Input Swap
-              </button>
+            <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
+              <div style="display: inline-flex; gap: 4px; align-items: center; justify-content: center;">
+                <button type="button" class="btn-action-view" onclick="quickInputSwapForUnit('${itemUnit}', '${itemShift}', '${itemTime}')" title="Input transaksi swap untuk unit ini" style="font-size: 11px; padding: 4px 7px;">
+                  ➕ Input
+                </button>
+                <button type="button" class="btn-action-view" onclick="window.openSingleScheduleEdit(${item.origIdx})" title="Edit Jadwal Unit DT ${itemUnit}" style="font-size: 11px; padding: 4px 6px; background: #f8fafc; color: #0284c7; border: 1px solid #cbd5e1;">
+                  ✏️
+                </button>
+                <button type="button" class="btn-action-view" onclick="window.deleteSingleSchedule(${item.origIdx})" title="Hapus Jadwal Unit DT ${itemUnit}" style="font-size: 11px; padding: 4px 6px; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3;">
+                  🗑️
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -21667,16 +21902,416 @@ function renderScheduleTable() {
     if (paginationContainer) {
       renderSchedulePagination(totalPages, paginationContainer);
     }
+
+    updateScheduleBulkUI();
   } catch (err) {
     console.error('Error rendering schedule table:', err);
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px; color: #ef4444;">Terjadi kesalahan saat memuat jadwal: ${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 25px; color: #ef4444;">Terjadi kesalahan saat memuat jadwal: ${err.message}</td></tr>`;
     }
     if (recordInfo) {
       recordInfo.textContent = 'Gagal memuat jadwal';
     }
   }
 }
+
+// Handler Centang Satuan pada Baris Jadwal
+window.handleScheduleCheckboxChange = function(origIdx, isChecked) {
+  if (isChecked) {
+    selectedScheduleIndices.add(origIdx);
+  } else {
+    selectedScheduleIndices.delete(origIdx);
+  }
+  updateScheduleBulkUI();
+};
+
+// Handler Centang Semua (Select All)
+window.handleScheduleSelectAll = function(isChecked) {
+  if (isChecked) {
+    (currentFilteredScheduleItems || []).forEach(it => {
+      if (typeof it.origIdx === 'number') {
+        selectedScheduleIndices.add(it.origIdx);
+      }
+    });
+  } else {
+    (currentFilteredScheduleItems || []).forEach(it => {
+      if (typeof it.origIdx === 'number') {
+        selectedScheduleIndices.delete(it.origIdx);
+      }
+    });
+  }
+  renderScheduleTable();
+};
+
+// Handler Batalkan Semua Pilihan
+window.deselectAllSchedules = function() {
+  selectedScheduleIndices.clear();
+  const checkboxes = document.querySelectorAll('.check-schedule-item');
+  checkboxes.forEach(cb => { cb.checked = false; });
+  const checkAll = document.getElementById('checkAllSchedules');
+  if (checkAll) {
+    checkAll.checked = false;
+    checkAll.indeterminate = false;
+  }
+  renderScheduleTable();
+};
+
+// Perbarui Tampilan UI Bar Aksi Kolektif & Badge
+function updateScheduleBulkUI() {
+  const selectedCount = selectedScheduleIndices.size;
+  const btnBulkEdit = document.getElementById('btnBulkEditSchedule');
+  const btnBulkDelete = document.getElementById('btnBulkDeleteSchedule');
+  const bulkBar = document.getElementById('scheduleBulkActionBar');
+  const countBadgeEdit = document.getElementById('countBulkEditBadge');
+  const countBadgeDelete = document.getElementById('countBulkDeleteBadge');
+  const countSelectedEl = document.getElementById('scheduleBulkSelectedCount');
+  const unitsListEl = document.getElementById('scheduleBulkUnitsList');
+  const checkAll = document.getElementById('checkAllSchedules');
+
+  if (countBadgeEdit) countBadgeEdit.textContent = selectedCount;
+  if (countBadgeDelete) countBadgeDelete.textContent = selectedCount;
+  if (countSelectedEl) countSelectedEl.textContent = `${selectedCount} Jadwal Terpilih`;
+
+  if (selectedCount > 0) {
+    if (btnBulkEdit) btnBulkEdit.style.display = 'inline-flex';
+    if (btnBulkDelete) btnBulkDelete.style.display = 'inline-flex';
+    if (bulkBar) bulkBar.style.display = 'flex';
+
+    if (unitsListEl) {
+      const selectedUnits = [...selectedScheduleIndices]
+        .map(i => schedulesData[i] ? `DT-${String(schedulesData[i].unit || '').replace(/^DT[- ]?/i, '')}` : null)
+        .filter(Boolean);
+      const preview = selectedUnits.slice(0, 7).join(', ');
+      unitsListEl.textContent = `Unit: ${preview}${selectedUnits.length > 7 ? ` (+${selectedUnits.length - 7} lainnya)` : ''}`;
+    }
+  } else {
+    if (btnBulkEdit) btnBulkEdit.style.display = 'none';
+    if (btnBulkDelete) btnBulkDelete.style.display = 'none';
+    if (bulkBar) bulkBar.style.display = 'none';
+  }
+
+  // Update status header checkbox
+  if (checkAll && currentFilteredScheduleItems && currentFilteredScheduleItems.length > 0) {
+    const totalFiltered = currentFilteredScheduleItems.length;
+    let selectedFilteredCount = 0;
+    currentFilteredScheduleItems.forEach(it => {
+      if (selectedScheduleIndices.has(it.origIdx)) selectedFilteredCount++;
+    });
+
+    if (selectedFilteredCount === totalFiltered && totalFiltered > 0) {
+      checkAll.checked = true;
+      checkAll.indeterminate = false;
+    } else if (selectedFilteredCount > 0) {
+      checkAll.checked = false;
+      checkAll.indeterminate = true;
+    } else {
+      checkAll.checked = false;
+      checkAll.indeterminate = false;
+    }
+  } else if (checkAll) {
+    checkAll.checked = false;
+    checkAll.indeterminate = false;
+  }
+}
+
+// Beralih Tab pada Modal Edit Kolektif
+window.switchBulkEditTab = function(tabName) {
+  const btnBatch = document.getElementById('tabBulkModeBatch');
+  const btnTable = document.getElementById('tabBulkModeTable');
+  const contentBatch = document.getElementById('bulkTabBatchContent');
+  const contentTable = document.getElementById('bulkTabTableContent');
+
+  if (tabName === 'batch') {
+    if (btnBatch) {
+      btnBatch.style.borderBottom = '2.5px solid #0284c7';
+      btnBatch.style.color = '#0284c7';
+      btnBatch.style.fontWeight = '700';
+    }
+    if (btnTable) {
+      btnTable.style.borderBottom = '2.5px solid transparent';
+      btnTable.style.color = '#64748b';
+      btnTable.style.fontWeight = '600';
+    }
+    if (contentBatch) contentBatch.style.display = 'block';
+    if (contentTable) contentTable.style.display = 'none';
+    window._bulkEditActiveTab = 'batch';
+  } else {
+    if (btnTable) {
+      btnTable.style.borderBottom = '2.5px solid #0284c7';
+      btnTable.style.color = '#0284c7';
+      btnTable.style.fontWeight = '700';
+    }
+    if (btnBatch) {
+      btnBatch.style.borderBottom = '2.5px solid transparent';
+      btnBatch.style.color = '#64748b';
+      btnBatch.style.fontWeight = '600';
+    }
+    if (contentBatch) contentBatch.style.display = 'none';
+    if (contentTable) contentTable.style.display = 'block';
+    window._bulkEditActiveTab = 'table';
+  }
+};
+
+window.toggleBulkDateInput = function(checked) {
+  const box = document.getElementById('boxBulkDateInput');
+  if (box) box.style.display = checked ? 'block' : 'none';
+};
+
+window.toggleBulkShiftInput = function(checked) {
+  const box = document.getElementById('boxBulkShiftInput');
+  if (box) box.style.display = checked ? 'block' : 'none';
+};
+
+window.toggleBulkTimeInput = function(checked) {
+  const box = document.getElementById('boxBulkTimeInput');
+  if (box) box.style.display = checked ? 'flex' : 'none';
+};
+
+window.toggleBulkTimeSubMode = function() {
+  const radFixed = document.querySelector('input[name="bulkTimeMode"][value="fixed"]');
+  const boxFixed = document.getElementById('boxBulkTimeFixed');
+  const boxSeq = document.getElementById('boxBulkTimeSequence');
+  if (radFixed && radFixed.checked) {
+    if (boxFixed) boxFixed.style.display = 'flex';
+    if (boxSeq) boxSeq.style.display = 'none';
+  } else {
+    if (boxFixed) boxFixed.style.display = 'none';
+    if (boxSeq) boxSeq.style.display = 'flex';
+  }
+};
+
+// Buka Modal Edit Kolektif
+window.openBulkEditScheduleModal = function() {
+  if (selectedScheduleIndices.size === 0) {
+    showToast('Silakan pilih minimal 1 jadwal dengan mencentang kotak pada tabel.', 'warning');
+    return;
+  }
+
+  const selectedIndices = [...selectedScheduleIndices].sort((a, b) => a - b);
+  const badge = document.getElementById('bulkEditSummaryBadge');
+  const preview = document.getElementById('bulkEditUnitsPreview');
+  const tableBody = document.getElementById('bulkEditTableRows');
+
+  if (badge) badge.textContent = `${selectedIndices.length} Jadwal Terpilih`;
+
+  const unitCodes = selectedIndices.map(i => schedulesData[i] ? `DT-${String(schedulesData[i].unit || '').replace(/^DT[- ]?/i, '')}` : null).filter(Boolean);
+  if (preview) {
+    preview.textContent = unitCodes.slice(0, 8).join(', ') + (unitCodes.length > 8 ? ` (+${unitCodes.length - 8} lainnya)` : '');
+  }
+
+  // Isi tanggal default dari item pertama
+  const firstItem = schedulesData[selectedIndices[0]] || {};
+  const inDate = document.getElementById('inputBulkNewDate');
+  if (inDate) inDate.value = firstItem.tanggal || '27/09/2026';
+
+  const inShift = document.getElementById('selectBulkNewShift');
+  if (inShift && firstItem.shift) inShift.value = String(firstItem.shift);
+
+  const inTimeFixed = document.getElementById('inputBulkTimeFixed');
+  if (inTimeFixed && firstItem.timeSch) inTimeFixed.value = firstItem.timeSch;
+
+  // Render baris tabel pada Tab 2 (Edit Tabel Langsung)
+  if (tableBody) {
+    tableBody.innerHTML = selectedIndices.map((origIdx, no) => {
+      const s = schedulesData[origIdx] || {};
+      const u = String(s.unit || '').replace(/^DT[- ]?/i, '');
+      return `
+        <tr data-orig-idx="${origIdx}">
+          <td style="text-align: center; vertical-align: middle; color: #64748b;">${no + 1}</td>
+          <td style="vertical-align: middle;">
+            <input type="text" class="bulk-row-unit form-control-ent" value="${u}" style="font-weight: 700; width: 85px; padding: 4px 6px;">
+          </td>
+          <td style="vertical-align: middle;">
+            <input type="text" class="bulk-row-date form-control-ent" value="${s.tanggal || ''}" style="width: 110px; padding: 4px 6px;">
+          </td>
+          <td style="vertical-align: middle;">
+            <select class="bulk-row-shift form-control-ent" style="width: 100px; padding: 4px 6px;">
+              <option value="1" ${String(s.shift) === '1' ? 'selected' : ''}>Shift 1</option>
+              <option value="2" ${String(s.shift) === '2' ? 'selected' : ''}>Shift 2</option>
+            </select>
+          </td>
+          <td style="vertical-align: middle;">
+            <input type="text" class="bulk-row-time form-control-ent" value="${s.timeSch || ''}" style="font-family: var(--font-mono); width: 100px; padding: 4px 6px;">
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Reset centang Tab 1
+  const chkDate = document.getElementById('chkBulkApplyDate');
+  const chkShift = document.getElementById('chkBulkApplyShift');
+  const chkTime = document.getElementById('chkBulkApplyTime');
+  if (chkDate) { chkDate.checked = false; toggleBulkDateInput(false); }
+  if (chkShift) { chkShift.checked = false; toggleBulkShiftInput(false); }
+  if (chkTime) { chkTime.checked = false; toggleBulkTimeInput(false); }
+
+  switchBulkEditTab('batch');
+  openModal('modalBulkEditSchedule');
+};
+
+// Simpan Perubahan Kolektif
+window.saveBulkScheduleEdit = function() {
+  if (selectedScheduleIndices.size === 0) return;
+
+  const selectedIndices = [...selectedScheduleIndices].sort((a, b) => a - b);
+  const isTableTab = window._bulkEditActiveTab === 'table';
+
+  if (!isTableTab) {
+    // Mode Parameter Serentak
+    const applyDate = document.getElementById('chkBulkApplyDate')?.checked;
+    const applyShift = document.getElementById('chkBulkApplyShift')?.checked;
+    const applyTime = document.getElementById('chkBulkApplyTime')?.checked;
+
+    if (!applyDate && !applyShift && !applyTime) {
+      showToast('Centang minimal 1 opsi perubahan (Tanggal, Shift, atau Target Jam) yang ingin diterapkan!', 'warning');
+      return;
+    }
+
+    const newDate = (document.getElementById('inputBulkNewDate')?.value || '').trim();
+    const newShift = document.getElementById('selectBulkNewShift')?.value || '1';
+
+    let timeMode = 'fixed';
+    const radSeq = document.querySelector('input[name="bulkTimeMode"][value="sequence"]');
+    if (radSeq && radSeq.checked) timeMode = 'sequence';
+
+    const fixedTime = (document.getElementById('inputBulkTimeFixed')?.value || '').trim();
+    const startTimeStr = (document.getElementById('inputBulkTimeStart')?.value || '07:00:00').trim();
+    const intervalMins = parseInt(document.getElementById('selectBulkTimeInterval')?.value || '20', 10);
+
+    let startHour = 7, startMin = 0;
+    const tParts = startTimeStr.split(':');
+    if (tParts.length >= 2) {
+      startHour = parseInt(tParts[0], 10) || 7;
+      startMin = parseInt(tParts[1], 10) || 0;
+    }
+
+    selectedIndices.forEach((origIdx, seqIndex) => {
+      const item = schedulesData[origIdx];
+      if (!item) return;
+
+      if (applyDate && newDate) {
+        item.tanggal = newDate;
+      }
+      if (applyShift) {
+        item.shift = newShift;
+      }
+      if (applyTime) {
+        if (timeMode === 'fixed' && fixedTime) {
+          item.timeSch = fixedTime.includes(':') ? fixedTime : `${fixedTime}:00`;
+        } else if (timeMode === 'sequence') {
+          const totalMins = startHour * 60 + startMin + seqIndex * intervalMins;
+          const hh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+          const mm = String(totalMins % 60).padStart(2, '0');
+          item.timeSch = `${hh}:${mm}:00`;
+        }
+      }
+    });
+  } else {
+    // Mode Edit Tabel Langsung
+    const rows = document.querySelectorAll('#bulkEditTableRows tr');
+    rows.forEach(r => {
+      const origIdx = parseInt(r.dataset.origIdx, 10);
+      const item = schedulesData[origIdx];
+      if (!item) return;
+
+      const inUnit = r.querySelector('.bulk-row-unit');
+      const inDate = r.querySelector('.bulk-row-date');
+      const inShift = r.querySelector('.bulk-row-shift');
+      const inTime = r.querySelector('.bulk-row-time');
+
+      if (inUnit && inUnit.value.trim()) item.unit = inUnit.value.trim().replace(/^DT[- ]?/i, '');
+      if (inDate && inDate.value.trim()) item.tanggal = inDate.value.trim();
+      if (inShift) item.shift = inShift.value;
+      if (inTime && inTime.value.trim()) item.timeSch = inTime.value.trim();
+    });
+  }
+
+  // Sinkronkan ke Google Sheets Master
+  if (typeof gasSync !== 'undefined' && typeof gasSync.pushSchedules === 'function') {
+    gasSync.pushSchedules(schedulesData, 'overwrite');
+  }
+
+  // Sinkronkan ke Firebase jika aktif
+  if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+    const updatedItems = selectedIndices.map(i => schedulesData[i]).filter(Boolean);
+    VoltFirebase.bulkSaveSchedules(updatedItems);
+  }
+
+  closeModal('modalBulkEditSchedule');
+  showToast(`🎉 Berhasil memperbarui ${selectedIndices.length} jadwal swap secara kolektif!`, 'success');
+  deselectAllSchedules();
+  renderScheduleTable();
+  updateScheduleSummaryMetrics();
+  if (typeof renderDbSchedulesTable === 'function') renderDbSchedulesTable();
+};
+
+// Konfirmasi Hapus Kolektif
+window.confirmBulkDeleteSchedules = function() {
+  if (selectedScheduleIndices.size === 0) {
+    showToast('Silakan pilih minimal 1 jadwal dengan mencentang kotak pada tabel.', 'warning');
+    return;
+  }
+
+  const selectedIndices = [...selectedScheduleIndices];
+  const countEl = document.getElementById('modalBulkDeleteCountNumber');
+  const chipsEl = document.getElementById('modalBulkDeleteUnitChips');
+
+  if (countEl) countEl.textContent = selectedIndices.length;
+
+  if (chipsEl) {
+    const unitCodes = selectedIndices
+      .map(i => schedulesData[i] ? `DT-${String(schedulesData[i].unit || '').replace(/^DT[- ]?/i, '')} (${schedulesData[i].tanggal || '-'})` : null)
+      .filter(Boolean);
+    chipsEl.innerHTML = unitCodes.map(u => `<span style="display: inline-block; background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 4px; margin: 3px; font-size: 11.5px;">${u}</span>`).join('');
+  }
+
+  openModal('modalBulkDeleteSchedule');
+};
+
+// Eksekusi Hapus Kolektif
+window.executeBulkDeleteSchedules = function() {
+  if (selectedScheduleIndices.size === 0) return;
+
+  const toDeleteItems = [...selectedScheduleIndices].map(i => schedulesData[i]).filter(Boolean);
+  const deletedCount = toDeleteItems.length;
+
+  // Hapus item dari schedulesData lokal
+  schedulesData = schedulesData.filter((_, idx) => !selectedScheduleIndices.has(idx));
+  window.schedulesData = schedulesData;
+
+  // Sinkronkan data ke Google Sheets
+  if (typeof gasSync !== 'undefined' && typeof gasSync.pushSchedules === 'function') {
+    gasSync.pushSchedules(schedulesData, 'overwrite');
+  }
+
+  // Hapus dari Firestore jika aktif
+  if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+    toDeleteItems.forEach(item => {
+      VoltFirebase.deleteSchedule(item.id || item);
+    });
+  }
+
+  closeModal('modalBulkDeleteSchedule');
+  showToast(`🗑️ ${deletedCount} jadwal swap berhasil dihapus secara kolektif!`, 'success');
+  deselectAllSchedules();
+  renderScheduleTable();
+  updateScheduleSummaryMetrics();
+  if (typeof renderDbSchedulesTable === 'function') renderDbSchedulesTable();
+};
+
+// Handler Edit & Hapus Satuan Langsung dari Tabel
+window.openSingleScheduleEdit = function(origIdx) {
+  if (typeof openDbScheduleModal === 'function') {
+    openDbScheduleModal(origIdx);
+  }
+};
+
+window.deleteSingleSchedule = function(origIdx) {
+  if (typeof confirmDeleteDbSchedule === 'function') {
+    confirmDeleteDbSchedule(origIdx);
+  }
+};
 
 function renderSchedulePagination(totalPages, container) {
   container.innerHTML = '';
@@ -23574,6 +24209,11 @@ function handleDbScheduleSubmit(e) {
   if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
     VoltFirebase.addSchedule(item);
   }
+
+  if (typeof gasSync !== 'undefined' && typeof gasSync.pushSchedules === 'function') {
+    gasSync.pushSchedules(schedulesData, 'overwrite');
+  }
+
   closeModal('modalDbSchedule');
   updateDbSummaryMetrics();
   renderDbSchedulesTable();
@@ -23591,6 +24231,9 @@ window.confirmDeleteDbSchedule = function(idx) {
       schedulesData.splice(idx, 1);
       if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured() && targetItem) {
         VoltFirebase.deleteSchedule(targetItem.id || targetItem);
+      }
+      if (typeof gasSync !== 'undefined' && typeof gasSync.pushSchedules === 'function') {
+        gasSync.pushSchedules(schedulesData, 'overwrite');
       }
       showToast(`Jadwal unit DT ${unit} berhasil dihapus.`, 'success');
       updateDbSummaryMetrics();

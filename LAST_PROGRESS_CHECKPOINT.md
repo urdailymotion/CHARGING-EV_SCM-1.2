@@ -183,6 +183,26 @@
   4. Memperbarui `switchAppView('schedule')` agar otomatis memicu pembaruan metrik dan render tabel saat sub-menu Swap Schedule dipilih.
   5. Menaikkan versi Service Worker ke **`charging-ev-v12`** untuk mengosongkan cache lama di peramban pengguna.
 
+#### 13. ⚡ Fitur Edit dan Hapus Jadwal Swap Secara Kolektif (Bulk Edit & Bulk Delete) (27 September 2026, 13:30 WITA):
+- **Kebutuhan Pengguna:** Menambahkan fitur untuk mengedit dan menghapus jadwal swap unit secara bersamaan (kolektif/massal), tidak perlu satu per satu.
+- **Implementasi Fitur:**
+  1. **Seleksi Massal (Checkbox Header & Row):**
+     - Kolom checkbox pada tabel jadwal dengan fitur *Select All* (pilih semua jadwal sekaligus).
+     - Kotak centang individual pada setiap baris jadwal dengan penanda baris aktif (*green highlight*).
+  2. **Active Bulk Action Ribbon:**
+     - Bilah aksi kolektif otomatis muncul saat 1 atau lebih jadwal dicentang, menampilkan jumlah jadwal terpilih, pratinjau kode unit, tombol **`[ ✏️ Edit Kolektif ]`**, **`[ 🗑️ Hapus Kolektif ]`**, dan **`[ ✕ Batal Pilih ]`**.
+  3. **Modal Edit Kolektif Cerdas (`#modalBulkEditSchedule`):**
+     - **Mode 1 (Parameter Serentak):** Memungkinkan pengubahan Tanggal serentak, Shift serentak, serta Target Jam serentak (baik jam seragam sama, maupun jam bertahap/berinterval otomatis seperti setiap 15/20/30 menit).
+     - **Mode 2 (Edit Tabel Langsung):** Spreadsheet-style inline editor di mana pengguna dapat mengedit tanggal, shift, kode unit, dan target jam masing-masing unit terpilih secara leluasa dalam satu tampilan tabel.
+  4. **Konfirmasi Hapus Kolektif (`#modalBulkDeleteSchedule`):**
+     - Dialog konfirmasi aman dengan daftar chip unit terpilih sebelum penghapusan dieksekusi.
+  5. **Tombol Satuan Cepat di Baris Tabel:**
+     - Kolom `Aksi Cepat` kini dilengkapi tombol `[ ➕ Input ]`, `[ ✏️ Edit ]`, dan `[ 🗑️ Hapus ]` untuk akses cepat individual.
+  6. **Sinkronisasi Dua Arah Otomatis:**
+     - Setiap perubahan massal langsung disinkronkan ke Google Sheets master (sheet `SCEDHULE`) melalui `gasSync.pushSchedules(schedulesData, 'overwrite')` dan Cloud Firestore.
+  7. **Pembaruan Service Worker:**
+     - Versi dinaikkan ke **`charging-ev-v13`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
@@ -193,7 +213,7 @@
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v12`
+   - **Service Worker Cache:** `charging-ev-v13`
 
 
 
