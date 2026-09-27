@@ -169,18 +169,31 @@
   3. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v11`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 12. 🛠️ Perbaikan Tuntas Tampilan Swap Schedule (Perbaikan ReferenceError & Render Engine) (27 September 2026, 12:05 WITA):
+- **Gejala:** Menu Operation ➔ Swap Schedule tetap kosong dan menampilkan teks "Memuat rencana jadwal..." meskipun data jadwal di database Google Sheets / Firestore sudah ada.
+- **Penyebab Utama (Root Cause):**
+  - Pada fungsi `renderScheduleTable()`, variabel `isExpired` dan `hasLaterSwap` dideklarasikan menggunakan `const` di dalam blok `else { ... }`.
+  - Pada baris sesudahnya, terdapat baris `else if (isExpired)` di luar blok `else`.
+  - Hal ini menyebabkan browser melempar runtime error `ReferenceError: isExpired is not defined` saat me-render baris data pertama.
+  - Akibat ReferenceError tersebut, eksekusi terhenti, `tbody.innerHTML` tidak pernah terisi, dan teks penampung bawaan `<div id="scheduleRecordInfo">Memuat rencana jadwal...</div>` tidak pernah diganti.
+- **Tindakan Perbaikan:**
+  1. Merestrukturisasi logika evaluasi kepatuhan pada `renderScheduleTable()`: scoping variabel diperbaiki dengan bersih tanpa potensi ReferenceError.
+  2. Mempertahankan format teks rapi netral gelap (#333) tanpa badge warna-warni sesuai permintaan pengguna.
+  3. Membungkus fungsi `renderScheduleTable()` dan `updateScheduleSummaryMetrics()` dalam blok `try...catch` lengkap dengan error fallback visual agar tidak pernah membeku.
+  4. Memperbarui `switchAppView('schedule')` agar otomatis memicu pembaruan metrik dan render tabel saat sub-menu Swap Schedule dipilih.
+  5. Menaikkan versi Service Worker ke **`charging-ev-v12`** untuk mengosongkan cache lama di peramban pengguna.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 53**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v11`
+   - **Service Worker Cache:** `charging-ev-v12`
 
 
 

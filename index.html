@@ -200,6 +200,8 @@
             if (itemOp) { itemOp.classList.add('open'); itemOp.classList.add('active'); }
             if (itemIntel) itemIntel.classList.remove('open');
             if (typeof window.initScheduleModule === 'function') window.initScheduleModule();
+            if (typeof window.updateScheduleSummaryMetrics === 'function') window.updateScheduleSummaryMetrics();
+            if (typeof window.renderScheduleTable === 'function') window.renderScheduleTable();
             break;
 
           case 'analytics':
@@ -21521,164 +21523,158 @@ function applyIntelImport() {
 function renderScheduleTable() {
   const tbody = document.getElementById('scheduleTableBody');
   const recordInfo = document.getElementById('scheduleRecordInfo');
-  const paginationContainer = document.getElementById('schedulePaginationContainer');
-  const panelTitle = document.getElementById('schedulePanelTitle');
+  const paginationContainer = document.getElementById('schedulePaginationContainer') || document.getElementById('schedulePaginationNav');
+  const panelTitle = document.getElementById('schedulePanelTitle') || document.getElementById('panelScheduleTableTitle');
   if (!tbody) return;
 
-  updateScheduleSummaryMetrics();
+  try {
+    updateScheduleSummaryMetrics();
+  } catch (eMetrics) {
+    console.warn('Notice updateScheduleSummaryMetrics:', eMetrics);
+  }
 
-  let filtered = schedulesData.filter(item => {
-    if (scheduleFilterShift !== 'ALL' && String(item.shift) !== String(scheduleFilterShift)) {
-      return false;
+  if (!schedulesData || schedulesData.length === 0) {
+    if (typeof buildDefaultSchedules === 'function') {
+      schedulesData = buildDefaultSchedules();
+      window.schedulesData = schedulesData;
     }
-    if (scheduleSearchQuery) {
-      const q = scheduleSearchQuery.toLowerCase();
-      const inUnit = String(item.unit || '').toLowerCase().includes(q);
-      const inTime = String(item.timeSch || '').toLowerCase().includes(q);
-      const inDate = String(item.tanggal || '').toLowerCase().includes(q);
-      return inUnit || inTime || inDate;
-    }
-    return true;
-  });
+  }
 
-  // Urutkan jadwal: tanggal terbaru di atas
-  filtered.sort((a, b) => {
-    const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a.tanggal) : (a.tanggal || '');
-    const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b.tanggal) : (b.tanggal || '');
-    if (da && db && da !== db) return db.localeCompare(da);
-    return (a.timeSch || '').localeCompare(b.timeSch || '');
-  });
-
-  const totalEntries = filtered.length;
-  const totalPages = Math.ceil(totalEntries / schedulePerPage) || 1;
-  if (scheduleCurrentPage > totalPages) scheduleCurrentPage = totalPages;
-  if (scheduleCurrentPage < 1) scheduleCurrentPage = 1;
-
-  const startIdx = (scheduleCurrentPage - 1) * schedulePerPage;
-  const pageItems = filtered.slice(startIdx, startIdx + schedulePerPage);
-
-  const now = new Date();
-  const currentClockStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-  if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;">Tidak ada data jadwal yang sesuai.</td></tr>';
-  } else {
-    tbody.innerHTML = pageItems.map((item, idx) => {
-      const globalNo = startIdx + idx + 1;
-      const itemUnit = String(item.unit || '').replace(/^DT[- ]?/i, '').trim();
-      const itemShift = String(item.shift || '').replace(/[^0-9]/g, '') || '1';
-      const itemTime = normalizeScheduleTime(item.timeSch);
-
-      // Cari swap transaksi yang cocok dengan unit, shift, tanggal, dan jadwal spesifik ini
-      const matchedSwap = (swapsData || []).find(sw => {
-        const swUnit = String(sw.unit || '').replace(/^DT[- ]?/i, '').trim();
-        const swShift = String(sw.shift || '').replace(/[^0-9]/g, '') || '1';
-        if (swUnit !== itemUnit || swShift !== itemShift) return false;
-
-        // Cocokkan Tanggal Jadwal dengan Tanggal Transaksi Swap
-        const itemDateComp = (typeof parseDateComparable === 'function' && (item.tanggal || item.date)) ? parseDateComparable(item.tanggal || item.date) : null;
-        const swDateComp = (typeof parseDateComparable === 'function' && sw.date) ? parseDateComparable(sw.date) : null;
-        if (itemDateComp && swDateComp && itemDateComp !== swDateComp) return false;
-
-        const swTime = normalizeScheduleTime(sw.timeSch);
-        if (swTime && itemTime) return swTime === itemTime;
-
-        // Fallback untuk rekaman lawas tanpa field timeSch
-        if (sw.jamIn && itemTime) {
-          const diff = Math.abs(calculateMinutesDifference(sw.jamIn, itemTime));
-          return diff <= 55;
-        }
+  try {
+    let filtered = (schedulesData || []).filter(item => {
+      if (scheduleFilterShift !== 'ALL' && String(item.shift) !== String(scheduleFilterShift)) {
         return false;
-      });
+      }
+      if (scheduleSearchQuery) {
+        const q = scheduleSearchQuery.toLowerCase();
+        const inUnit = String(item.unit || '').toLowerCase().includes(q);
+        const inTime = String(item.timeSch || '').toLowerCase().includes(q);
+        const inDate = String(item.tanggal || '').toLowerCase().includes(q);
+        return inUnit || inTime || inDate;
+      }
+      return true;
+    });
 
-      let statusBadge = '';
-      let keteranganHtml = '-';
+    // Urutkan jadwal: tanggal terbaru di atas
+    filtered.sort((a, b) => {
+      const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a.tanggal) : (a.tanggal || '');
+      const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b.tanggal) : (b.tanggal || '');
+      if (da && db && da !== db) return db.localeCompare(da);
+      return String(a.timeSch || '').localeCompare(String(b.timeSch || ''));
+    });
 
-      if (matchedSwap) {
-        const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
-        if (isLate) {
-          statusBadge = `<span class="status-pill" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 700;">⚠️ Out Off Time (${matchedSwap.jamIn || '-'})</span>`;
-        } else {
-          statusBadge = `<span class="status-pill green" style="font-weight: 700;">🟢 On Time (${matchedSwap.jamIn || '-'})</span>`;
-        }
+    const totalEntries = filtered.length;
+    const totalPages = Math.ceil(totalEntries / schedulePerPage) || 1;
+    if (scheduleCurrentPage > totalPages) scheduleCurrentPage = totalPages;
+    if (scheduleCurrentPage < 1) scheduleCurrentPage = 1;
 
-        // Keterangan diambil langsung dari hasil input transaksi swap (catatan + problem remark jika ada)
-        const notes = [];
-        if (matchedSwap.problemRemark && matchedSwap.problemRemark !== '13.NO PROBLEM' && matchedSwap.problemRemark !== '-') {
-          notes.push(`<span style="font-weight: 700; color: #b45309;">⚠️ ${matchedSwap.problemRemark}</span>`);
-        }
-        if (matchedSwap.keterangan && matchedSwap.keterangan !== '-') {
-          notes.push(`<span>${matchedSwap.keterangan}</span>`);
-        }
-        keteranganHtml = notes.length > 0 
-          ? `<div style="font-size: 12px; line-height: 1.4; color: #0f172a;">${notes.join('<br>')}</div>` 
-          : `<span style="font-size: 11.5px; color: #15803d; font-weight: 600;">✓ Selesai On Time</span>`;
-      } else {
-        // Cek apakah jadwal ini sudah terlewat / expired
-        const diffFromDeadline = calculateMinutesDifference(currentClockStr, itemTime);
+    const startIdx = (scheduleCurrentPage - 1) * schedulePerPage;
+    const pageItems = filtered.slice(startIdx, startIdx + schedulePerPage);
 
-        // Jika unit ini sudah mengeksekusi swap lain di shift ini pada jam yang lebih lambat, maka jadwal ini pasti terlewat (Missed)
-        const hasLaterSwap = (swapsData || []).some(sw => {
+    const now = new Date();
+    const currentClockStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    if (pageItems.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #64748b;">Tidak ada data jadwal yang sesuai.</td></tr>';
+    } else {
+      tbody.innerHTML = pageItems.map((item, idx) => {
+        const globalNo = startIdx + idx + 1;
+        const itemUnit = String(item.unit || '').replace(/^DT[- ]?/i, '').trim();
+        const itemShift = String(item.shift || '').replace(/[^0-9]/g, '') || '1';
+        const itemTime = (typeof normalizeScheduleTime === 'function') ? normalizeScheduleTime(item.timeSch) : String(item.timeSch || '');
+
+        // Cari swap transaksi yang cocok dengan unit, shift, tanggal, dan jadwal spesifik ini
+        const matchedSwap = (swapsData || []).find(sw => {
           const swUnit = String(sw.unit || '').replace(/^DT[- ]?/i, '').trim();
           const swShift = String(sw.shift || '').replace(/[^0-9]/g, '') || '1';
           if (swUnit !== itemUnit || swShift !== itemShift) return false;
-          const swTime = normalizeScheduleTime(sw.timeSch || sw.jamIn);
-          return calculateMinutesDifference(swTime, itemTime) > 0;
+
+          // Cocokkan Tanggal Jadwal dengan Tanggal Transaksi Swap
+          const itemDateComp = (typeof parseDateComparable === 'function' && (item.tanggal || item.date)) ? parseDateComparable(item.tanggal || item.date) : null;
+          const swDateComp = (typeof parseDateComparable === 'function' && sw.date) ? parseDateComparable(sw.date) : null;
+          if (itemDateComp && swDateComp && itemDateComp !== swDateComp) return false;
+
+          const swTime = (typeof normalizeScheduleTime === 'function') ? normalizeScheduleTime(sw.timeSch) : String(sw.timeSch || '');
+          if (swTime && itemTime) return swTime === itemTime;
+
+          // Fallback untuk rekaman lawas tanpa field timeSch
+          if (sw.jamIn && itemTime && typeof calculateMinutesDifference === 'function') {
+            const diff = Math.abs(calculateMinutesDifference(sw.jamIn, itemTime));
+            return diff <= 55;
+          }
+          return false;
         });
 
-        const isExpired = hasLaterSwap || diffFromDeadline > 55;
+        let cleanStatus = 'Menunggu Antrean';
+        let cleanKet = '-';
 
-        if (isExpired) {
-          statusBadge = `<span class="status-pill" style="background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; font-weight: 700; white-space: nowrap;">⛔ No Swap On time sch</span>`;
-          keteranganHtml = `<span style="font-size: 11.5px; color: #dc2626; font-weight: 700;">No Swap On time sch${hasLaterSwap ? ' <span style="font-weight: 400; color: #64748b;">(Unit swap di jadwal berikutnya)</span>' : ''}</span>`;
+        if (matchedSwap) {
+          const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && typeof calculateMinutesDifference === 'function' && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
+          cleanStatus = isLate ? `Out Off Time (${matchedSwap.jamIn || '-'})` : `On Time (${matchedSwap.jamIn || '-'})`;
+          cleanKet = matchedSwap.keterangan || (matchedSwap.problemRemark && matchedSwap.problemRemark !== '13.NO PROBLEM' ? matchedSwap.problemRemark : 'Selesai On Time');
         } else {
-          statusBadge = `<span class="status-pill blue">⏳ Menunggu Antrean</span>`;
-          keteranganHtml = `<span style="font-size: 11.5px; color: #64748b;">Menunggu kedatangan unit</span>`;
+          const diffFromDeadline = (typeof calculateMinutesDifference === 'function') ? calculateMinutesDifference(currentClockStr, itemTime) : 0;
+
+          // Jika unit ini sudah mengeksekusi swap lain di shift ini pada jam yang lebih lambat, maka jadwal ini pasti terlewat (Missed)
+          const hasLaterSwap = (swapsData || []).some(sw => {
+            const swUnit = String(sw.unit || '').replace(/^DT[- ]?/i, '').trim();
+            const swShift = String(sw.shift || '').replace(/[^0-9]/g, '') || '1';
+            if (swUnit !== itemUnit || swShift !== itemShift) return false;
+            const swTime = (typeof normalizeScheduleTime === 'function') ? normalizeScheduleTime(sw.timeSch || sw.jamIn) : String(sw.timeSch || sw.jamIn || '');
+            return (typeof calculateMinutesDifference === 'function') ? calculateMinutesDifference(swTime, itemTime) > 0 : false;
+          });
+
+          const isExpired = hasLaterSwap || diffFromDeadline > 55;
+
+          if (isExpired) {
+            cleanStatus = 'No Swap On Time';
+            cleanKet = hasLaterSwap ? 'Unit swap di jadwal berikutnya' : 'Terlewat / Belum Swap';
+          } else {
+            cleanStatus = 'Menunggu Antrean';
+            cleanKet = 'Menunggu kedatangan unit';
+          }
         }
-      }
 
-      let cleanStatus = 'Menunggu Antrean';
-      let cleanKet = '-';
-      if (matchedSwap) {
-        const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
-        cleanStatus = isLate ? `Out Off Time (${matchedSwap.jamIn || '-'})` : `On Time (${matchedSwap.jamIn || '-'})`;
-        cleanKet = matchedSwap.keterangan || matchedSwap.problemRemark || 'Selesai';
-      } else if (isExpired) {
-        cleanStatus = 'No Swap On Time';
-        cleanKet = hasLaterSwap ? 'Unit swap di jadwal berikutnya' : 'Terlewat / Belum Swap';
-      }
+        return `
+          <tr>
+            <td style="text-align: center; vertical-align: middle;">${globalNo}</td>
+            <td style="text-align: center; vertical-align: middle;">${item.tanggal || '-'}</td>
+            <td style="text-align: center; vertical-align: middle;">Shift ${item.shift}</td>
+            <td style="text-align: center; vertical-align: middle;">DT-${itemUnit}</td>
+            <td style="text-align: center; vertical-align: middle;">${itemTime || item.timeSch || '-'}</td>
+            <td style="text-align: center; vertical-align: middle;">${cleanStatus}</td>
+            <td style="text-align: center; vertical-align: middle;">${cleanKet}</td>
+            <td style="text-align: center; vertical-align: middle;">
+              <button type="button" class="btn-action-view" onclick="quickInputSwapForUnit('${itemUnit}', '${itemShift}', '${itemTime}')" title="Input transaksi swap untuk unit ini" style="font-size: 11px; padding: 4px 8px;">
+                ➕ Input Swap
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
 
-      return `
-        <tr>
-          <td style="text-align: center; vertical-align: middle;">${globalNo}</td>
-          <td style="text-align: center; vertical-align: middle;">${item.tanggal || '11/09/2026'}</td>
-          <td style="text-align: center; vertical-align: middle;">Shift ${item.shift}</td>
-          <td style="text-align: center; vertical-align: middle;">DT-${itemUnit}</td>
-          <td style="text-align: center; vertical-align: middle;">${itemTime || item.timeSch}</td>
-          <td style="text-align: center; vertical-align: middle;">${cleanStatus}</td>
-          <td style="text-align: center; vertical-align: middle;">${cleanKet}</td>
-          <td style="text-align: center; vertical-align: middle;">
-            <button type="button" class="btn-action-view" onclick="quickInputSwapForUnit('${itemUnit}', '${itemShift}', '${itemTime}')" title="Input transaksi swap untuk unit ini" style="font-size: 11px; padding: 4px 8px;">
-              ➕ Input Swap
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  }
+    if (panelTitle) {
+      const shiftText = scheduleFilterShift === '1' ? ' - Shift 1 (Siang)' : scheduleFilterShift === '2' ? ' - Shift 2 (Malam)' : '';
+      panelTitle.textContent = `Daftar Rencana Jadwal Swap Unit DT EV (${totalEntries} Data Terdaftar${shiftText})`;
+    }
 
-  if (panelTitle) {
-    const shiftText = scheduleFilterShift === '1' ? ' - Shift 1 (Siang)' : scheduleFilterShift === '2' ? ' - Shift 2 (Malam)' : '';
-    panelTitle.textContent = `Daftar Rencana Jadwal Swap Unit DT EV (${totalEntries} Data Terdaftar${shiftText})`;
-  }
+    if (recordInfo) {
+      const endIdx = Math.min(startIdx + schedulePerPage, totalEntries);
+      recordInfo.textContent = `Showing ${totalEntries > 0 ? startIdx + 1 : 0} to ${endIdx} of ${totalEntries} entries`;
+    }
 
-  if (recordInfo) {
-    const endIdx = Math.min(startIdx + schedulePerPage, totalEntries);
-    recordInfo.textContent = `Showing ${totalEntries > 0 ? startIdx + 1 : 0} to ${endIdx} of ${totalEntries} entries`;
-  }
-
-  if (paginationContainer) {
-    renderSchedulePagination(totalPages, paginationContainer);
+    if (paginationContainer) {
+      renderSchedulePagination(totalPages, paginationContainer);
+    }
+  } catch (err) {
+    console.error('Error rendering schedule table:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px; color: #ef4444;">Terjadi kesalahan saat memuat jadwal: ${err.message}</td></tr>`;
+    }
+    if (recordInfo) {
+      recordInfo.textContent = 'Gagal memuat jadwal';
+    }
   }
 }
 
