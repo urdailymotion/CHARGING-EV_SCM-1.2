@@ -126,18 +126,30 @@
   3. **Pembaruan Service Worker:**
      - Cache dinaikkan ke **`charging-ev-v8`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 9. 🎨 Penyeragaman Gaya Teks Tabel Transaksi (Sesuai Kolom Date, Tanpa Warna-Warni) (27 September 2026, 10:05 WITA):
+- **Kebutuhan Pengguna (Berdasarkan Screenshot):**
+  - Mengubah tampilan teks pada seluruh sel baris tabel transaksi agar seragam seperti pada kolom **Date** (teks standar rapi, tidak warna-warni seperti biru, hijau, merah, atau badge background warna-warni).
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Tabel Data Transaksi (`enterprise-data-table`):**
+     - Seluruh sel data (`Manpower`, `Transaction ID`, `Category`, `Unit`, `Date`, `Shift`, `Time In`, `Time Out`, `Dur (m)`, `Energy (kWh)`, `HM`, `Bat In`, `Bat Out`, `Loc`, `Swap Station`, `Status`, `Remark`) kini menggunakan format teks bersih standar: `<td style="text-align: center; vertical-align: middle;">...</td>`.
+     - Menghilangkan warna biru terang pada Transaction ID, badge pill warna-warni pada Category & Swap Station, warna hijau pada Energy, warna merah pada Bat In, serta pill ungu/hijau pada Status.
+     - Tampilan tabel menjadi seragam, bersih, elegan, dan rapi layaknya spreadsheet profesional.
+  2. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke **`charging-ev-v9`** di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Terpasang:** **Versi 50**
+   - **Versi Terpasang:** **Versi 51**
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v8`
+   - **Service Worker Cache:** `charging-ev-v9`
+
 
 
 

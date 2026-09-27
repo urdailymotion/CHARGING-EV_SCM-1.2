@@ -16878,35 +16878,32 @@ function renderMainTable() {
       const isPile = (row.category || '').toUpperCase().includes('PILE');
       const catLabel = row.category || 'CHARGING SWAP';
 
+      const displayStation = row.swapStation || (String(row.location).includes('A2') ? 'SWAP 02' : 'SWAP 01');
+      const displayStatus = row.statusRemark || (isOnTime ? 'On Time' : 'Out Off Time');
+
       tr.innerHTML = `
-        <td style="white-space: nowrap; text-align: center; vertical-align: middle;">
-          <div style="font-weight: 700; color: #1e293b; font-size: 11.5px; letter-spacing: 0.01em; text-align: center;">${row.operator || '-'}</div>
-        </td>
-        <td style="font-family: var(--font-mono); font-weight:600; color: #0b5394; text-align: center; vertical-align: middle;">${formattedTxId}</td>
-        <td style="text-align: center; vertical-align: middle;">
-          <span class="badge-cat-table ${isPile ? 'pile' : ''}">${catLabel}</span>
-        </td>
-        <td style="text-align: center; vertical-align: middle;"><strong>DT ${row.unit}</strong></td>
+        <td style="text-align: center; vertical-align: middle;">${row.operator || '-'}</td>
+        <td style="text-align: center; vertical-align: middle;">${formattedTxId}</td>
+        <td style="text-align: center; vertical-align: middle;">${catLabel}</td>
+        <td style="text-align: center; vertical-align: middle;">DT ${row.unit}</td>
         <td style="text-align: center; vertical-align: middle;">${row.date}</td>
         <td style="text-align: center; vertical-align: middle;">${row.shift}</td>
-        <td style="font-family: var(--font-mono); text-align: center; vertical-align: middle;">${row.jamIn}</td>
-        <td style="font-family: var(--font-mono); text-align: center; vertical-align: middle;">${row.jamOut}</td>
+        <td style="text-align: center; vertical-align: middle;">${row.jamIn}</td>
+        <td style="text-align: center; vertical-align: middle;">${row.jamOut}</td>
         <td style="text-align: center; vertical-align: middle;">${row.durationMin}</td>
-        <td style="text-align: center; font-weight:600; color:#00a65a; vertical-align: middle;">${Number(row.energyKwh).toLocaleString()}</td>
-        <td style="font-family: var(--font-mono); text-align: center; vertical-align: middle;">${row.hm || '-'}</td>
-        <td style="color:#d32f2f; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryBefore)}</td>
-        <td style="color:#00a65a; font-weight:600; text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryAfter)}</td>
-        <td style="text-align: center; vertical-align: middle; font-weight: 700; color: #1e293b; font-size: 11.5px;">${row.location || 'ROOM A1'}</td>
-        <td style="text-align: center; vertical-align: middle;">
-          <span style="font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 2px 7px; border-radius: 4px; font-family: var(--font-mono); border: 1px solid #bae6fd;">${row.swapStation || (String(row.location).includes('A2') ? 'SWAP 02' : 'SWAP 01')}</span>
-        </td>
-        <td style="text-align: center; vertical-align: middle;">${statusPillHtml}</td>
-        <td style="font-size:11px; color:#666; text-align: center; vertical-align: middle;">${row.problemRemark}</td>
+        <td style="text-align: center; vertical-align: middle;">${Number(row.energyKwh).toLocaleString()}</td>
+        <td style="text-align: center; vertical-align: middle;">${row.hm || '-'}</td>
+        <td style="text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryBefore)}</td>
+        <td style="text-align: center; vertical-align: middle;">${formatBatteryPercentage(row.batteryAfter)}</td>
+        <td style="text-align: center; vertical-align: middle;">${row.location || 'ROOM A1'}</td>
+        <td style="text-align: center; vertical-align: middle;">${displayStation}</td>
+        <td style="text-align: center; vertical-align: middle;">${displayStatus}</td>
+        <td style="text-align: center; vertical-align: middle;">${row.problemRemark}</td>
         <td style="text-align: center; vertical-align: middle;">
           <div class="table-actions-cell" style="justify-content: center;">
             <button class="btn-tbl-action view" title="Preview Detail" onclick="previewRecord('${row.id}')">👁️</button>
             <button class="btn-tbl-action edit" title="Edit Transaksi" onclick="editRecord('${row.id}')">✏️</button>
-            <button class="btn-tbl-action del" title="Hapus Transaksi" onclick="deletePrompt('${row.id}')">🗑️</button>
+            <button class="btn-tbl-action del" title="Hapus Transaksi" onclick="deletePrompt('${row.id}')">🗑️ </button>
           </div>
         </td>
       `;
