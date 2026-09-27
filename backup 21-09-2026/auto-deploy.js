@@ -11,8 +11,8 @@ const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const SCRIPT_ID = '1EUs-JcLD89T3PSJCVRwD3XqeJacdiPS0oDr_JfZFWzZdmUEODlFADijR';
-const DEPLOYMENT_ID = 'AKfycbys18CO-bbRbaCL0V8VIrhpnHpZqQ1Mw9yY_z6nLr45bC3_E7YdeqUEo0xPz1Rjl_xLQA';
+const SCRIPT_ID = '1tUo8EHKFnFhKD25J-0HKSHAbw5dfudvByQ-brT9bG86EMEqJeLyffaTH';
+const DEPLOYMENT_ID = 'AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q';
 const WEB_APP_URL = `https://script.google.com/macros/s/${DEPLOYMENT_ID}/exec`;
 
 function getTimestamp() {
@@ -59,7 +59,7 @@ if (isWatchMode) {
   deployNow();
 
   let debounceTimer = null;
-  const filesToWatch = ['Code.gs', 'Index.html', 'appsscript.json'];
+  const filesToWatch = ['Code.gs', 'index.html', 'Index.html', 'intelligence.html', 'appsscript.json'];
 
   filesToWatch.forEach(file => {
     const fullPath = path.join(__dirname, file);

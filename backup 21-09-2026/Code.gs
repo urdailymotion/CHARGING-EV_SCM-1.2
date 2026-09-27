@@ -1,7 +1,7 @@
 /**
  * PPA Safe & Strong - Charging & Battery Swap Management System
  * Google Apps Script Backend (Code.gs)
- * Spreadsheet ID: 1-MH5PWRStOldJDd7icQTNI-jLNLOjOLI4v-sA8LFexc
+ * Spreadsheet ID: 1k63AKsRQ8WK1m37akbX9nxcEA2TVOJiKjRiQhj-4Phs (CHARGING EV 1.2)
  *
  * Sheet mapping (nama sheet di Spreadsheet):
  *  - DATA INPUT   : Transaksi swap (19 kolom)
@@ -11,9 +11,9 @@
  *  - POPULASI UNIT: Daftar kode unit armada
  */
 
-const SPREADSHEET_ID = '1-MH5PWRStOldJDd7icQTNI-jLNLOjOLI4v-sA8LFexc';
-const FALLBACK_SPREADSHEET_ID = '1-MH5PWRStOldJDd7icQTNI-jLNLOjOLI4v-sA8LFexc';
-const EV_INTELLIGENCE_SPREADSHEET_ID = '1w3CkA2GQErFXkkXCeysX6Tdaf7-lz6E_6SkPp0siu1w';
+const SPREADSHEET_ID = '1k63AKsRQ8WK1m37akbX9nxcEA2TVOJiKjRiQhj-4Phs';
+const FALLBACK_SPREADSHEET_ID = '1k63AKsRQ8WK1m37akbX9nxcEA2TVOJiKjRiQhj-4Phs';
+const EV_INTELLIGENCE_SPREADSHEET_ID = '1k63AKsRQ8WK1m37akbX9nxcEA2TVOJiKjRiQhj-4Phs';
 
 function doGet(e) {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -43,6 +43,73 @@ function doPost(e) {
 
     if (body.action === 'get_all') {
       const result = apiGetAllSheetsData();
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Direct HTTP API Endpoints for PWA / Netlify External Clients
+    if (body.action === 'save_swap' || body.action === 'push_transaction') {
+      const rec = body.record || body.payload || body.data || body;
+      const result = apiSaveSwapTransaction(rec);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'update_swap' || body.action === 'update_transaction') {
+      const rec = body.record || body.payload || body.data || body;
+      const result = apiUpdateTransaction(rec);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_swap' || body.action === 'delete_transaction') {
+      const txId = body.id || body.txId;
+      const result = apiDeleteTransaction(txId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'save_problem') {
+      const prob = body.problem || body.record || body.data || body;
+      const result = apiSaveProblemLog(prob);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'update_problem') {
+      const prob = body.problem || body.record || body.data || body;
+      const result = apiUpdateProblem(prob);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_problem') {
+      const probId = body.id || body.probId;
+      const result = apiDeleteProblem(probId);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'save_schedules') {
+      const result = apiSaveUploadedSchedules(body.schedulesList || body.schedules, body.importMode || 'append');
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'add_unit') {
+      const result = apiAddUnit(body.code || body.unitCode);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_unit') {
+      const result = apiDeleteUnit(body.code || body.unitCode);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'validate_login') {
+      const result = apiValidateLogin(body.nik, body.password);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -84,7 +151,7 @@ function doPost(e) {
     }
 
     if (body.action === 'migrate_sheets_to_firestore' || body.action === 'sync_sheets_to_firestore') {
-      const result = apiMigrateSheetsToFirestore(body.config);
+      const result = apiMigrateSheetsToFirestore(body.config, body.targetCollections);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -223,7 +290,7 @@ function ensureDatabaseStructure_(ss, forceFormat) {
     'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION',
     'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN SWAP', 'BATTERY AFTER',
     'JAM OUT SWAP', 'CHARGING TIME (MENIT)', 'ENERGY (KWH)', 'STATUS REMARK',
-    'PROBLEM REMARK', 'MANPOWER', 'NIK', 'KETERANGAN', 'TIME SCH'
+    'PROBLEM REMARK', 'MANPOWER', 'NIK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION'
   ];
   let sheetInput = ss.getSheetByName('DATA INPUT');
   if (!sheetInput) {
@@ -1145,7 +1212,8 @@ function apiReadTransactions_(ss) {
       operator:      String(r[15] || '-').trim(),
       operatorNik:   String(r[16] || '-').trim(),
       keterangan:    String(r[17] || '-').trim(),
-      timeSch:       formatTimeCell(r[18]) || '-'
+      timeSch:       formatTimeCell(r[18]) || '-',
+      swapStation:   String(r[19] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim()
     });
   }
   return swaps;
@@ -1265,7 +1333,7 @@ function deleteFromFirestoreFromGas_(collection, docId) {
 /**
  * Migrasi seluruh database Google Sheets langsung ke Cloud Firestore via REST batchWrite
  */
-function apiMigrateSheetsToFirestore(customConfig) {
+function apiMigrateSheetsToFirestore(customConfig, targetCollections) {
   try {
     if (customConfig && customConfig.projectId && customConfig.apiKey) {
       apiSaveFirebaseConfig(customConfig);
@@ -1289,8 +1357,16 @@ function apiMigrateSheetsToFirestore(customConfig) {
       problems: 0,
       units: 0,
       durasiCharging: 0,
+      durasiChargingChunks: 0,
       swabTime: 0,
-      totalItems: 0
+      swabTimeChunks: 0,
+      totalItems: 0,
+      totalWrites: 0
+    };
+
+    const shouldMigrate = (colName) => {
+      if (!targetCollections || !Array.isArray(targetCollections) || targetCollections.length === 0) return true;
+      return targetCollections.includes(colName) || targetCollections.includes('all');
     };
 
     function executeBatchWrite(writes) {
@@ -1305,6 +1381,7 @@ function apiMigrateSheetsToFirestore(customConfig) {
       const code = res.getResponseCode();
       const txt = res.getContentText();
       if (code >= 200 && code < 300) {
+        Utilities.sleep(30);
         return { ok: true, count: writes.length };
       }
       if (code === 403) {
@@ -1315,6 +1392,9 @@ function apiMigrateSheetsToFirestore(customConfig) {
           errMsg += 'Buka Firebase Console > Firestore Database > Tab Rules, lalu ganti aturannya menjadi "allow read, write: if true;" dan klik Publish.';
         }
         throw new Error(errMsg);
+      }
+      if (code === 429 || txt.includes('RESOURCE_EXHAUSTED')) {
+        throw new Error('Batas kuota harian Firebase (20.000 writes Spark Plan) tercapai. Reset otomatis pukul 07:00 WIB.');
       }
       throw new Error('Gagal menulis batch ke Firestore (HTTP ' + code + '): ' + txt.slice(0, 200));
     }
@@ -1358,171 +1438,263 @@ function apiMigrateSheetsToFirestore(customConfig) {
     }
 
     // 1. DATA INPUT -> collection 'swaps'
-    const swaps = apiReadTransactions_(ss);
-    let swapWrites = [];
-    swaps.forEach((s) => {
-      swapWrites.push(createWriteOp('swaps', s.id, s));
-      if (swapWrites.length >= 350) {
+    if (shouldMigrate('swaps')) {
+      const swaps = apiReadTransactions_(ss);
+      let swapWrites = [];
+      swaps.forEach((s) => {
+        swapWrites.push(createWriteOp('swaps', s.id, s));
+        if (swapWrites.length >= 350) {
+          executeBatchWrite(swapWrites);
+          summary.swaps += swapWrites.length;
+          summary.totalWrites += swapWrites.length;
+          swapWrites = [];
+        }
+      });
+      if (swapWrites.length > 0) {
         executeBatchWrite(swapWrites);
         summary.swaps += swapWrites.length;
-        swapWrites = [];
+        summary.totalWrites += swapWrites.length;
       }
-    });
-    if (swapWrites.length > 0) {
-      executeBatchWrite(swapWrites);
-      summary.swaps += swapWrites.length;
     }
 
     // 2. USER -> collection 'users'
-    const userSheet = ss.getSheetByName('USER');
-    if (userSheet && userSheet.getLastRow() > 1) {
-      const uRows = userSheet.getDataRange().getValues();
-      const userWrites = [];
-      for (let i = 1; i < uRows.length; i++) {
-        const r = uRows[i];
-        if (!r[1]) continue;
-        const nik = String(r[1]).trim();
-        userWrites.push(createWriteOp('users', nik, {
-          no: r[0],
-          nik: nik,
-          name: String(r[2] || '').trim(),
-          title: String(r[3] || '').trim(),
-          role: String(r[4] || 'OPERATOR').trim(),
-          password: String(r[5] || r[1]).trim(),
-          dept: String(r[6] || 'Charging Operations').trim()
-        }));
-      }
-      if (userWrites.length > 0) {
-        executeBatchWrite(userWrites);
-        summary.users += userWrites.length;
+    if (shouldMigrate('users')) {
+      const userSheet = ss.getSheetByName('USER');
+      if (userSheet && userSheet.getLastRow() > 1) {
+        const uRows = userSheet.getDataRange().getValues();
+        const userWrites = [];
+        for (let i = 1; i < uRows.length; i++) {
+          const r = uRows[i];
+          if (!r[1]) continue;
+          const nik = String(r[1]).trim();
+          userWrites.push(createWriteOp('users', nik, {
+            no: r[0],
+            nik: nik,
+            name: String(r[2] || '').trim(),
+            title: String(r[3] || '').trim(),
+            role: String(r[4] || 'OPERATOR').trim(),
+            password: String(r[5] || r[1]).trim(),
+            dept: String(r[6] || 'Charging Operations').trim()
+          }));
+        }
+        if (userWrites.length > 0) {
+          executeBatchWrite(userWrites);
+          summary.users += userWrites.length;
+          summary.totalWrites += userWrites.length;
+        }
       }
     }
 
     // 3. SCEDHULE -> collection 'schedules'
-    const schSheet = ss.getSheetByName('SCEDHULE');
-    if (schSheet && schSheet.getLastRow() > 1) {
-      const scRows = schSheet.getDataRange().getValues();
-      const schWrites = [];
-      for (let i = 1; i < scRows.length; i++) {
-        const r = scRows[i];
-        if (!r[2]) continue;
-        const cleanDate = String(r[0] || '').replace(/[\/\-]/g, '');
-        const scId = 'SCH-' + r[2] + '-' + (r[1] || '1') + '-' + (cleanDate || i);
-        schWrites.push(createWriteOp('schedules', scId, {
-          id: scId,
-          tanggal: formatDateCell(r[0]),
-          shift: String(r[1] || '1').trim(),
-          unit: String(r[2] || '').trim(),
-          timeSch: formatTimeCell(r[3])
-        }));
-      }
-      if (schWrites.length > 0) {
-        executeBatchWrite(schWrites);
-        summary.schedules += schWrites.length;
+    if (shouldMigrate('schedules')) {
+      const schSheet = ss.getSheetByName('SCEDHULE');
+      if (schSheet && schSheet.getLastRow() > 1) {
+        const scRows = schSheet.getDataRange().getValues();
+        const schWrites = [];
+        for (let i = 1; i < scRows.length; i++) {
+          const r = scRows[i];
+          if (!r[2]) continue;
+          const cleanDate = String(r[0] || '').replace(/[\/\-]/g, '');
+          const scId = 'SCH-' + r[2] + '-' + (r[1] || '1') + '-' + (cleanDate || i);
+          schWrites.push(createWriteOp('schedules', scId, {
+            id: scId,
+            tanggal: formatDateCell(r[0]),
+            shift: String(r[1] || '1').trim(),
+            unit: String(r[2] || '').trim(),
+            timeSch: formatTimeCell(r[3])
+          }));
+        }
+        if (schWrites.length > 0) {
+          executeBatchWrite(schWrites);
+          summary.schedules += schWrites.length;
+          summary.totalWrites += schWrites.length;
+        }
       }
     }
 
     // 4. DATA PROBLEM -> collection 'problems'
-    const probSheet = ss.getSheetByName('DATA PROBLEM');
-    if (probSheet && probSheet.getLastRow() > 1) {
-      const pRows = probSheet.getDataRange().getValues();
-      const probWrites = [];
-      for (let i = 1; i < pRows.length; i++) {
-        const r = pRows[i];
-        if (!r[0] && !r[3]) continue;
-        const probId = String(r[0] || ('PRB-' + i)).trim();
-        probWrites.push(createWriteOp('problems', probId, {
-          id: probId,
-          no: String(i),
-          date: formatDateCell(r[1]),
-          shift: String(r[2] || '1'),
-          unit: String(r[3] || '-'),
-          problem: String(r[4] || '-'),
-          timeOpen: formatTimeCell(r[5]),
-          timeClose: formatTimeCell(r[6]),
-          duration: formatTimeCell(r[7])
-        }));
-      }
-      if (probWrites.length > 0) {
-        executeBatchWrite(probWrites);
-        summary.problems += probWrites.length;
+    if (shouldMigrate('problems')) {
+      const probSheet = ss.getSheetByName('DATA PROBLEM');
+      if (probSheet && probSheet.getLastRow() > 1) {
+        const pRows = probSheet.getDataRange().getValues();
+        const probWrites = [];
+        for (let i = 1; i < pRows.length; i++) {
+          const r = pRows[i];
+          if (!r[0] && !r[3]) continue;
+          const probId = String(r[0] || ('PRB-' + i)).trim();
+          probWrites.push(createWriteOp('problems', probId, {
+            id: probId,
+            no: String(i),
+            date: formatDateCell(r[1]),
+            shift: String(r[2] || '1'),
+            unit: String(r[3] || '-'),
+            problem: String(r[4] || '-'),
+            timeOpen: formatTimeCell(r[5]),
+            timeClose: formatTimeCell(r[6]),
+            duration: formatTimeCell(r[7])
+          }));
+        }
+        if (probWrites.length > 0) {
+          executeBatchWrite(probWrites);
+          summary.problems += probWrites.length;
+          summary.totalWrites += probWrites.length;
+        }
       }
     }
 
     // 5. POPULASI UNIT -> collection 'units'
-    const popSheet = ss.getSheetByName('POPULASI UNIT');
-    if (popSheet && popSheet.getLastRow() > 1) {
-      const popRows = popSheet.getDataRange().getValues();
-      const unitWrites = [];
-      for (let i = 1; i < popRows.length; i++) {
-        const uCode = String(popRows[i][0] || '').trim();
-        if (!uCode) continue;
-        unitWrites.push(createWriteOp('units', uCode, {
-          code: uCode,
-          type: String(popRows[i][1] || 'EV Dump Truck 90T').trim(),
-          status: String(popRows[i][2] || 'Aktif').trim(),
-          note: 'Operasional Normal'
-        }));
-      }
-      if (unitWrites.length > 0) {
-        executeBatchWrite(unitWrites);
-        summary.units += unitWrites.length;
+    if (shouldMigrate('units')) {
+      const popSheet = ss.getSheetByName('POPULASI UNIT');
+      if (popSheet && popSheet.getLastRow() > 1) {
+        const popRows = popSheet.getDataRange().getValues();
+        const unitWrites = [];
+        for (let i = 1; i < popRows.length; i++) {
+          const uCode = String(popRows[i][0] || '').trim();
+          if (!uCode) continue;
+          unitWrites.push(createWriteOp('units', uCode, {
+            code: uCode,
+            type: String(popRows[i][1] || 'EV Dump Truck 90T').trim(),
+            status: String(popRows[i][2] || 'Aktif').trim(),
+            note: 'Operasional Normal'
+          }));
+        }
+        if (unitWrites.length > 0) {
+          executeBatchWrite(unitWrites);
+          summary.units += unitWrites.length;
+          summary.totalWrites += unitWrites.length;
+        }
       }
     }
 
-    // 6. Durasi Charging -> collection 'durasi_charging'
-    const dcSheet = ss.getSheetByName('Durasi Charging');
-    if (dcSheet && dcSheet.getLastRow() > 1) {
-      const lastRow = dcSheet.getLastRow();
-      const lastCol = dcSheet.getLastColumn();
-      const headers = dcSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || '').trim());
-      const blockSize = 350;
-      for (let start = 2; start <= lastRow; start += blockSize) {
-        const numRows = Math.min(blockSize, lastRow - start + 1);
-        const chunk = dcSheet.getRange(start, 1, numRows, lastCol).getValues();
-        const dcWrites = [];
-        chunk.forEach((row, idx) => {
-          const docObj = {};
-          headers.forEach((h, colIdx) => {
-            const val = row[colIdx];
-            const cleanKey = h.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || ('col_' + colIdx);
-            docObj[cleanKey] = val instanceof Date ? Utilities.formatDate(val, 'Asia/Makassar', 'yyyy-MM-dd HH:mm:ss') : val;
+    // 6. Durasi Charging -> collection 'durasi_charging' (Optimized Chunking)
+    if (shouldMigrate('durasi_charging')) {
+      let dcSheet = ss.getSheetByName('Durasi Charging');
+      if (!dcSheet || dcSheet.getLastRow() <= 1) {
+        const srcSs = getEvSourceSpreadsheet_();
+        if (srcSs) dcSheet = srcSs.getSheetByName('Durasi Charging');
+      }
+      if (dcSheet && dcSheet.getLastRow() > 1) {
+        const lastRow = dcSheet.getLastRow();
+        const lastCol = dcSheet.getLastColumn();
+        const allData = dcSheet.getRange(1, 1, lastRow, lastCol).getValues();
+        const headers = allData[0].map(h => String(h || '').trim());
+        const rows = allData.slice(1);
+        const chunkSize = 100;
+        let chunkIndex = 0;
+        let dcWrites = [];
+
+        for (let i = 0; i < rows.length; i += chunkSize) {
+          chunkIndex++;
+          const slice = rows.slice(i, i + chunkSize);
+          const records = [];
+
+          slice.forEach((row) => {
+            const docObj = {};
+            headers.forEach((h, colIdx) => {
+              const val = row[colIdx];
+              const cleanKey = h.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || ('col_' + colIdx);
+              docObj[cleanKey] = val instanceof Date ? Utilities.formatDate(val, 'Asia/Makassar', 'yyyy-MM-dd HH:mm:ss') : val;
+            });
+            records.push(docObj);
           });
-          const docId = String(row[0] || ('DC_' + (start + idx))).trim();
-          dcWrites.push(createWriteOp('durasi_charging', docId, docObj));
-        });
+
+          const chunkId = 'chunk_' + String(chunkIndex).padStart(3, '0');
+          const chunkDoc = {
+            chunkIndex: chunkIndex,
+            startRow: i + 2,
+            endRow: i + 1 + slice.length,
+            rowCount: records.length,
+            recordsJson: JSON.stringify(records)
+          };
+
+          dcWrites.push(createWriteOp('durasi_charging', chunkId, chunkDoc));
+          summary.durasiCharging += records.length;
+        }
+
         if (dcWrites.length > 0) {
           executeBatchWrite(dcWrites);
-          summary.durasiCharging += dcWrites.length;
+          summary.totalWrites += dcWrites.length;
+          summary.durasiChargingChunks += dcWrites.length;
+          dcWrites = [];
         }
+
+        // Simpan meta info koleksi durasi_charging
+        executeBatchWrite([
+          createWriteOp('durasi_charging', '_meta', {
+            totalRows: summary.durasiCharging,
+            totalChunks: summary.durasiChargingChunks,
+            chunkSize: chunkSize,
+            headers: headers,
+            updatedAt: new Date().toISOString()
+          })
+        ]);
+        summary.totalWrites += 1;
       }
     }
 
-    // 7. Swab Time -> collection 'swab_time'
-    const stSheet = ss.getSheetByName('Swab Time');
-    if (stSheet && stSheet.getLastRow() > 1) {
-      const lastRow = stSheet.getLastRow();
-      const lastCol = stSheet.getLastColumn();
-      const headers = stSheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || '').trim());
-      const blockSize = 350;
-      for (let start = 2; start <= lastRow; start += blockSize) {
-        const numRows = Math.min(blockSize, lastRow - start + 1);
-        const chunk = stSheet.getRange(start, 1, numRows, lastCol).getValues();
-        const stWrites = [];
-        chunk.forEach((row, idx) => {
-          const docObj = {};
-          headers.forEach((h, colIdx) => {
-            const val = row[colIdx];
-            const cleanKey = h.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || ('col_' + colIdx);
-            docObj[cleanKey] = val instanceof Date ? Utilities.formatDate(val, 'Asia/Makassar', 'yyyy-MM-dd HH:mm:ss') : val;
+    // 7. Swab Time -> collection 'swab_time' (Optimized Chunking)
+    if (shouldMigrate('swab_time')) {
+      let stSheet = ss.getSheetByName('Swab Time');
+      if (!stSheet || stSheet.getLastRow() <= 1) {
+        const srcSs = getEvSourceSpreadsheet_();
+        if (srcSs) stSheet = srcSs.getSheetByName('Swab Time');
+      }
+      if (stSheet && stSheet.getLastRow() > 1) {
+        const lastRow = stSheet.getLastRow();
+        const lastCol = stSheet.getLastColumn();
+        const allData = stSheet.getRange(1, 1, lastRow, lastCol).getValues();
+        const headers = allData[0].map(h => String(h || '').trim());
+        const rows = allData.slice(1);
+        const chunkSize = 100;
+        let chunkIndex = 0;
+        let stWrites = [];
+
+        for (let i = 0; i < rows.length; i += chunkSize) {
+          chunkIndex++;
+          const slice = rows.slice(i, i + chunkSize);
+          const records = [];
+
+          slice.forEach((row) => {
+            const docObj = {};
+            headers.forEach((h, colIdx) => {
+              const val = row[colIdx];
+              const cleanKey = h.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase() || ('col_' + colIdx);
+              docObj[cleanKey] = val instanceof Date ? Utilities.formatDate(val, 'Asia/Makassar', 'yyyy-MM-dd HH:mm:ss') : val;
+            });
+            records.push(docObj);
           });
-          const docId = String(row[0] || ('ST_' + (start + idx))).trim();
-          stWrites.push(createWriteOp('swab_time', docId, docObj));
-        });
+
+          const chunkId = 'chunk_' + String(chunkIndex).padStart(3, '0');
+          const chunkDoc = {
+            chunkIndex: chunkIndex,
+            startRow: i + 2,
+            endRow: i + 1 + slice.length,
+            rowCount: records.length,
+            recordsJson: JSON.stringify(records)
+          };
+
+          stWrites.push(createWriteOp('swab_time', chunkId, chunkDoc));
+          summary.swabTime += records.length;
+        }
+
         if (stWrites.length > 0) {
           executeBatchWrite(stWrites);
-          summary.swabTime += stWrites.length;
+          summary.totalWrites += stWrites.length;
+          summary.swabTimeChunks += stWrites.length;
+          stWrites = [];
         }
+
+        // Simpan meta info koleksi swab_time
+        executeBatchWrite([
+          createWriteOp('swab_time', '_meta', {
+            totalRows: summary.swabTime,
+            totalChunks: summary.swabTimeChunks,
+            chunkSize: chunkSize,
+            headers: headers,
+            updatedAt: new Date().toISOString()
+          })
+        ]);
+        summary.totalWrites += 1;
       }
     }
 
@@ -1530,9 +1702,10 @@ function apiMigrateSheetsToFirestore(customConfig) {
       createWriteOp('system', 'sync_info', {
         lastMigrationDate: new Date().toISOString(),
         summary: summary,
-        migratedVia: 'Google Apps Script Direct Server Batch Engine'
+        migratedVia: 'Google Apps Script Direct Server Chunked Batch Engine'
       })
     ]);
+    summary.totalWrites += 1;
 
     summary.totalItems = summary.swaps + summary.users + summary.schedules + summary.problems + summary.units + summary.durasiCharging + summary.swabTime;
 
@@ -1542,6 +1715,45 @@ function apiMigrateSheetsToFirestore(customConfig) {
       summary: summary
     };
 
+  } catch (err) {
+    return { status: 'error', message: err.message || String(err) };
+  }
+}
+
+/**
+ * Mengambil data analitik dari Cloud Firestore yang tersimpan dalam format chunk
+ */
+function apiGetFirestoreIntelligenceData(collectionName, limit) {
+  try {
+    const creds = getFirestoreCredentials_();
+    if (!creds || !creds.projectId || !creds.apiKey) {
+      throw new Error('Kredensial Firebase belum diatur');
+    }
+    const cleanCol = (collectionName === 'swab_time') ? 'swab_time' : 'durasi_charging';
+    const url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(creds.projectId) + '/databases/(default)/documents/' + cleanCol + '?pageSize=100&key=' + encodeURIComponent(creds.apiKey);
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() >= 200 && res.getResponseCode() < 300) {
+      const data = JSON.parse(res.getContentText());
+      const docs = data.documents || [];
+      const records = [];
+      for (const d of docs) {
+        if (d.name && d.name.endsWith('/_meta')) continue;
+        const fields = d.fields || {};
+        if (fields.recordsJson && fields.recordsJson.stringValue) {
+          try {
+            const parsed = JSON.parse(fields.recordsJson.stringValue);
+            if (Array.isArray(parsed)) records.push(...parsed);
+          } catch(e) {}
+        }
+      }
+      return {
+        status: 'success',
+        collection: cleanCol,
+        records: limit ? records.slice(0, limit) : records,
+        totalRecords: records.length
+      };
+    }
+    throw new Error('HTTP ' + res.getResponseCode());
   } catch (err) {
     return { status: 'error', message: err.message || String(err) };
   }
@@ -1575,6 +1787,13 @@ function apiSaveSwapTransaction(rec) {
     const targetRow = getFirstEmptySwapRow_(sheet);
     const finalId = rec.id || `DA01/CHG/2026/SWAP/${String(targetRow - 1).padStart(4, '0')}`;
 
+    // Pastikan header Kolom 20 (Swap Station) terpasang jika belum ada
+    if (sheet.getLastColumn() < 20 || !sheet.getRange(1, 20).getValue()) {
+      sheet.getRange(1, 20).setValue('SWAP STATION');
+    }
+
+    const finalStation = rec.swapStation || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
+
     const row = [
       finalId,
       rec.date          || '',
@@ -1594,11 +1813,12 @@ function apiSaveSwapTransaction(rec) {
       rec.operator      || '',
       rec.operatorNik   || '',
       rec.keterangan    || '-',
-      rec.timeSch       || '-'
+      rec.timeSch       || '-',
+      finalStation
     ];
 
-    // Tulis langsung ke targetRow secara presisi (hindari appendRow ke baris 500+)
-    sheet.getRange(targetRow, 1, 1, 19).setValues([row]);
+    // Tulis langsung ke targetRow secara presisi (20 Kolom lengkap)
+    sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
 
     // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
     syncToFirestoreFromGas_('swaps', finalId, rec);
@@ -1621,6 +1841,7 @@ function apiUpdateTransaction(rec) {
 
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]).trim() === cleanId) {
+        const finalStation = rec.swapStation || rows[i][19] || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
         const row = [
           cleanId,
           rec.date          || '',
@@ -1640,9 +1861,10 @@ function apiUpdateTransaction(rec) {
           rec.operator      || '',
           rec.operatorNik   || '',
           rec.keterangan    || '-',
-          rec.timeSch       || '-'
+          rec.timeSch       || '-',
+          finalStation
         ];
-        sheet.getRange(i + 1, 1, 1, 19).setValues([row]);
+        sheet.getRange(i + 1, 1, 1, 20).setValues([row]);
         updated = true;
         break;
       }
@@ -1674,7 +1896,7 @@ function apiSaveProblemLog(prob) {
       prob.problem   || '',
       prob.timeOpen  || '',
       prob.timeClose || '',
-      prob.duration  || '0:00:00'
+      prob.duration  || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
     ];
 
     sheet.getRange(targetRow, 1, 1, 8).setValues([row]);
@@ -1688,7 +1910,7 @@ function apiSaveProblemLog(prob) {
       problem: prob.problem || '',
       timeOpen: prob.timeOpen || '',
       timeClose: prob.timeClose || '',
-      duration: prob.duration || '0:00:00'
+      duration: prob.duration || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
     });
 
     return { status: 'success', no: targetRow - 1, id: probId };
@@ -1717,7 +1939,7 @@ function apiUpdateProblem(prob) {
           prob.problem   || '',
           prob.timeOpen  || '',
           prob.timeClose || '',
-          prob.duration  || '0:00:00'
+          prob.duration  || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
         ];
         sheet.getRange(i + 1, 1, 1, 8).setValues([row]);
         updated = true;
@@ -1733,7 +1955,7 @@ function apiUpdateProblem(prob) {
       problem: prob.problem || '',
       timeOpen: prob.timeOpen || '',
       timeClose: prob.timeClose || '',
-      duration: prob.duration || '0:00:00'
+      duration: prob.duration || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
     });
 
     return { status: 'success', updated: updated };
@@ -1777,7 +1999,24 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       sheet.getRange(1, 1, 1, 4).setBackground('#003366').setFontColor('#ffffff').setFontWeight('bold');
     }
 
-    if (!Array.isArray(schedulesList) || schedulesList.length === 0) {
+    if (!Array.isArray(schedulesList)) {
+      return { status: 'error', message: 'Format data jadwal tidak valid' };
+    }
+
+    const mode = importMode || 'overwrite';
+
+    if (schedulesList.length === 0) {
+      if (mode === 'overwrite') {
+        const lastR = Math.max(sheet.getLastRow(), 2);
+        if (lastR > 1) {
+          sheet.getRange(2, 1, lastR - 1, 4).clearContent();
+        }
+        return { 
+          status: 'success', 
+          message: 'Seluruh data jadwal di sheet SCEDHULE berhasil dikosongkan',
+          count: 0 
+        };
+      }
       return { status: 'error', message: 'Daftar jadwal kosong' };
     }
 
@@ -1788,7 +2027,6 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       s.timeSch || s.time || '07:00:00'
     ]);
 
-    const mode = importMode || 'overwrite';
 
     if (mode === 'overwrite') {
       const lastR = Math.max(sheet.getLastRow(), 2);
