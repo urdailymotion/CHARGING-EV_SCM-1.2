@@ -203,6 +203,25 @@
   7. **Pembaruan Service Worker:**
      - Versi dinaikkan ke **`charging-ev-v13`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 12. 📅 Penambahan Fitur Filter Rentang Tanggal (DARI - SAMPAI) pada Dashboard Visual KPI:
+- **Latar Belakang & Kebutuhan:**
+  - Sebelumnya filter tanggal pada dashboard pemantauan ketepatan swap (`viewAnalyticsDashboard`) hanya berupa dropdown tanggal tunggal (`DATE: [ Semua Tanggal v ]`), sehingga pengguna kesulitan melihat tren atau data rekap pada rentang tanggal tertentu (misalnya tanggal 1 sampai 15, atau per minggu tertentu).
+- **Fitur Baru yang Diimplementasikan:**
+  1. **Dual Date Inputs (DARI & SAMPAI):**
+     - Menggantikan dropdown tanggal tunggal dengan dua input date picker native HTML5:
+       - **`DARI:`** (`id="ppaFilterDateStart"`)
+       - **`SAMPAI:`** (`id="ppaFilterDateEnd"`)
+     - Mendukung pemilihan tanggal fleksibel (mulai dari tanggal tertentu saja, sampai tanggal tertentu saja, ataupun rentang lengkap dari - sampai).
+     - Validasi interaktif: input tanggal awal secara otomatis menyelaraskan batas minimal (`min`) pada tanggal akhir, dan sebaliknya.
+  2. **Dynamic ISO Week Filter:**
+     - Penambahan kalkulasi nomor pekan standar ISO-8601 (`getIsoWeek()`) sehingga dropdown `WEEK:` terisi secara dinamis dari data aktual.
+  3. **Sinkronisasi Reaktif:**
+     - Mengubah rentang tanggal atau week secara instan memperbarui 5 kartu KPI crimson, 8 diagram interaktif, serta tabel operasional di bawahnya.
+  4. **Reset Otomatis:**
+     - Tombol **`[ 🔄 Reset ]`** secara bersih mengosongkan kedua input tanggal serta mengembalikan seluruh filter dropdown ke status default.
+  5. **Pembaruan Service Worker:**
+     - Versi dinaikkan ke **`charging-ev-v14`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
@@ -213,7 +232,8 @@
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v13`
+   - **Service Worker Cache:** `charging-ev-v14`
+
 
 
 

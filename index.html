@@ -10074,14 +10074,18 @@ html.needs-login .sidebar-backdrop {
             </div>
           </div>
 
-          <!-- White Filter Bar (Date, Week, Shift, Lokasi, ID Unit, Status, Problem) -->
+          <!-- White Filter Bar (Date Range, Week, Shift, Lokasi, ID Unit, Status, Problem) -->
           <div class="ppa-filters-row">
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">DATE:</span>
-              <select id="ppaFilterDate" class="ppa-filter-item-control" style="min-width: 135px; font-weight:600;">
-                <option value="ALL">Semua Tanggal</option>
-              </select>
+              <span style="font-weight:700; font-size:11px; color:#555;">DARI:</span>
+              <input type="date" id="ppaFilterDateStart" class="ppa-filter-item-control" style="min-width: 122px; font-weight:600; padding: 2px 6px;" title="Filter Tanggal Mulai (Dari)">
             </div>
+
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-weight:700; font-size:11px; color:#555;">SAMPAI:</span>
+              <input type="date" id="ppaFilterDateEnd" class="ppa-filter-item-control" style="min-width: 122px; font-weight:600; padding: 2px 6px;" title="Filter Tanggal Selesai (Sampai)">
+            </div>
+            <select id="ppaFilterDate" style="display:none;"><option value="ALL">Semua Tanggal</option></select>
 
             <div style="display:flex; align-items:center; gap:4px;">
               <span style="font-weight:700; font-size:11px; color:#555;">WEEK:</span>
@@ -19591,6 +19595,20 @@ function normalizeDateStr(str) {
   return str;
 }
 
+function getIsoWeek(dateStr) {
+  if (!dateStr) return null;
+  const comp = (typeof parseDateComparable === 'function') ? parseDateComparable(dateStr) : dateStr;
+  if (!comp || typeof comp !== 'string' || !comp.includes('-')) return null;
+  const parts = comp.split('-');
+  if (parts.length < 3) return null;
+  const d = new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)));
+  if (isNaN(d.getTime())) return null;
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return 'W' + String(weekNo).padStart(2, '0');
+}
+
 function populatePpaDashboardFilters() {
   // 1. Populate Unit Filter
   const unitSelect = document.getElementById('ppaFilterUnit');
@@ -19609,24 +19627,20 @@ function populatePpaDashboardFilters() {
     unitSelect.value = prev;
   }
 
-  // 2. Populate Date Filter from actual swapsData
-  const dateSelect = document.getElementById('ppaFilterDate');
-  if (dateSelect) {
-    const prevDate = dateSelect.value || 'ALL';
-    dateSelect.innerHTML = '<option value="ALL">Semua Tanggal</option>';
-    const distinctDates = Array.from(new Set(swapsData.map(s => normalizeDateStr(s.date || s.dateDisplay)).filter(Boolean)));
-    distinctDates.sort((a, b) => {
-      const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a) : a;
-      const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b) : b;
-      return (db || '').localeCompare(da || '');
-    });
-    distinctDates.forEach(d => {
+  // 2. Populate Week Filter dynamically from actual swapsData
+  const weekSelect = document.getElementById('ppaFilterWeek');
+  if (weekSelect) {
+    const prevWeek = weekSelect.value || 'ALL';
+    const distinctWeeks = Array.from(new Set((swapsData || []).map(s => getIsoWeek(s.date || s.dateDisplay)).filter(Boolean)));
+    distinctWeeks.sort((a, b) => b.localeCompare(a));
+    weekSelect.innerHTML = '<option value="ALL">Semua Week</option>';
+    distinctWeeks.forEach(w => {
       const opt = document.createElement('option');
-      opt.value = d;
-      opt.textContent = d;
-      dateSelect.appendChild(opt);
+      opt.value = w;
+      opt.textContent = w;
+      weekSelect.appendChild(opt);
     });
-    dateSelect.value = prevDate;
+    weekSelect.value = prevWeek;
   }
 
   // 3. Populate Problem Filter from actual data
@@ -19663,28 +19677,68 @@ function initPpaDashboardControls() {
         const el = document.getElementById(id);
         if (el) el.value = 'ALL';
       });
+      const dStart = document.getElementById('ppaFilterDateStart');
+      const dEnd = document.getElementById('ppaFilterDateEnd');
+      if (dStart) { dStart.value = ''; dStart.removeAttribute('max'); }
+      if (dEnd) { dEnd.value = ''; dEnd.removeAttribute('min'); }
       ppaExecPage = 1;
       updatePpaExecutiveDashboard();
       if (typeof showToast === 'function') showToast('🔄 Filter dashboard di-reset ke Semua Data!', 'info');
     });
   }
 
-  // Bind change listeners to all filter controls
+  // Bind change listeners to select filter controls
   ['ppaFilterShift', 'ppaFilterLocation', 'ppaFilterStation', 'ppaFilterUnit', 'ppaFilterStatus', 'ppaFilterProblem', 'ppaFilterDate', 'ppaFilterWeek'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('change', () => {
+        if (id === 'ppaFilterWeek' && el.value !== 'ALL') {
+          const dStart = document.getElementById('ppaFilterDateStart');
+          const dEnd = document.getElementById('ppaFilterDateEnd');
+          if (dStart) dStart.value = '';
+          if (dEnd) dEnd.value = '';
+        }
         ppaExecPage = 1;
         updatePpaExecutiveDashboard();
       });
-      if (el.tagName === 'INPUT') {
-        el.addEventListener('input', () => {
-          ppaExecPage = 1;
-          updatePpaExecutiveDashboard();
-        });
-      }
     }
   });
+
+  // Date range inputs listener (Dari & Sampai)
+  const dateStartEl = document.getElementById('ppaFilterDateStart');
+  const dateEndEl = document.getElementById('ppaFilterDateEnd');
+  if (dateStartEl) {
+    dateStartEl.addEventListener('change', () => {
+      if (dateStartEl.value && dateEndEl && dateEndEl.value && dateStartEl.value > dateEndEl.value) {
+        dateEndEl.value = dateStartEl.value;
+      }
+      if (dateEndEl) dateEndEl.min = dateStartEl.value || '';
+      const wEl = document.getElementById('ppaFilterWeek');
+      if (wEl && dateStartEl.value) wEl.value = 'ALL';
+      ppaExecPage = 1;
+      updatePpaExecutiveDashboard();
+    });
+    dateStartEl.addEventListener('input', () => {
+      ppaExecPage = 1;
+      updatePpaExecutiveDashboard();
+    });
+  }
+  if (dateEndEl) {
+    dateEndEl.addEventListener('change', () => {
+      if (dateEndEl.value && dateStartEl && dateStartEl.value && dateEndEl.value < dateStartEl.value) {
+        dateStartEl.value = dateEndEl.value;
+      }
+      if (dateStartEl) dateStartEl.max = dateEndEl.value || '';
+      const wEl = document.getElementById('ppaFilterWeek');
+      if (wEl && dateEndEl.value) wEl.value = 'ALL';
+      ppaExecPage = 1;
+      updatePpaExecutiveDashboard();
+    });
+    dateEndEl.addEventListener('input', () => {
+      ppaExecPage = 1;
+      updatePpaExecutiveDashboard();
+    });
+  }
 
   // Table pagination buttons
   const btnPrev = document.getElementById('ppaTablePrev');
@@ -19755,6 +19809,9 @@ function updatePpaExecutiveDashboard() {
   const statusVal = document.getElementById('ppaFilterStatus')?.value || 'ALL';
   const probVal = document.getElementById('ppaFilterProblem')?.value || 'ALL';
   const dateVal = document.getElementById('ppaFilterDate')?.value || 'ALL';
+  const startDate = document.getElementById('ppaFilterDateStart')?.value || '';
+  const endDate = document.getElementById('ppaFilterDateEnd')?.value || '';
+  const weekVal = document.getElementById('ppaFilterWeek')?.value || 'ALL';
   const opMode = window.ppaOperationalMode || 'ALL';
 
   // Filter Data with robust normalization
@@ -19828,11 +19885,21 @@ function updatePpaExecutiveDashboard() {
       }
     }
 
-    // 6. Date filter (normalized comparison)
-    if (dateVal !== 'ALL') {
+    // 6. Date Range filter (Dari - Sampai)
+    if (startDate || endDate) {
+      const sComp = (typeof parseDateComparable === 'function') ? parseDateComparable(s.date || s.dateDisplay) : null;
+      if (startDate && (!sComp || sComp < startDate)) return false;
+      if (endDate && (!sComp || sComp > endDate)) return false;
+    } else if (dateVal !== 'ALL') {
       const sDateNorm = normalizeDateStr(s.date || s.dateDisplay);
       const dateValNorm = normalizeDateStr(dateVal);
       if (sDateNorm !== dateValNorm) return false;
+    }
+
+    // 7. Week filter
+    if (weekVal !== 'ALL') {
+      const sWeek = getIsoWeek(s.date || s.dateDisplay);
+      if (sWeek !== weekVal) return false;
     }
 
     return true;
