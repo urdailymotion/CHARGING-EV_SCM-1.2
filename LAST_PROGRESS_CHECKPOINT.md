@@ -222,17 +222,40 @@
   5. **Pembaruan Service Worker:**
      - Versi dinaikkan ke **`charging-ev-v14`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 13. 🎨 Pembaruan Logo Resmi PPA di Seluruh Komponen Aplikasi (28 September 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Pengguna menyediakan logo resmi PT Putra Perkasa Abadi (emblem pelari lingkaran merah dengan tipografi PPA tegas) untuk dipasang di seluruh titik identitas visual aplikasi.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Pemrosesan Aset Gambar Beresolusi Tinggi:**
+     - File gambar baru diproses ke format RGBA berlatar transparan bersih (`180 x 240`).
+     - Dibuat varian aset di folder `assets/`:
+       - `assets/logo_ppa.png` dan `assets/logo_ppa_hd.png` (Logo lengkap dengan teks PPA hitam).
+       - `assets/logo_ppa_circle.png` (Emblem lingkaran pelari merah 180x180 berlatar transparan).
+       - `assets/icon-192.png`, `assets/icon-512.png`, dan `assets/apple-touch-icon.png` (Ikon PWA & homescreen tajam dengan safe-zone padding).
+  2. **Pembaruan Layar Login (`index.html`):**
+     - Logo lingkaran pelari resmi dipasang pada `.ppa-circle-logo-badge` dengan efek drop-shadow elegan disandingkan dengan teks tebal "PPA" putih di atas banner *dark navy*.
+  3. **Pembaruan Topbar Header Aplikasi (`index.html`):**
+     - Komponen `.brand-circle-logo` di samping judul *SAFE & STRONG* kini menampilkan logo lingkaran resmi PPA berlatar putih bersih menggantikan ikon emoji statis `⚡`.
+  4. **Pembaruan Modul EV Intelligence (`intelligence.html` & Embedded String):**
+     - Komponen `.brand-mark img` dan kop cetak laporan PDF/Print (`#printLogo`) diperbarui menggunakan logo resmi PPA.
+     - String `window.INTELLIGENCE_HTML_SOURCE` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) disinkronkan penuh dengan *safe script escaping*.
+  5. **Pembaruan Cache PWA & Service Worker:**
+     - Cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dinaikkan ke versi **`charging-ev-v15`** dengan seluruh aset logo baru terdaftar ke dalam *pre-cache* agar langsung terunduh di HP/laptop pengguna.
+  6. **Deployment:**
+     - Berhasil dideploy ke Google Apps Script Production Versi 59 (`@59`) dan disinkronkan ke GitHub repository `main`.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
+   - **Versi Rilis:** `@59`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v14`
+   - **Service Worker Cache:** `charging-ev-v15`
 
 
 
