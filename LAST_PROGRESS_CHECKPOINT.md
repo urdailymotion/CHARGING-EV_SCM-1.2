@@ -261,19 +261,49 @@
       - File `netlify.toml` dan `_headers` dikonfigurasi dengan `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` untuk `/sw.js`, `/manifest.json`, dan `/index.html`.
       - Cache Service Worker pada sw.js dinaikkan ke versi **`charging-ev-v18`** dan manifest query string dinaikkan ke `?v=18`.
 
+#### 14. 💎 Redesain Visual KPI - Standar Desain EV Intelligence & Revisi Segmented Switcher (28 September 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Tampilan Visual KPI sebelumnya dinilai kurang profesional (terlalu banyak kombinasi warna dan ikon kartun).
+  - Pengguna meminta visual yang sejalan dengan standar desain **EV Intelligence** (`intelligence.html`), dengan palet warna enterprise dan tata letak yang bersih, elegan, dan informatif.
+  - Pengguna meminta revisi tombol switcher mode operasional menjadi `SCHEDULE` dan `NON SCHEDULE`, serta menghapus teks notice deskripsi di bawah tombol agar layout lebih ringkas.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Palet Warna & Tipografi EV Intelligence:**
+     - Menggunakan warna resmi EV Intelligence: Cobalt Blue (`#2563EB`), Corporate Navy (`#0F2747` / `#173A63`), Emerald Green (`#168A5B`), Golden Amber (`#D99000`), Petrol Cyan (`#287C8E`), dan Ruby Red (`#D64545`).
+     - Seluruh ikon emoji kartun dihapus dan digantikan micro-tag enterprise (`FLEET`, `TOTAL`, `CLEAN ENERGY`, `SLA < 8M`, `STATION`).
+  2. **5 Floating Stat Cards:**
+     - Kartu bernuansa putih bersih (`#ffffff`, border `#E4E7EC`, radius `10px`, hover elevation halus).
+     - Segmented workload bar stasiun swap dengan proporsi real-time ($S1: 46\%, S2: 54\%$).
+  3. **8 Diagram Telemetri BI:**
+     - Speedometer Gauge SLA dengan indikator Emerald Green & Ruby Red.
+     - Frekuensi Harian (Bar Cobalt Blue + Golden Amber moving average spline).
+     - Target vs Aktual Mingguan (Bar Cobalt Blue vs Target Muted).
+     - 24-Jam Pit Rush Hour (Kurva Petrol Cyan).
+     - Distribusi Beban Stasiun (Deep Navy vs Petrol Cyan vs Steel Blue).
+     - Top 10 EV Dump Truck Pareto (Cobalt Blue).
+     - Penyaluran Energi Bersih Harian (Emerald Green MWh).
+     - Analisis Kendala Root Cause Pareto (Multi-warna terstruktur).
+  4. **Tabel Riwayat Telemetri Modern:**
+     - Header abu-abu subtle (`#F8F9FA`), hover highlight halus, dan status pill (`ON SCHEDULE` hijau, `NON-SCHEDULE` cyan, `OUT OFF TIME` merah).
+  5. **Revisi Tombol & Penghapusan Notice:**
+     - Tombol switcher diperbarui menjadi: `[Semua Operasional]`, `[SCHEDULE]`, `[NON SCHEDULE]`.
+     - Teks deskripsi notice di bawahnya dihapus untuk menghasilkan tampilan yang jauh lebih bersih dan compact.
+  6. **Pembaruan Service Worker:**
+     - Versi dinaikkan ke **`charging-ev-v21`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@63`
+   - **Versi Rilis:** `@67`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v18`
-   - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml` (Instant PWA update v18)
+   - **Service Worker Cache:** `charging-ev-v21`
+   - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
 
 
 
