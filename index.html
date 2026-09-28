@@ -21445,7 +21445,7 @@ function renderDailyTable() {
           <td><span class="status-tag ontime">${s.statusRemark || 'On Time'}</span></td>
           <td style="color: #666;">${s.problemRemark || '13.NO PROBLEM'}</td>
           <td style="text-align: center;">
-            <button class="btn-tbl-action view" title="Preview Transaksi" onclick="previewRecord('${s.id}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="btn-tbl-action view" title="Preview Transaksi" onclick="previewRecord('${s.id}')"><svg class="ico-solid" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="vertical-align:-1px;"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></button>
           </td>
         </tr>
       `).join('');
@@ -24263,7 +24263,7 @@ function renderDbUsersTable() {
         <td style="text-align: center;">
           <div class="db-table-actions">
             <button type="button" class="btn-db-table-icon edit" title="Edit Data Pengguna" onclick="openDbUserModal('edit', '${u.nik}')"><svg class="ico-solid" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="vertical-align:-1px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
-            <button type="button" class="btn-db-table-icon delete" title="Hapus Pengguna" onclick="confirmDeleteDbUser('${u.nik}', '${u.name.replace(/'/g, "\\'")}')"><svg class="svg-ico" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            <button type="button" class="btn-db-table-icon delete" title="Hapus Pengguna" onclick="confirmDeleteDbUser('${u.nik}', '${u.name.replace(/'/g, "\\'")}')"><svg class="ico-solid" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="vertical-align:-1px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h2v8H8V9zm6 0h-2v8h2V9zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
           </div>
         </td>
       </tr>
