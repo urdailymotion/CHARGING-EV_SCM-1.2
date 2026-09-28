@@ -249,21 +249,31 @@
   8. **Suite Ikon PWA Lengkap & Pembersihan Duplikasi Tag Ikon:**
      - Ditemukan dan dibersihkan duplikasi tag `<link rel="icon" href="icon.svg">` dan `<link rel="apple-touch-icon" href="icon-192.png">` di baris 931-932 [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) yang menimpa ikon resmi.
      - Dibuat suite ikon lengkap: `icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png` (dengan safe-zone padding untuk Android Adaptive Icon), `apple-touch-icon.png` (180x180), `favicon-32x32.png`, dan `favicon-16x16.png` baik di folder `assets/` maupun di root directory sebagai fallback.
-     - Ditambahkan cache-busting query parameter `?v=17` pada `manifest.json`, icon link, dan Service Worker cache dinaikkan ke **`charging-ev-v17`**.
+     - Ditambahkan cache-busting query parameter `?v=17` pada `manifest.json`, icon link, dan Service Worker cache dinaikkan ke **`charging-ev-v18`**.
+
+---
+
+   9. **Pembaruan Desain Ikon PWA, Logo Kontras Tinggi, dan Sistem Anti-Cache v18:**
+      - Dibuat ulang aset logo resmi runner lingkaran PPA dengan transparansi sudut sempurna (`alpha = 0` pada 4 sudut luar lingkaran) dan antialiasing tepi melingkar halus pada `assets/logo_ppa_circle.png` (6.829 bytes).
+      - Pada Login Card Banner index.html, `.ppa-circle-logo-badge` kini menggunakan circular white badge (`background: #ffffff; border-radius: 50%; box-shadow: 0 4px 14px rgba(0,0,0,0.45);`) agar logo lingkaran merah PPA tampil kontras tinggi 100% dan sangat mencolok di atas latar belakang banner biru gelap.
+      - Seluruh rangkaian ikon PWA (`assets/icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.png`, `favicon.ico`) diregenerasi dengan backing putih kontras tinggi sesuai spesifikasi Google WebAPK & Android Adaptive Icons.
+      - **Instant Hard-Cache Purge:** Ditambahkan skrip deteksi build `2026.09.28.v18` di `<head>` index.html yang secara otomatis menghapus seluruh isi `CacheStorage` dan memaksa reload jika terdeteksi build lama di browser HP.
+      - File `netlify.toml` dan `_headers` dikonfigurasi dengan `Cache-Control: no-cache, no-store, must-revalidate, max-age=0` untuk `/sw.js`, `/manifest.json`, dan `/index.html`.
+      - Cache Service Worker pada sw.js dinaikkan ke versi **`charging-ev-v18`** dan manifest query string dinaikkan ke `?v=18`.
 
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@62`
+   - **Versi Rilis:** `@63`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v17`
-   - **Anti-Cache Headers:** Aktif via `_headers` Netlify (Instant PWA update)
+   - **Service Worker Cache:** `charging-ev-v18`
+   - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml` (Instant PWA update v18)
 
 
 

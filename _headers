@@ -1,16 +1,18 @@
 # Netlify Cache Control Headers for Instant PWA Updates
 /sw.js
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-  Expires: 0
-
-/index.html
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
   Pragma: no-cache
   Expires: 0
 
 /manifest.json
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
 
-/assets/*
-  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
+/*
+  X-Frame-Options: ALLOWALL
