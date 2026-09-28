@@ -10302,11 +10302,11 @@ html.needs-login .sidebar-backdrop {
           </div>
 
           <!-- Controls Wrapper: Segmented Switcher & Quick Presets -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
             <div class="ppa-opmode-pills">
               <button type="button" class="ppa-opmode-btn active" id="btnPpaModeAll" onclick="setPpaOperationalMode('ALL')">Semua Operasional</button>
-              <button type="button" class="ppa-opmode-btn" id="btnPpaModeScheduled" onclick="setPpaOperationalMode('SCHEDULED')">Terjadwal (ROOM A1)</button>
-              <button type="button" class="ppa-opmode-btn" id="btnPpaModeOnDemand" onclick="setPpaOperationalMode('ON_DEMAND')">On-Demand (ROOM A2)</button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeScheduled" onclick="setPpaOperationalMode('SCHEDULED')">SCHEDULE</button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeOnDemand" onclick="setPpaOperationalMode('ON_DEMAND')">NON SCHEDULE</button>
             </div>
 
             <div class="ppa-quick-presets-row" style="margin: 0;">
@@ -10317,10 +10317,6 @@ html.needs-login .sidebar-backdrop {
               <button type="button" class="ppa-preset-chip" id="ppaPresetMonth" onclick="setPpaDatePreset('MONTH')">Bulan Ini</button>
               <button type="button" id="btnResetPpaFilters" class="ppa-preset-chip" style="color: #667085; font-weight: 600;" title="Reset semua filter ke default">Reset Filter</button>
             </div>
-          </div>
-
-          <div id="ppaModeDescriptionNotice" style="font-size: 11.5px; font-weight: 600; color: #667085; margin-bottom: 16px;">
-            Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)
           </div>
 
           <!-- White Filter Bar (Date Range, Week, Shift, Lokasi, ID Unit, Status, Problem) -->
@@ -20173,28 +20169,15 @@ window.setPpaOperationalMode = function(mode) {
   const btnAll = document.getElementById('btnPpaModeAll');
   const btnSch = document.getElementById('btnPpaModeScheduled');
   const btnOd = document.getElementById('btnPpaModeOnDemand');
-  const noticeEl = document.getElementById('ppaModeDescriptionNotice');
 
   [btnAll, btnSch, btnOd].forEach(b => { if (b) b.classList.remove('active'); });
 
   if (mode === 'SCHEDULED') {
     if (btnSch) btnSch.classList.add('active');
-    if (noticeEl) {
-      noticeEl.innerHTML = '<strong>Fokus Operasional Terjadwal (ROOM A1)</strong> — Memantau kepatuhan jam &amp; ketepatan waktu armada';
-      noticeEl.style.color = '#2563EB';
-    }
   } else if (mode === 'ON_DEMAND') {
     if (btnOd) btnOd.classList.add('active');
-    if (noticeEl) {
-      noticeEl.innerHTML = '<strong>Fokus Operasional On-Demand (ROOM A2)</strong> — Memantau swap insidentil, baterai drop &amp; fleksibel';
-      noticeEl.style.color = '#287C8E';
-    }
   } else {
     if (btnAll) btnAll.classList.add('active');
-    if (noticeEl) {
-      noticeEl.innerHTML = 'Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)';
-      noticeEl.style.color = '#667085';
-    }
   }
 
   updatePpaExecutiveDashboard();
@@ -20470,7 +20453,7 @@ function updatePpaExecutiveDashboard() {
   }
 
   if (kpiAvg) kpiAvg.textContent = avgUsage;
-  if (lbl1) lbl1.textContent = opMode === 'SCHEDULED' ? 'Armada Terjadwal (A1)' : (opMode === 'ON_DEMAND' ? 'Armada Bebas (A2)' : 'Armada EV Aktif');
+  if (lbl1) lbl1.textContent = opMode === 'SCHEDULED' ? 'Armada Schedule' : (opMode === 'ON_DEMAND' ? 'Armada Non-Schedule' : 'Armada EV Aktif');
   if (lbl2) lbl2.textContent = 'Throughput Swap';
   if (lbl3) lbl3.textContent = 'Green Mining & ESG';
   if (lbl5) lbl5.textContent = 'Rata-Rata Durasi';
@@ -20507,7 +20490,7 @@ function renderChartKetepatan() {
   let centerSub = 'ON-TIME SLA';
 
   if (opMode === 'SCHEDULED') {
-    if (titleEl) titleEl.textContent = 'Ach Ketepatan Sch (ROOM A1)';
+    if (titleEl) titleEl.textContent = 'Ach Ketepatan Schedule';
     const onTimeCount = ppaFilteredSwaps.filter(s => {
       const st = String(s.statusRemark || 'On Time').trim().toUpperCase();
       return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
@@ -20522,7 +20505,7 @@ function renderChartKetepatan() {
     centerSub = 'SLA TARGET 95%';
     if (badgeEl) badgeEl.textContent = `SLA: ${centerVal}`;
   } else if (opMode === 'ON_DEMAND') {
-    if (titleEl) titleEl.textContent = 'Kondisi Baterai Masuk (ROOM A2)';
+    if (titleEl) titleEl.textContent = 'Kondisi Baterai Masuk (Non-Schedule)';
     let normalCount = 0;
     let lowCount = 0;
     ppaFilteredSwaps.forEach(s => {
