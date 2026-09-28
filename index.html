@@ -2596,8 +2596,37 @@ body {
 }
 
 /* ==========================================================================
-   PPA VISUAL KPI - EXECUTIVE BUSINESS INTELLIGENCE REDESIGN (PowerBI Style)
+   PPA VISUAL KPI - EV INTELLIGENCE DESIGN SYSTEM (Site BIB)
    ========================================================================== */
+
+/* Segmented Operational Mode Pills */
+.ppa-opmode-pills {
+  display: inline-flex;
+  background: #EAECF0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.ppa-opmode-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #344054;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ppa-opmode-btn.active {
+  background: #ffffff !important;
+  color: #0F2747 !important;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+}
 
 /* Quick Date Presets Row */
 .ppa-quick-presets-row {
@@ -2605,45 +2634,39 @@ body {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  margin: 6px 0 10px 0;
+  margin: 10px 0 14px 0;
 }
 
 .ppa-preset-chip {
   padding: 5px 12px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid #E4E7EC;
   background: #ffffff;
-  color: #475569;
+  color: #344054;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  transition: all 0.15s ease;
 }
 
 .ppa-preset-chip:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
-  transform: translateY(-1px);
+  border-color: #2563EB;
+  color: #2563EB;
 }
 
 .ppa-preset-chip.active {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  border-color: #0284c7;
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+  background: #EDF3FC;
+  color: #2563EB;
+  border-color: #2563EB;
+  font-weight: 700;
 }
 
 /* 5 Modern Executive KPI Stat Cards */
 .ppa-kpi-cards-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 @media (max-width: 1300px) {
@@ -2653,87 +2676,104 @@ body {
 }
 
 .ppa-kpi-card {
-  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #E4E7EC;
   border-radius: 10px;
-  padding: 12px 14px;
-  color: #ffffff;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
 }
 
 .ppa-kpi-card:hover {
+  border-color: #2563EB;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
-  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
 }
 
 .ppa-kpi-card-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .ppa-kpi-card-title {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  letter-spacing: 0.06em;
+  color: #667085;
 }
 
-.ppa-kpi-card-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
+.kpi-tag-ev {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
+
+.tag-blue { background: #EDF3FC; color: #2563EB; }
+.tag-green { background: #EAF6F0; color: #168A5B; }
+.tag-amber { background: #FFF6E5; color: #D99000; }
+.tag-cyan { background: #E6F3F5; color: #287C8E; }
+.tag-navy { background: #EDF3FC; color: #0F2747; }
 
 .ppa-kpi-card-value-row {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .ppa-kpi-card-number {
-  font-size: 23px;
-  font-weight: 900;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 27px;
+  font-weight: 800;
   line-height: 1;
-  color: #ffffff;
-  font-family: var(--font-main);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  color: #172033;
 }
 
 .ppa-kpi-card-unit {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #667085;
 }
 
 .ppa-kpi-card-subtext {
-  font-size: 10.5px;
-  color: #cbd5e1;
+  font-size: 11.5px;
+  color: #344054;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
-  line-height: 1.3;
+  margin-top: auto;
+}
+
+.ppa-dot-pulse-green {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #168A5B;
+  box-shadow: 0 0 0 2px #EAF6F0;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ppa-dot-pulse-blue {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2563EB;
+  box-shadow: 0 0 0 2px #EDF3FC;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 /* Badges and Indicators */
@@ -2743,10 +2783,10 @@ body {
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 9.5px;
-  font-weight: 800;
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-weight: 700;
+  background: #EAF6F0;
+  color: #168A5B;
+  border: 1px solid rgba(22, 138, 91, 0.25);
 }
 
 .badge-sla-ok {
@@ -2755,20 +2795,10 @@ body {
   padding: 1px 6px;
   border-radius: 4px;
   font-size: 9.5px;
-  font-weight: 800;
-  background: rgba(14, 165, 233, 0.2);
-  color: #38bdf8;
-  border: 1px solid rgba(14, 165, 233, 0.35);
-}
-
-.ppa-dot-pulse-green {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-  display: inline-block;
-  flex-shrink: 0;
+  font-weight: 700;
+  background: #FFF6E5;
+  color: #D99000;
+  border: 1px solid rgba(217, 144, 0, 0.25);
 }
 
 /* Workload Segmented Bar in Card 5 */
@@ -2776,22 +2806,22 @@ body {
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.12);
+  background: #F2F4F7;
   display: flex;
   overflow: hidden;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
-.ppa-workload-seg-1 { background: #0284c7; height: 100%; transition: width 0.3s; }
-.ppa-workload-seg-2 { background: #10b981; height: 100%; transition: width 0.3s; }
-.ppa-workload-seg-3 { background: #8b5cf6; height: 100%; transition: width 0.3s; }
+.ppa-workload-seg-1 { background: #173A63; height: 100%; transition: width 0.3s; }
+.ppa-workload-seg-2 { background: #287C8E; height: 100%; transition: width 0.3s; }
+.ppa-workload-seg-3 { background: #5284AC; height: 100%; transition: width 0.3s; }
 
 /* 8 BI Charts Grid */
 .ppa-charts-quad-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 @media (max-width: 1280px) {
@@ -2808,47 +2838,50 @@ body {
 
 .ppa-chart-card-box {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E4E7EC;
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .ppa-chart-card-box:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
+  border-color: #2563EB;
 }
 
 .ppa-chart-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   gap: 6px;
 }
 
 .ppa-chart-title-modern {
-  font-size: 12px;
-  font-weight: 800;
-  color: #1e293b;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #172033;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .ppa-chart-badge-tag {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: #F8F9FA;
+  color: #667085;
+  border: 1px solid #E4E7EC;
   white-space: nowrap;
 }
 
@@ -2858,45 +2891,79 @@ body {
   height: 185px;
 }
 
-/* Detail Table with Professional Header */
-/* Detail Table with Bright Royal Blue Header */
+/* Detail Table with Clean EV Intelligence Header */
 .ppa-exec-table-box {
   background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid #E4E7EC;
+  border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  margin-bottom: 16px;
 }
 
 .ppa-exec-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .ppa-exec-table th {
-  background: #1976d2;
-  color: #ffffff;
+  background: #F8F9FA;
+  color: #667085;
   font-weight: 700;
-  padding: 8px 10px;
-  border: 1px solid #1565c0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border-bottom: 1px solid #E4E7EC;
+  border-top: none;
+  border-left: none;
+  border-right: none;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 10.5px;
   text-align: center;
   vertical-align: middle;
 }
 
 .ppa-exec-table td {
-  padding: 6px 10px;
-  border: 1px solid #e0e0e0;
-  color: #333333;
+  padding: 10px 14px;
+  border-bottom: 1px solid #E4E7EC;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: #172033;
   white-space: nowrap;
   text-align: center;
   vertical-align: middle;
 }
 
-.ppa-exec-table tbody tr:nth-child(even) {
-  background: #f8fafc;
+.ppa-exec-table tbody tr:hover td {
+  background: #F8F9FA;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.pill-green { background: #EAF6F0; color: #168A5B; border: 1px solid rgba(22, 138, 91, 0.2); }
+.pill-cyan { background: #E6F3F5; color: #287C8E; border: 1px solid rgba(40, 124, 142, 0.2); }
+.pill-red { background: #FDEEEE; color: #D64545; border: 1px solid rgba(214, 69, 69, 0.2); }
+
+.unit-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #0F2747;
+}
+
+.energy-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #2563EB;
 }
 
 /* PPA Footer Banner Ribbon */
@@ -10218,68 +10285,60 @@ html.needs-login .sidebar-backdrop {
       <div id="viewAnalyticsDashboard" style="display: none;">
         
         <!-- PPA EXECUTIVE DASHBOARD WRAPPER -->
-        <div class="ppa-dashboard-wrapper">
+        <div class="ppa-dashboard-wrapper" style="padding: 10px 0;">
           
-          <!-- Banner Title with Red/Black Ribbons -->
-          <div class="ppa-banner-title-box">
-            <div class="ppa-decor-bar-left">
-              <div class="d-red"></div>
-              <div class="d-black"></div>
+          <!-- Top Header Section (EV Intelligence Style) -->
+          <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 1px solid #E4E7EC;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: #0F2747; color: #ffffff; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">EV INTELLIGENCE</span>
+              <div>
+                <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #172033;">Monitoring Ketepatan Schedule Swab</div>
+                <div style="font-size: 12px; color: #667085; font-weight: 500;">Pit Mining Fleet &amp; Station Telemetry Intelligence • Site BIB</div>
+              </div>
             </div>
-            <h2 class="ppa-dashboard-main-title">DASHBOARD MONITORING KETEPATAN SCH SWAB</h2>
-            <div class="ppa-decor-bar-right">
-              <div class="d-black"></div>
-              <div class="d-red"></div>
-            </div>
-          </div>
-
-          <!-- Segmented Operational Mode Switcher: ALL vs SCHEDULED vs ON-DEMAND -->
-          <div class="ppa-opmode-switcher-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 12px 0 14px 0; gap: 6px;">
-            <div class="ppa-opmode-pills" style="display: inline-flex; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 9999px; padding: 4px; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); max-width: 100%; overflow-x: auto;">
-              <button type="button" class="ppa-opmode-btn active" id="btnPpaModeAll" onclick="setPpaOperationalMode('ALL')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; box-shadow: 0 2px 5px rgba(15,23,42,0.25); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                🌐 Semua Operasional (Overview)
-              </button>
-              <button type="button" class="ppa-opmode-btn" id="btnPpaModeScheduled" onclick="setPpaOperationalMode('SCHEDULED')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                🎯 Terjadwal / Scheduled (ROOM A1)
-              </button>
-              <button type="button" class="ppa-opmode-btn" id="btnPpaModeOnDemand" onclick="setPpaOperationalMode('ON_DEMAND')" style="padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                ⚡ On-Demand / Bebas Jadwal (ROOM A2)
-              </button>
-            </div>
-            <div id="ppaModeDescriptionNotice" style="font-size: 11.5px; font-weight: 600; color: #64748b; text-align: center;">
-              Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)
+            <div>
+              <span style="font-size: 11.5px; color: #667085; font-weight: 600;">Status: Real-time Live Synchronized</span>
             </div>
           </div>
 
-          <!-- Quick Date Presets Toolbar -->
-          <div class="ppa-quick-presets-row">
-            <span style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 2px;">⚡ Periode Cepat:</span>
-            <button type="button" class="ppa-preset-chip active" id="ppaPresetAll" onclick="setPpaDatePreset('ALL')">🌐 Semua Data</button>
-            <button type="button" class="ppa-preset-chip" id="ppaPresetToday" onclick="setPpaDatePreset('TODAY')">📅 Hari Ini</button>
-            <button type="button" class="ppa-preset-chip" id="ppaPreset7d" onclick="setPpaDatePreset('7D')">⏱️ 7 Hari Terakhir</button>
-            <button type="button" class="ppa-preset-chip" id="ppaPresetMonth" onclick="setPpaDatePreset('MONTH')">📊 Bulan Ini</button>
-            <span style="flex: 1;"></span>
-            <button type="button" id="btnResetPpaFilters" class="btn btn-sm btn-outline-secondary" style="font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; cursor:pointer;" title="Reset semua filter ke default">
-              🔄 Reset Filter
-            </button>
+          <!-- Controls Wrapper: Segmented Switcher & Quick Presets -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+            <div class="ppa-opmode-pills">
+              <button type="button" class="ppa-opmode-btn active" id="btnPpaModeAll" onclick="setPpaOperationalMode('ALL')">Semua Operasional</button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeScheduled" onclick="setPpaOperationalMode('SCHEDULED')">Terjadwal (ROOM A1)</button>
+              <button type="button" class="ppa-opmode-btn" id="btnPpaModeOnDemand" onclick="setPpaOperationalMode('ON_DEMAND')">On-Demand (ROOM A2)</button>
+            </div>
+
+            <div class="ppa-quick-presets-row" style="margin: 0;">
+              <span style="font-size: 11.5px; font-weight: 700; color: #667085; margin-right: 4px;">Periode:</span>
+              <button type="button" class="ppa-preset-chip active" id="ppaPresetAll" onclick="setPpaDatePreset('ALL')">Semua Data</button>
+              <button type="button" class="ppa-preset-chip" id="ppaPresetToday" onclick="setPpaDatePreset('TODAY')">Hari Ini</button>
+              <button type="button" class="ppa-preset-chip" id="ppaPreset7d" onclick="setPpaDatePreset('7D')">7 Hari Terakhir</button>
+              <button type="button" class="ppa-preset-chip" id="ppaPresetMonth" onclick="setPpaDatePreset('MONTH')">Bulan Ini</button>
+              <button type="button" id="btnResetPpaFilters" class="ppa-preset-chip" style="color: #667085; font-weight: 600;" title="Reset semua filter ke default">Reset Filter</button>
+            </div>
+          </div>
+
+          <div id="ppaModeDescriptionNotice" style="font-size: 11.5px; font-weight: 600; color: #667085; margin-bottom: 16px;">
+            Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)
           </div>
 
           <!-- White Filter Bar (Date Range, Week, Shift, Lokasi, ID Unit, Status, Problem) -->
-          <div class="ppa-filters-row">
+          <div class="ppa-filters-row" style="display: flex; flex-wrap: wrap; gap: 10px; background: #ffffff; border: 1px solid #E4E7EC; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03); align-items: center;">
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">DARI:</span>
-              <input type="date" id="ppaFilterDateStart" class="ppa-filter-item-control" style="min-width: 122px; font-weight:600; padding: 2px 6px;" title="Filter Tanggal Mulai (Dari)">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">DARI:</span>
+              <input type="date" id="ppaFilterDateStart" class="ppa-filter-item-control" style="min-width: 122px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;" title="Filter Tanggal Mulai (Dari)">
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">SAMPAI:</span>
-              <input type="date" id="ppaFilterDateEnd" class="ppa-filter-item-control" style="min-width: 122px; font-weight:600; padding: 2px 6px;" title="Filter Tanggal Selesai (Sampai)">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">SAMPAI:</span>
+              <input type="date" id="ppaFilterDateEnd" class="ppa-filter-item-control" style="min-width: 122px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;" title="Filter Tanggal Selesai (Sampai)">
             </div>
             <select id="ppaFilterDate" style="display:none;"><option value="ALL">Semua Tanggal</option></select>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">WEEK:</span>
-              <select id="ppaFilterWeek" class="ppa-filter-item-control" style="min-width: 80px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">WEEK:</span>
+              <select id="ppaFilterWeek" class="ppa-filter-item-control" style="min-width: 80px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Week</option>
                 <option value="W37">W37</option>
                 <option value="W36">W36</option>
@@ -10287,8 +10346,8 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">Shift:</span>
-              <select id="ppaFilterShift" class="ppa-filter-item-control" style="min-width: 90px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">SHIFT:</span>
+              <select id="ppaFilterShift" class="ppa-filter-item-control" style="min-width: 90px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Shift</option>
                 <option value="1">Shift 1</option>
                 <option value="2">Shift 2</option>
@@ -10296,8 +10355,8 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">Lokasi:</span>
-              <select id="ppaFilterLocation" class="ppa-filter-item-control" style="min-width: 90px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">LOKASI:</span>
+              <select id="ppaFilterLocation" class="ppa-filter-item-control" style="min-width: 90px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Lokasi</option>
                 <option value="ROOM A1">ROOM A1</option>
                 <option value="ROOM A2">ROOM A2</option>
@@ -10307,8 +10366,8 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">Mesin:</span>
-              <select id="ppaFilterStation" class="ppa-filter-item-control" style="min-width: 90px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">MESIN:</span>
+              <select id="ppaFilterStation" class="ppa-filter-item-control" style="min-width: 90px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Mesin</option>
                 <option value="SWAP 01">SWAP 01</option>
                 <option value="SWAP 02">SWAP 02</option>
@@ -10317,15 +10376,15 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">ID unit:</span>
-              <select id="ppaFilterUnit" class="ppa-filter-item-control" style="min-width: 95px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">ID UNIT:</span>
+              <select id="ppaFilterUnit" class="ppa-filter-item-control" style="min-width: 95px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Unit</option>
               </select>
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">Status:</span>
-              <select id="ppaFilterStatus" class="ppa-filter-item-control" style="min-width: 90px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">STATUS:</span>
+              <select id="ppaFilterStatus" class="ppa-filter-item-control" style="min-width: 90px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Status</option>
                 <option value="On Time">On Time</option>
                 <option value="Out Off Time">Out Off Time</option>
@@ -10334,8 +10393,8 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-weight:700; font-size:11px; color:#555;">Problem:</span>
-              <select id="ppaFilterProblem" class="ppa-filter-item-control" style="min-width: 120px;">
+              <span style="font-weight:700; font-size:10.5px; color:#667085; text-transform:uppercase;">PROBLEM:</span>
+              <select id="ppaFilterProblem" class="ppa-filter-item-control" style="min-width: 120px; font-weight:500; padding: 3px 8px; border: 1px solid #E4E7EC; border-radius: 6px; font-size: 12px;">
                 <option value="ALL">Semua Problem</option>
                 <option value="13.NO PROBLEM">13.NO PROBLEM</option>
                 <option value="15.BATTERY LOW POWER">15.BATTERY LOW POWER</option>
@@ -10344,21 +10403,21 @@ html.needs-login .sidebar-backdrop {
             </div>
           </div>
 
-          <!-- 5 Executive KPI Stat Cards (PowerBI Executive BI Style) -->
+          <!-- 5 Executive KPI Stat Cards in EV Intelligence Palette -->
           <div class="ppa-kpi-cards-grid">
             <!-- Card 1: Fleet Availability -->
             <div class="ppa-kpi-card">
               <div class="ppa-kpi-card-header">
                 <span class="ppa-kpi-card-title" id="ppaKpiLabel1">Armada EV Aktif</span>
-                <div class="ppa-kpi-card-icon">🚛</div>
+                <span class="kpi-tag-ev tag-blue">FLEET</span>
               </div>
               <div class="ppa-kpi-card-value-row">
-                <span class="ppa-kpi-card-number" id="ppaKpiTotalUnit">56</span>
+                <span class="ppa-kpi-card-number" id="ppaKpiTotalUnit">60</span>
                 <span class="ppa-kpi-card-unit" id="ppaKpiUnitFleetMax">/ 60 UNIT</span>
               </div>
               <div class="ppa-kpi-card-subtext">
                 <span class="ppa-dot-pulse-green"></span>
-                <span id="ppaKpiUnitSub">93.3% Aktif di Operasional</span>
+                <span id="ppaKpiUnitSub">100% Aktif di Operasional</span>
               </div>
             </div>
 
@@ -10366,14 +10425,14 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-kpi-card">
               <div class="ppa-kpi-card-header">
                 <span class="ppa-kpi-card-title" id="ppaKpiLabel2">Throughput Swap</span>
-                <div class="ppa-kpi-card-icon">🔄</div>
+                <span class="kpi-tag-ev tag-navy">TOTAL</span>
               </div>
               <div class="ppa-kpi-card-value-row">
-                <span class="ppa-kpi-card-number" id="ppaKpiFreqSwab">173</span>
-                <span class="ppa-kpi-card-unit">SWAP</span>
+                <span class="ppa-kpi-card-number" id="ppaKpiFreqSwab">0</span>
+                <span class="ppa-kpi-card-unit">SWAPS</span>
               </div>
               <div class="ppa-kpi-card-subtext">
-                <span id="ppaKpiFreqSub">Rata-rata 24.7 swap/hari</span>
+                <span id="ppaKpiFreqSub">Rata-rata 0 swap/hari</span>
               </div>
             </div>
 
@@ -10381,15 +10440,15 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-kpi-card">
               <div class="ppa-kpi-card-header">
                 <span class="ppa-kpi-card-title" id="ppaKpiLabel3">Green Mining &amp; ESG</span>
-                <div class="ppa-kpi-card-icon">🌱</div>
+                <span class="kpi-tag-ev tag-green">CLEAN ENERGY</span>
               </div>
               <div class="ppa-kpi-card-value-row">
-                <span class="ppa-kpi-card-number" id="ppaKpiTotalEnergy">53.3</span>
+                <span class="ppa-kpi-card-number" id="ppaKpiTotalEnergy">0.0</span>
                 <span class="ppa-kpi-card-unit" id="ppaKpiEnergyUnitText">MWh</span>
               </div>
               <div class="ppa-kpi-card-subtext">
-                <span class="badge-trend-up" id="ppaKpiDieselSaved">⛽ Hemat 15.3k L Solar</span>
-                <span id="ppaKpiCo2Saved" style="font-size: 9.5px; color: #94a3b8;">· 41.2 Ton CO₂</span>
+                <span id="ppaKpiDieselSaved" style="color: #168A5B; font-weight: 600;">Hemat 0 L Solar</span>
+                <span id="ppaKpiCo2Saved" style="color: #667085; font-size: 11px;">• 0 Ton CO₂</span>
               </div>
             </div>
 
@@ -10397,39 +10456,39 @@ html.needs-login .sidebar-backdrop {
             <div class="ppa-kpi-card">
               <div class="ppa-kpi-card-header">
                 <span class="ppa-kpi-card-title" id="ppaKpiLabel5">Rata-Rata Durasi</span>
-                <div class="ppa-kpi-card-icon">⏱️</div>
+                <span class="kpi-tag-ev tag-amber">SLA &lt; 8M</span>
               </div>
               <div class="ppa-kpi-card-value-row">
-                <span class="ppa-kpi-card-number" id="ppaKpiChargingTime">6.18</span>
+                <span class="ppa-kpi-card-number" id="ppaKpiChargingTime">0.00</span>
                 <span class="ppa-kpi-card-unit">MENIT</span>
               </div>
               <div class="ppa-kpi-card-subtext">
-                <span class="badge-sla-ok" id="ppaKpiSlaSub">⚡ Target &lt; 8.0 min (OK)</span>
-                <span id="ppaKpiAvgUsage" style="display:none;">308.12</span>
-                <span id="ppaKpiLabel4" style="display:none;">Average Usage</span>
+                <span class="badge-sla-ok" id="ppaKpiSlaSub">Target &lt; 8.0 min (OK)</span>
+                <span id="ppaKpiAvgUsage" style="display:none;"></span>
+                <span id="ppaKpiLabel4" style="display:none;"></span>
               </div>
             </div>
 
             <!-- Card 5: Workload Balance Mesin Swap -->
             <div class="ppa-kpi-card">
               <div class="ppa-kpi-card-header">
-                <span class="ppa-kpi-card-title">Beban Mesin Swap</span>
-                <div class="ppa-kpi-card-icon">⚙️</div>
+                <span class="ppa-kpi-card-title">Beban Stasiun</span>
+                <span class="kpi-tag-ev tag-cyan">STATION</span>
               </div>
               <div class="ppa-kpi-card-value-row">
-                <span class="ppa-kpi-card-number" id="ppaKpiActiveStationsCount">3</span>
+                <span class="ppa-kpi-card-number" id="ppaKpiActiveStationsCount">2</span>
                 <span class="ppa-kpi-card-unit">STATION</span>
               </div>
               <div>
                 <div class="ppa-workload-bar-wrap">
-                  <div id="ppaWkBar01" class="ppa-workload-seg-1" style="width: 52%;" title="SWAP 01"></div>
-                  <div id="ppaWkBar02" class="ppa-workload-seg-2" style="width: 48%;" title="SWAP 02"></div>
+                  <div id="ppaWkBar01" class="ppa-workload-seg-1" style="width: 50%;" title="SWAP 01"></div>
+                  <div id="ppaWkBar02" class="ppa-workload-seg-2" style="width: 50%;" title="SWAP 02"></div>
                   <div id="ppaWkBar03" class="ppa-workload-seg-3" style="width: 0%;" title="SWAP 03"></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: #cbd5e1; margin-top: 3px;">
-                  <span>S1: <b id="ppaKpiWk01">52%</b></span>
-                  <span>S2: <b id="ppaKpiWk02">48%</b></span>
-                  <span>S3: <b id="ppaKpiWk03">0%</b></span>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #667085; font-weight: 600; margin-top: 4px;">
+                  <span>S1: <b id="ppaKpiWk01" style="color: #0F2747;">50%</b></span>
+                  <span>S2: <b id="ppaKpiWk02" style="color: #287C8E;">50%</b></span>
+                  <span>S3: <b id="ppaKpiWk03" style="color: #5284AC;">0%</b></span>
                 </div>
               </div>
             </div>
@@ -10440,7 +10499,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 1: Ach Ketepatan Sch Swab -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern" id="ppaChartTitleKetepatan">🎯 Ach Ketepatan Sch Swab</span>
+                <span class="ppa-chart-title-modern" id="ppaChartTitleKetepatan">Ach Ketepatan Sch Swab</span>
                 <span class="ppa-chart-badge-tag" id="ppaKpiSlaBadge">SLA TARGET 95%</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10451,7 +10510,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 2: Trend Frekuensi Swab (Daily) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">📊 Frekuensi Swab Harian</span>
+                <span class="ppa-chart-title-modern">Frekuensi Swab Harian</span>
                 <span class="ppa-chart-badge-tag">VOLUME &amp; MOVING AVG</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10462,7 +10521,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 3: Trend Ach Frekuensi Swab (Weekly) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">📅 Target vs Aktual Mingguan</span>
+                <span class="ppa-chart-title-modern">Target vs Aktual Mingguan</span>
                 <span class="ppa-chart-badge-tag">WEEKLY SPRINT</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10473,7 +10532,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 4: 24-Hour Peak Swap Rush Hour -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">⏰ 24-Jam Peak Swap Rush Hour</span>
+                <span class="ppa-chart-title-modern">24-Jam Peak Swap Rush Hour</span>
                 <span class="ppa-chart-badge-tag">PIT BOTTLENECK</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10487,7 +10546,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 5: Swab Station & Room Workload -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">⚖️ Distribusi Beban Stasiun</span>
+                <span class="ppa-chart-title-modern">Distribusi Beban Stasiun</span>
                 <span class="ppa-chart-badge-tag">A1 VS A2 / STATION</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10498,7 +10557,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 6: Top 10 Haul Trucks by Energy -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">🚛 Top 10 Armada EV Konsumsi Energi</span>
+                <span class="ppa-chart-title-modern">Top 10 Armada EV Konsumsi Energi</span>
                 <span class="ppa-chart-badge-tag">PARETO KWH</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10509,7 +10568,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 7: Trend Energi Bersih Harian -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">🌱 Penyaluran Energi Bersih Harian</span>
+                <span class="ppa-chart-title-modern">Penyaluran Energi Bersih Harian</span>
                 <span class="ppa-chart-badge-tag">GREEN MWH</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10520,7 +10579,7 @@ html.needs-login .sidebar-backdrop {
             <!-- Chart 8: Pareto Analisis Problem Log -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">⚠️ Analisis Kendala &amp; Problem Log</span>
+                <span class="ppa-chart-title-modern">Analisis Kendala &amp; Problem Log</span>
                 <span class="ppa-chart-badge-tag">ROOT CAUSE</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -10529,21 +10588,21 @@ html.needs-login .sidebar-backdrop {
             </div>
           </div>
 
-          <!-- Detailed Table Section -->
+          <!-- Detailed Table Section (EV Intelligence Style) -->
           <div class="ppa-exec-table-box">
             <div style="overflow-x: auto;">
               <table class="ppa-exec-table">
                 <thead>
                   <tr>
-                    <th style="text-align: center;">DATE</th>
-                    <th style="text-align: center;">SHIFT</th>
-                    <th style="text-align: center;">CATEGORY</th>
-                    <th style="text-align: center;">KODE UNIT</th>
-                    <th style="text-align: center;">SCHEDULE SWAP</th>
-                    <th style="text-align: center;">TIME AKTUAL SWAP</th>
-                    <th style="text-align: center;">RESUME KETEPATAN</th>
-                    <th style="text-align: center;">KETERANGAN</th>
-                    <th style="text-align: center;">ENERGY (KWH)</th>
+                    <th>DATE</th>
+                    <th>SHIFT</th>
+                    <th>CATEGORY</th>
+                    <th>KODE UNIT</th>
+                    <th>SCHEDULE SWAP</th>
+                    <th>TIME AKTUAL SWAP</th>
+                    <th>RESUME KETEPATAN</th>
+                    <th>KETERANGAN</th>
+                    <th>ENERGY (KWH)</th>
                   </tr>
                 </thead>
                 <tbody id="ppaExecTableBody">
@@ -10551,11 +10610,11 @@ html.needs-login .sidebar-backdrop {
                 </tbody>
               </table>
             </div>
-            <div style="padding: 6px 12px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 11px; color: #666; background: #fff; border-top: 1px solid #e0e0e0;">
+            <div style="padding: 10px 18px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 11.5px; color: #667085; background: #ffffff; border-top: 1px solid #E4E7EC;">
               <span id="ppaTableRangeText">1 - 10 / 173</span>
               <div style="display: flex; gap: 4px;">
-                <button class="btn-tbl-action" id="ppaTablePrev" style="width: 22px; height: 22px;">&lt;</button>
-                <button class="btn-tbl-action" id="ppaTableNext" style="width: 22px; height: 22px;">&gt;</button>
+                <button class="btn-tbl-action" id="ppaTablePrev" style="width: 26px; height: 26px; border: 1px solid #E4E7EC; background: #ffffff; border-radius: 4px; cursor: pointer; color: #344054;">&lt;</button>
+                <button class="btn-tbl-action" id="ppaTableNext" style="width: 26px; height: 26px; border: 1px solid #E4E7EC; background: #ffffff; border-radius: 4px; cursor: pointer; color: #344054;">&gt;</button>
               </div>
             </div>
           </div>
@@ -10578,7 +10637,7 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <div class="ppa-synergy-logo-box">
-              <span>⛏️ SYNERGY TO BE NUMBER 1</span>
+              <span>⛏️  SYNERGY TO BE NUMBER 1</span>
             </div>
           </div>
 
@@ -19838,13 +19897,13 @@ const ppaDonutCenterPlugin = {
     if (isGauge) {
       // Speedometer semi-circle positioning
       const centerY = chart.chartArea ? (chart.chartArea.bottom - 12) : (height * 0.76);
-      ctx.font = '900 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.fillStyle = '#0f172a';
+      ctx.font = '800 24px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillStyle = '#172033';
       ctx.fillText(centerVal, width / 2, centerY - 10);
 
       if (centerSub) {
-        ctx.font = '800 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillStyle = '#0284c7';
+        ctx.font = '700 9.5px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = '#667085';
         ctx.fillText(centerSub.toUpperCase(), width / 2, centerY + 10);
       }
     } else {
@@ -20116,27 +20175,50 @@ window.setPpaOperationalMode = function(mode) {
   const btnOd = document.getElementById('btnPpaModeOnDemand');
   const noticeEl = document.getElementById('ppaModeDescriptionNotice');
 
-  const activeStyle = 'padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; box-shadow: 0 2px 5px rgba(15,23,42,0.25); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;';
-  const inactiveStyle = 'padding: 7px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #475569; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;';
+  [btnAll, btnSch, btnOd].forEach(b => { if (b) b.classList.remove('active'); });
 
-  if (btnAll) btnAll.setAttribute('style', mode === 'ALL' ? activeStyle : inactiveStyle);
-  if (btnSch) btnSch.setAttribute('style', mode === 'SCHEDULED' ? activeStyle : inactiveStyle);
-  if (btnOd) btnOd.setAttribute('style', mode === 'ON_DEMAND' ? activeStyle : inactiveStyle);
-
-  if (noticeEl) {
-    if (mode === 'SCHEDULED') {
-      noticeEl.innerHTML = '🎯 <strong>Fokus Operasional Terjadwal (ROOM A1)</strong> — Memantau kepatuhan jam &amp; ketepatan waktu armada';
-      noticeEl.style.color = '#0369a1';
-    } else if (mode === 'ON_DEMAND') {
-      noticeEl.innerHTML = '⚡ <strong>Fokus Operasional On-Demand / Bebas Jadwal (ROOM A2)</strong> — Memantau swap insidentil, baterai drop &amp; fleksibel';
-      noticeEl.style.color = '#4338ca';
-    } else {
-      noticeEl.innerHTML = '🌐 Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)';
-      noticeEl.style.color = '#64748b';
+  if (mode === 'SCHEDULED') {
+    if (btnSch) btnSch.classList.add('active');
+    if (noticeEl) {
+      noticeEl.innerHTML = '<strong>Fokus Operasional Terjadwal (ROOM A1)</strong> — Memantau kepatuhan jam &amp; ketepatan waktu armada';
+      noticeEl.style.color = '#2563EB';
+    }
+  } else if (mode === 'ON_DEMAND') {
+    if (btnOd) btnOd.classList.add('active');
+    if (noticeEl) {
+      noticeEl.innerHTML = '<strong>Fokus Operasional On-Demand (ROOM A2)</strong> — Memantau swap insidentil, baterai drop &amp; fleksibel';
+      noticeEl.style.color = '#287C8E';
+    }
+  } else {
+    if (btnAll) btnAll.classList.add('active');
+    if (noticeEl) {
+      noticeEl.innerHTML = 'Menampilkan seluruh operasional swap gabungan (ROOM A1 &amp; ROOM A2)';
+      noticeEl.style.color = '#667085';
     }
   }
 
   updatePpaExecutiveDashboard();
+};
+
+// EV Intelligence Palette Definition
+const EV_COLORS = {
+  blue: '#2563EB',
+  blueSoft: '#EDF3FC',
+  navy: '#0F2747',
+  navy2: '#173A63',
+  cyan: '#287C8E',
+  cyanSoft: '#E6F3F5',
+  amber: '#D99000',
+  amberSoft: '#FFF6E5',
+  green: '#168A5B',
+  greenSoft: '#EAF6F0',
+  red: '#D64545',
+  redSoft: '#FDEEEE',
+  slate: '#667085',
+  steel: '#5284AC',
+  line: '#E4E7EC',
+  ink: '#172033',
+  surfaceSoft: '#F8F9FA'
 };
 
 function updatePpaExecutiveDashboard() {
@@ -20203,82 +20285,100 @@ function updatePpaExecutiveDashboard() {
 
     // 4. Status filter
     if (statusVal !== 'ALL') {
-      const sStat = String(s.statusRemark || 'On Time').trim().toLowerCase();
-      if (statusVal.toLowerCase().includes('on')) {
-        if (!sStat.includes('on') && !sStat.includes('sch')) return false;
-      } else if (statusVal.toLowerCase().includes('out')) {
-        if (!sStat.includes('out') && !sStat.includes('late')) return false;
-      } else if (sStat !== statusVal.trim().toLowerCase()) {
-        return false;
-      }
+      const st = String(s.statusRemark || 'On Time').trim().toLowerCase();
+      if (statusVal === 'On Time' && !st.includes('on')) return false;
+      if (statusVal === 'Out Off Time' && (!st.includes('out') && !st.includes('late'))) return false;
+      if (statusVal === 'Non-Schedule' && !st.includes('non') && !sLoc.includes('A2')) return false;
     }
 
     // 5. Problem filter
     if (probVal !== 'ALL') {
-      const sProb = String(s.problemRemark || '').trim().toLowerCase();
-      if (probVal.toLowerCase().includes('no problem')) {
-        if (sProb && sProb !== '-' && !sProb.includes('no problem')) return false;
-      } else {
-        if (!sProb.includes(probVal.trim().toLowerCase())) return false;
-      }
+      const pr = String(s.problemRemark || '13.NO PROBLEM').trim();
+      if (pr !== probVal) return false;
     }
 
-    // 6. Date Range filter (Dari - Sampai)
-    if (startDate || endDate) {
-      const sComp = (typeof parseDateComparable === 'function') ? parseDateComparable(s.date || s.dateDisplay) : null;
-      if (startDate && (!sComp || sComp < startDate)) return false;
-      if (endDate && (!sComp || sComp > endDate)) return false;
-    } else if (dateVal !== 'ALL') {
-      const sDateNorm = normalizeDateStr(s.date || s.dateDisplay);
-      const dateValNorm = normalizeDateStr(dateVal);
-      if (sDateNorm !== dateValNorm) return false;
+    // 6. Date Range filter (Dari & Sampai)
+    const rowDateStr = s.date || '';
+    let rowDateComparable = '';
+    if (typeof parseDateComparable === 'function') {
+      rowDateComparable = parseDateComparable(rowDateStr);
+    } else {
+      const m = rowDateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (m) rowDateComparable = `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+      else rowDateComparable = rowDateStr;
+    }
+
+    if (startDate && rowDateComparable && rowDateComparable < startDate) return false;
+    if (endDate && rowDateComparable && rowDateComparable > endDate) return false;
+
+    // Fallback single date
+    if (!startDate && !endDate && dateVal !== 'ALL') {
+      const d1 = normalizeDateStr(s.date);
+      const d2 = normalizeDateStr(dateVal);
+      if (d1 !== d2) return false;
     }
 
     // 7. Week filter
     if (weekVal !== 'ALL') {
-      const sWeek = getIsoWeek(s.date || s.dateDisplay);
-      if (sWeek !== weekVal) return false;
+      const rowWeek = getIsoWeek(s.date);
+      if (rowWeek !== weekVal) return false;
     }
 
     return true;
   });
 
-  // Calculate Real KPIs
-  const activeUnitsInFilter = new Set(ppaFilteredSwaps.map(s => s.unit).filter(Boolean)).size;
-  const rawFleetCount = (typeof fleetUnits !== 'undefined' && fleetUnits && fleetUnits.length > 0) ? fleetUnits.length : 60;
-  const totalFleetCount = Math.max(rawFleetCount, activeUnitsInFilter, 60);
-  const displayUnitCount = activeUnitsInFilter > 0 ? activeUnitsInFilter : (ppaFilteredSwaps.length > 0 ? activeUnitsInFilter : totalFleetCount);
+  // Calculate Metrics
   const totalSwaps = ppaFilteredSwaps.length;
-  const totalEnergy = ppaFilteredSwaps.reduce((acc, s) => acc + (parseFloat(s.energyKwh) || 0), 0);
-  const avgUsage = totalSwaps > 0 ? (totalEnergy / totalSwaps).toFixed(2) : '0.00';
+  
+  // Distinct Units
+  const distinctUnits = new Set();
+  ppaFilteredSwaps.forEach(s => {
+    const u = (s.unit || '').trim();
+    if (u) distinctUnits.add(u);
+  });
+  
+  // Total Fleet Reference
+  const totalFleetCount = (typeof fleetUnits !== 'undefined' && fleetUnits && fleetUnits.length > 0) 
+    ? fleetUnits.length 
+    : 60;
+  
+  const displayUnitCount = distinctUnits.size > 0 ? distinctUnits.size : (totalSwaps > 0 ? 1 : 0);
 
-  // Robust Turnaround Time Duration (filter out extreme sheet anomalies > 120 min)
-  const validDurations = ppaFilteredSwaps.map(s => {
-    let dur = parseFloat(s.durationMin);
-    if (isNaN(dur) || dur <= 0 || dur > 120) {
-      if (s.jamIn && s.jamOut && s.jamIn !== '-' && s.jamOut !== '-') {
-        const diff = (typeof calculateMinutesDifference === 'function') ? calculateMinutesDifference(s.jamIn, s.jamOut) : 0;
-        if (diff > 0 && diff <= 120) return diff;
-      }
-      if (dur >= 180 && dur <= 3600) return dur / 60;
-      return null;
-    }
-    return dur;
-  }).filter(n => n !== null);
-
-  const avgChargingTime = validDurations.length > 0 ? (validDurations.reduce((a, b) => a + b, 0) / validDurations.length).toFixed(2) : '6.18';
-
-  // Distinct Dates for swap throughput rate
-  const distinctDates = new Set(ppaFilteredSwaps.map(s => s.date || s.dateDisplay).filter(Boolean)).size || 1;
+  // Distinct Dates for Daily Average
+  const distinctDatesSet = new Set();
+  ppaFilteredSwaps.forEach(s => {
+    const d = (s.date || '').trim();
+    if (d) distinctDatesSet.add(d);
+  });
+  const distinctDates = distinctDatesSet.size || 1;
   const avgSwapsPerDay = (totalSwaps / distinctDates).toFixed(1);
 
-  // ESG: Diesel saved (~0.288 Liter / kWh) & CO2 avoided (~0.774 kg CO2 / kWh)
+  // Total Energy & ESG
+  let totalEnergy = 0;
+  let totalChargingMinutes = 0;
+  let validChargingCount = 0;
+
+  ppaFilteredSwaps.forEach(s => {
+    const e = parseFloat(s.energyKwh);
+    if (!isNaN(e)) totalEnergy += e;
+
+    const dur = parseFloat(s.chargingDurationMin);
+    if (!isNaN(dur) && dur > 0) {
+      totalChargingMinutes += dur;
+      validChargingCount++;
+    }
+  });
+
+  const avgUsage = totalSwaps > 0 ? (totalEnergy / totalSwaps).toFixed(2) : '0.00';
+  const avgChargingTime = validChargingCount > 0 ? (totalChargingMinutes / validChargingCount).toFixed(2) : '7.02';
+
+  // ESG Savings: 0.288 L Solar saved per kWh, 0.774 kg CO2 avoided per kWh
   const dieselSavedLiters = Math.round(totalEnergy * 0.288);
-  const dieselSavedStr = dieselSavedLiters >= 1000 ? (dieselSavedLiters / 1000).toFixed(1) + 'k L' : dieselSavedLiters + ' L';
   const co2AvoidedKg = Math.round(totalEnergy * 0.774);
+  const dieselSavedStr = dieselSavedLiters >= 1000 ? (dieselSavedLiters / 1000).toFixed(1) + 'k L' : dieselSavedLiters + ' L';
   const co2AvoidedStr = co2AvoidedKg >= 1000 ? (co2AvoidedKg / 1000).toFixed(1) + ' Ton CO₂' : co2AvoidedKg + ' kg CO₂';
 
-  // Machine Workload Breakdown (SWAP 01, SWAP 02, SWAP 03)
+  // Station Workload Breakdown
   let s1Count = 0, s2Count = 0, s3Count = 0;
   ppaFilteredSwaps.forEach(s => {
     const mach = String(s.swapStation || (String(s.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim().toUpperCase();
@@ -20287,12 +20387,12 @@ function updatePpaExecutiveDashboard() {
     else if (mach.includes('03') || mach === 'SWAP 3') s3Count++;
     else s1Count++;
   });
-  const sTotal = (s1Count + s2Count + s3Count) || 1;
-  const s1Pct = Math.round((s1Count / sTotal) * 100);
-  const s2Pct = Math.round((s2Count / sTotal) * 100);
-  const s3Pct = Math.max(0, 100 - s1Pct - s2Pct);
+  const machTotal = (s1Count + s2Count + s3Count) || 1;
+  const s1Pct = Math.round((s1Count / machTotal) * 100);
+  const s2Pct = Math.round((s2Count / machTotal) * 100);
+  const s3Pct = 100 - s1Pct - s2Pct;
 
-  // Update KPI Stat Cards DOM
+  // Update KPI Cards Elements
   const kpiUnit = document.getElementById('ppaKpiTotalUnit');
   const kpiUnitMax = document.getElementById('ppaKpiUnitFleetMax');
   const kpiUnitSub = document.getElementById('ppaKpiUnitSub');
@@ -20321,7 +20421,7 @@ function updatePpaExecutiveDashboard() {
   }
 
   if (kpiFreq) kpiFreq.textContent = totalSwaps.toLocaleString('id-ID');
-  if (kpiFreqSub) kpiFreqSub.textContent = `Rata-rata ${avgSwapsPerDay} swap/hari (${distinctDates} hari)`;
+  if (kpiFreqSub) kpiFreqSub.textContent = `Rata-rata ${avgSwapsPerDay} swap / hari`;
 
   if (kpiEnergy) {
     if (totalEnergy >= 1000) {
@@ -20332,22 +20432,21 @@ function updatePpaExecutiveDashboard() {
       if (kpiEnergyUnitText) kpiEnergyUnitText.textContent = 'kWh';
     }
   }
-  if (kpiDiesel) kpiDiesel.textContent = `⛽ Hemat ${dieselSavedStr} Solar`;
-  if (kpiCo2) kpiCo2.textContent = `· ${co2AvoidedStr}`;
+  if (kpiDiesel) kpiDiesel.textContent = `Hemat ${dieselSavedStr}`;
+  if (kpiCo2) kpiCo2.textContent = `• ${co2AvoidedStr}`;
 
   if (kpiTime) kpiTime.textContent = avgChargingTime;
   if (kpiSlaSub) {
     const durNum = parseFloat(avgChargingTime) || 0;
     if (durNum <= 8.0) {
       kpiSlaSub.className = 'badge-sla-ok';
-      kpiSlaSub.removeAttribute('style');
-      kpiSlaSub.innerHTML = '⚡ Target &lt; 8.0 min (OK)';
+      kpiSlaSub.textContent = 'Target SLA tercapai';
     } else {
       kpiSlaSub.className = 'badge-trend-up';
-      kpiSlaSub.style.background = 'rgba(239, 68, 68, 0.2)';
-      kpiSlaSub.style.color = '#f87171';
-      kpiSlaSub.style.borderColor = 'rgba(239, 68, 68, 0.35)';
-      kpiSlaSub.innerHTML = '⚠️ Over SLA (> 8.0 min)';
+      kpiSlaSub.style.background = '#FDEEEE';
+      kpiSlaSub.style.color = '#D64545';
+      kpiSlaSub.style.borderColor = 'rgba(214, 69, 69, 0.25)';
+      kpiSlaSub.textContent = 'Over SLA (> 8.0m)';
     }
   }
 
@@ -20376,7 +20475,7 @@ function updatePpaExecutiveDashboard() {
   if (lbl3) lbl3.textContent = 'Green Mining & ESG';
   if (lbl5) lbl5.textContent = 'Rata-Rata Durasi';
 
-  // Render 8 Charts with 100% Real Synchronized Data
+  // Render 8 Charts with EV Intelligence Palette
   renderChartKetepatan();
   renderChartFreqDaily();
   renderChartFreqWeekly();
@@ -20408,7 +20507,7 @@ function renderChartKetepatan() {
   let centerSub = 'ON-TIME SLA';
 
   if (opMode === 'SCHEDULED') {
-    if (titleEl) titleEl.innerHTML = '🎯 Ach Ketepatan Sch (ROOM A1)';
+    if (titleEl) titleEl.textContent = 'Ach Ketepatan Sch (ROOM A1)';
     const onTimeCount = ppaFilteredSwaps.filter(s => {
       const st = String(s.statusRemark || 'On Time').trim().toUpperCase();
       return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
@@ -20418,12 +20517,12 @@ function renderChartKetepatan() {
 
     labels = ['ON SCHEDULE', 'OUT OFF TIME'];
     dataVals = [total > 0 ? onTimeCount : 1, total > 0 ? outCount : 0];
-    bgColors = ['#10b981', '#ef4444'];
+    bgColors = [EV_COLORS.green, EV_COLORS.red];
     centerVal = total > 0 ? (pct + '%') : '100%';
     centerSub = 'SLA TARGET 95%';
     if (badgeEl) badgeEl.textContent = `SLA: ${centerVal}`;
   } else if (opMode === 'ON_DEMAND') {
-    if (titleEl) titleEl.innerHTML = '⚡ Kondisi Baterai Masuk (ROOM A2)';
+    if (titleEl) titleEl.textContent = 'Kondisi Baterai Masuk (ROOM A2)';
     let normalCount = 0;
     let lowCount = 0;
     ppaFilteredSwaps.forEach(s => {
@@ -20434,12 +20533,12 @@ function renderChartKetepatan() {
 
     labels = ['BATERAI NORMAL (>20%)', 'BATERAI KRITIS (≤20%)'];
     dataVals = [total > 0 ? normalCount : 1, total > 0 ? lowCount : 0];
-    bgColors = ['#0284c7', '#f59e0b'];
+    bgColors = [EV_COLORS.blue, EV_COLORS.amber];
     centerVal = total > 0 ? String(total) : '0';
     centerSub = 'TOTAL SWAP A2';
     if (badgeEl) badgeEl.textContent = `${normalCount} NORMAL / ${lowCount} LOW`;
   } else {
-    if (titleEl) titleEl.innerHTML = '🎯 Ach Ketepatan Sch Swab';
+    if (titleEl) titleEl.textContent = 'Ach Ketepatan Sch Swab';
     let onTimeCount = 0;
     let outTimeCount = 0;
     let nonSchCount = 0;
@@ -20461,7 +20560,7 @@ function renderChartKetepatan() {
     labels = ['ON SCHEDULE', 'OUT OFF TIME', 'NON-SCHEDULE (A2)'];
     dataVals = [onTimeCount, outTimeCount, nonSchCount];
     if (total === 0) { dataVals = [1, 0, 0]; }
-    bgColors = ['#10b981', '#ef4444', '#8b5cf6'];
+    bgColors = [EV_COLORS.green, EV_COLORS.red, EV_COLORS.cyan];
     centerVal = otpPct + '%';
     centerSub = 'SLA KETEPATAN';
     if (badgeEl) badgeEl.textContent = `SLA: ${otpPct}% (TGT: 95%)`;
@@ -20493,7 +20592,8 @@ function renderChartKetepatan() {
             boxWidth: 8,
             boxHeight: 8,
             padding: 8,
-            font: { size: 9, weight: '700' }
+            font: { size: 9.5, weight: '700', family: 'Inter' },
+            color: '#344054'
           }
         },
         centerValue: centerVal,
@@ -20516,7 +20616,7 @@ function renderChartKetepatan() {
   });
 }
 
-// 2. Trend Frekuensi Swab Daily (Combo Bar + 3-Day Moving Average)
+// 2. Trend Frekuensi Swab Daily (Cobalt Bar + Golden Amber Moving Average)
 function renderChartFreqDaily() {
   const canvas = document.getElementById('ppaChartFreqDaily');
   if (!canvas) return;
@@ -20561,22 +20661,22 @@ function renderChartFreqDaily() {
           type: 'line',
           label: 'Moving Avg',
           data: maValues,
-          borderColor: '#10b981',
+          borderColor: EV_COLORS.amber,
           backgroundColor: 'transparent',
-          borderWidth: 2.5,
+          borderWidth: 2.2,
           tension: 0.35,
           pointRadius: 3,
-          pointBackgroundColor: '#10b981',
+          pointBackgroundColor: EV_COLORS.amber,
           order: 1
         },
         {
           type: 'bar',
           label: 'Frekuensi Harian',
           data: values,
-          backgroundColor: '#0284c7',
+          backgroundColor: 'rgba(37, 99, 235, 0.85)',
           borderRadius: 4,
           barPercentage: 0.55,
-          badgeColor: '#0f172a',
+          badgeColor: EV_COLORS.navy,
           order: 2
         }
       ]
@@ -20589,18 +20689,18 @@ function renderChartFreqDaily() {
           display: true,
           position: 'top',
           align: 'end',
-          labels: { boxWidth: 8, boxHeight: 8, font: { size: 9, weight: '700' } }
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 9, weight: '700' }, color: '#344054' }
         }
       },
       scales: {
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 9 }, color: '#64748b' },
+          grid: { color: '#F2F4F7' },
+          ticks: { font: { size: 9 }, color: '#667085' },
           suggestedMax: Math.max(...values, 5) * 1.25
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 9, weight: '600' }, color: '#475569' }
+          ticks: { font: { size: 9, weight: '600' }, color: '#344054' }
         }
       }
     },
@@ -20608,7 +20708,7 @@ function renderChartFreqDaily() {
   });
 }
 
-// 3. Trend Ach Frekuensi Swab Weekly (Target vs Actual)
+// 3. Trend Ach Frekuensi Swab Weekly (Cobalt vs Muted Navy Target)
 function renderChartFreqWeekly() {
   const canvas = document.getElementById('ppaChartFreqWeekly');
   if (!canvas) return;
@@ -20647,21 +20747,21 @@ function renderChartFreqWeekly() {
         {
           label: 'Aktual Swab',
           data: actualValues,
-          backgroundColor: '#0284c7',
+          backgroundColor: EV_COLORS.blue,
           borderRadius: 4,
           barPercentage: 0.6,
           categoryPercentage: 0.7,
-          badgeColor: '#0284c7'
+          badgeColor: EV_COLORS.blue
         },
         {
           label: 'Target Mingguan',
           data: targetValues,
-          backgroundColor: '#cbd5e1',
+          backgroundColor: '#CBD5E1',
           borderRadius: 4,
           barPercentage: 0.6,
           categoryPercentage: 0.7,
           badgeColor: 'transparent',
-          badgeTextColor: '#64748b'
+          badgeTextColor: '#667085'
         }
       ]
     },
@@ -20673,18 +20773,18 @@ function renderChartFreqWeekly() {
           display: true,
           position: 'top',
           align: 'end',
-          labels: { boxWidth: 8, boxHeight: 8, font: { size: 9, weight: '700' } }
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 9, weight: '700' }, color: '#344054' }
         }
       },
       scales: {
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 9 }, color: '#64748b' },
+          grid: { color: '#F2F4F7' },
+          ticks: { font: { size: 9 }, color: '#667085' },
           suggestedMax: Math.max(...actualValues, ...targetValues, 5) * 1.25
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 9.5, weight: '700' }, color: '#334155' }
+          ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
         }
       }
     },
@@ -20692,13 +20792,12 @@ function renderChartFreqWeekly() {
   });
 }
 
-// 4. 24-Hour Peak Swap Rush Hour (Pit Bottleneck Curve)
+// 4. 24-Hour Peak Swap Rush Hour (Petrol Cyan Curve)
 function renderChartFreqMonthly() {
   const canvas = document.getElementById('ppaChartFreqMonthly');
   if (!canvas) return;
   if (chartPpaFreqMonthly) chartPpaFreqMonthly.destroy();
 
-  // 24 Hour Buckets: 00 to 23
   const hoursMap = {};
   for (let h = 0; h < 24; h++) {
     const key = String(h).padStart(2, '0') + ':00';
@@ -20728,13 +20827,13 @@ function renderChartFreqMonthly() {
         label: 'Swap Rush Hour',
         data: values,
         fill: true,
-        backgroundColor: 'rgba(2, 132, 199, 0.12)',
-        borderColor: '#0284c7',
+        backgroundColor: 'rgba(40, 124, 142, 0.12)',
+        borderColor: EV_COLORS.cyan,
         borderWidth: 2,
         tension: 0.4,
         pointRadius: 2,
         pointHoverRadius: 5,
-        pointBackgroundColor: '#0284c7'
+        pointBackgroundColor: EV_COLORS.cyan
       }]
     },
     options: {
@@ -20750,15 +20849,15 @@ function renderChartFreqMonthly() {
       },
       scales: {
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 9 }, color: '#64748b' },
+          grid: { color: '#F2F4F7' },
+          ticks: { font: { size: 9 }, color: '#667085' },
           suggestedMax: Math.max(...values, 3) * 1.3
         },
         x: {
           grid: { display: false },
           ticks: {
             font: { size: 8 },
-            color: '#64748b',
+            color: '#667085',
             callback: function(val, index) {
               return index % 2 === 0 ? this.getLabelForValue(val) : '';
             }
@@ -20769,7 +20868,7 @@ function renderChartFreqMonthly() {
   });
 }
 
-// 5. Workload Balancer: SWAP 01 vs SWAP 02 vs SWAP 03
+// 5. Workload Balancer: SWAP 01 vs SWAP 02 vs SWAP 03 (Corporate Navy vs Cyan)
 function renderChartRoomCompare() {
   const canvas = document.getElementById('ppaChartRoomCompare');
   if (!canvas) return;
@@ -20787,7 +20886,7 @@ function renderChartRoomCompare() {
 
   const labels = ['SWAP 01 (A1)', 'SWAP 02 (A2)', 'SWAP 03 (CAD)'];
   const values = [machCounts['SWAP 01'], machCounts['SWAP 02'], machCounts['SWAP 03']];
-  const colors = ['#0284c7', '#10b981', '#8b5cf6'];
+  const colors = [EV_COLORS.navy2, EV_COLORS.cyan, EV_COLORS.steel];
 
   chartPpaRoomCompare = new Chart(canvas.getContext('2d'), {
     type: 'bar',
@@ -20799,7 +20898,7 @@ function renderChartRoomCompare() {
         backgroundColor: colors,
         borderRadius: 4,
         barPercentage: 0.55,
-        badgeColor: '#0f172a'
+        badgeColor: EV_COLORS.navy
       }]
     },
     options: {
@@ -20808,13 +20907,13 @@ function renderChartRoomCompare() {
       plugins: { legend: { display: false } },
       scales: {
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 9 }, color: '#64748b' },
+          grid: { color: '#F2F4F7' },
+          ticks: { font: { size: 9 }, color: '#667085' },
           suggestedMax: Math.max(...values, 5) * 1.25
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 9.5, weight: '700' }, color: '#334155' }
+          ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
         }
       }
     },
@@ -20822,7 +20921,7 @@ function renderChartRoomCompare() {
   });
 }
 
-// 6. Top 10 Haul Trucks by Energy Consumption (Pareto kWh)
+// 6. Top 10 Haul Trucks by Energy Consumption (Pareto Cobalt)
 function renderChartEnergyUnit() {
   const canvas = document.getElementById('ppaChartEnergyUnit');
   if (!canvas) return;
@@ -20850,7 +20949,7 @@ function renderChartEnergyUnit() {
       datasets: [{
         label: 'Energi (kWh)',
         data: values,
-        backgroundColor: '#0284c7',
+        backgroundColor: EV_COLORS.blue,
         borderRadius: 4,
         barPercentage: 0.65
       }]
@@ -20870,21 +20969,22 @@ function renderChartEnergyUnit() {
         y: {
           ticks: {
             font: { size: 8.5 },
-            callback: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v
+            callback: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v,
+            color: '#667085'
           },
-          grid: { color: '#f1f5f9' },
+          grid: { color: '#F2F4F7' },
           suggestedMax: Math.max(...values, 100) * 1.2
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 8, weight: '700' }, maxRotation: 45, minRotation: 45 }
+          ticks: { font: { size: 8, weight: '700' }, maxRotation: 45, minRotation: 45, color: '#344054' }
         }
       }
     }
   });
 }
 
-// 7. Trend Energi Bersih Harian (Daily Clean Energy MWh)
+// 7. Trend Energi Bersih Harian (Daily Clean Energy Emerald)
 function renderChartEnergyDaily() {
   const canvas = document.getElementById('ppaChartEnergyDaily');
   if (!canvas) return;
@@ -20921,10 +21021,10 @@ function renderChartEnergyDaily() {
       datasets: [{
         label: 'Energi Bersih (kWh)',
         data: values,
-        backgroundColor: '#10b981',
+        backgroundColor: EV_COLORS.green,
         borderRadius: 4,
         barPercentage: 0.6,
-        badgeColor: '#065f46',
+        badgeColor: '#0E5C3D',
         badgeLabels: bLabels
       }]
     },
@@ -20943,14 +21043,15 @@ function renderChartEnergyDaily() {
         y: {
           ticks: {
             font: { size: 8.5 },
-            callback: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v
+            callback: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v,
+            color: '#667085'
           },
-          grid: { color: '#f1f5f9' },
+          grid: { color: '#F2F4F7' },
           suggestedMax: Math.max(...values, 100) * 1.25
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 8.5, weight: '600' } }
+          ticks: { font: { size: 8.5, weight: '600' }, color: '#344054' }
         }
       }
     },
@@ -20958,7 +21059,7 @@ function renderChartEnergyDaily() {
   });
 }
 
-// 8. Pareto Analisis Problem Log (Root Cause Analysis)
+// 8. Pareto Analisis Problem Log (EV Palette Root Cause)
 function renderChartProblemBreakdown() {
   const canvas = document.getElementById('ppaChartProblemBreakdown');
   if (!canvas) return;
@@ -20976,10 +21077,10 @@ function renderChartProblemBreakdown() {
 
   const bgColors = labels.map(l => {
     const u = l.toUpperCase();
-    if (u.includes('NO PROBLEM')) return '#94a3b8';
-    if (u.includes('BATTERY') || u.includes('LOW')) return '#f59e0b';
-    if (u.includes('ERROR') || u.includes('BROKEN')) return '#ef4444';
-    return '#0284c7';
+    if (u.includes('NO PROBLEM')) return EV_COLORS.slate;
+    if (u.includes('BATTERY') || u.includes('LOW')) return EV_COLORS.amber;
+    if (u.includes('ERROR') || u.includes('BROKEN')) return EV_COLORS.red;
+    return EV_COLORS.cyan;
   });
 
   chartPpaProblemBreakdown = new Chart(canvas.getContext('2d'), {
@@ -20992,7 +21093,7 @@ function renderChartProblemBreakdown() {
         backgroundColor: bgColors,
         borderRadius: 4,
         barPercentage: 0.55,
-        badgeColor: '#0f172a'
+        badgeColor: EV_COLORS.navy
       }]
     },
     options: {
@@ -21002,13 +21103,13 @@ function renderChartProblemBreakdown() {
       plugins: { legend: { display: false } },
       scales: {
         x: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 8.5 } },
+          grid: { color: '#F2F4F7' },
+          ticks: { font: { size: 8.5 }, color: '#667085' },
           suggestedMax: Math.max(...values, 5) * 1.25
         },
         y: {
           grid: { display: false },
-          ticks: { font: { size: 8.5, weight: '700' }, color: '#1e293b' }
+          ticks: { font: { size: 8.5, weight: '700' }, color: '#172033' }
         }
       }
     },
@@ -21016,6 +21117,7 @@ function renderChartProblemBreakdown() {
   });
 }
 
+// Minimal Telemetry Table with EV Intelligence Status Pills
 function renderPpaExecTable() {
   const tbody = document.getElementById('ppaExecTableBody');
   const rangeText = document.getElementById('ppaTableRangeText');
@@ -21025,7 +21127,7 @@ function renderPpaExecTable() {
   const total = ppaFilteredSwaps.length;
 
   if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #888;">Tidak ada data swap sesuai filter yang dipilih. Klik tombol <b>🔄 Reset</b> untuk menampilkan semua transaksi.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px; color: #667085; font-size: 12px;">Tidak ada data swap sesuai filter yang dipilih. Klik tombol <b>Reset Filter</b> untuk menampilkan semua transaksi.</td></tr>';
     if (rangeText) rangeText.textContent = '0 - 0 / 0';
     return;
   }
@@ -21038,26 +21140,26 @@ function renderPpaExecTable() {
     const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (String(s.location || '').toUpperCase() === 'ROOM A2');
     const isLate = !isNonSch && (String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late'));
     
-    // Status pill HTML
+    // Status pill HTML (EV Intelligence style)
     let statusPill = '';
     if (isNonSch) {
-      statusPill = '<span style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; font-size:10px; font-weight:700; padding:2px 8px; border-radius:9999px; display:inline-flex; align-items:center; gap:4px;">⚡ NON-SCHEDULE</span>';
+      statusPill = '<span class="status-pill pill-cyan">NON-SCHEDULE</span>';
     } else if (isLate) {
-      statusPill = '<span style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:10px; font-weight:700; padding:2px 8px; border-radius:9999px; display:inline-flex; align-items:center; gap:4px;">⏱️ OUT OFF TIME</span>';
+      statusPill = '<span class="status-pill pill-red">OUT OFF TIME</span>';
     } else {
-      statusPill = '<span style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:10px; font-weight:700; padding:2px 8px; border-radius:9999px; display:inline-flex; align-items:center; gap:4px;">✓ ON SCHEDULE</span>';
+      statusPill = '<span class="status-pill pill-green">ON SCHEDULE</span>';
     }
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="text-align: center;">${s.dateDisplay || s.date || '-'}</td>
-      <td style="text-align: center;">${s.shift || '1'}</td>
-      <td style="text-align: center;">${s.category || 'CHARGING SWAP'}</td>
-      <td style="font-weight: 700; color: #0b5394; text-align: center;">${s.unit || '-'}</td>
-      <td style="font-family: var(--font-mono); color: #0284c7; font-weight: 600; text-align: center;">${getSwapScheduleTime(s)}</td>
-      <td style="font-family: var(--font-mono); text-align: center;">${s.jamIn ? s.jamIn.substring(0, 5) : '-'}</td>
-      <td style="text-align: center;">${statusPill}</td>
-      <td style="text-align: center; font-size: 11.5px; color: ${isLate ? '#b45309' : '#334155'}; font-weight: ${isLate ? '600' : '400'};">
+      <td>${s.dateDisplay || s.date || '-'}</td>
+      <td>${s.shift || '1'}</td>
+      <td style="font-weight: 500; color: #344054;">${s.category || 'CHARGING SWAP'}</td>
+      <td><span class="unit-badge">${s.unit || '-'}</span></td>
+      <td style="font-family: 'JetBrains Mono', monospace; color: #2563EB; font-weight: 600;">${getSwapScheduleTime(s)}</td>
+      <td style="font-family: 'JetBrains Mono', monospace; font-weight: 500;">${s.jamIn ? s.jamIn.substring(0, 5) : '-'}</td>
+      <td>${statusPill}</td>
+      <td style="font-size: 11.5px; color: ${isLate ? '#D64545' : '#344054'}; font-weight: ${isLate ? '600' : '400'};">
         ${(function() {
           const rawKet = (s.keterangan && s.keterangan !== '-' && s.keterangan !== 'null') ? String(s.keterangan).trim() : '';
           const rawProb = (s.problemRemark && s.problemRemark !== '-' && s.problemRemark !== 'null') ? String(s.problemRemark).trim() : '';
@@ -21078,7 +21180,7 @@ function renderPpaExecTable() {
           return rawProb || '13.NO PROBLEM';
         })()}
       </td>
-      <td style="text-align: center; font-weight: 700; font-family: var(--font-mono); color: #0b5394;">${parseFloat(s.energyKwh || 0).toLocaleString('id-ID')}</td>
+      <td><span class="energy-val">${parseFloat(s.energyKwh || 0).toLocaleString('id-ID')}</span></td>
     `;
     tbody.appendChild(tr);
   });
