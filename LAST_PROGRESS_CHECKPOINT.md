@@ -287,21 +287,25 @@
   5. **Revisi Tombol & Penghapusan Notice:**
      - Tombol switcher diperbarui menjadi: `[Semua Operasional]`, `[SCHEDULE]`, `[NON SCHEDULE]`.
      - Teks deskripsi notice di bawahnya dihapus untuk menghasilkan tampilan yang jauh lebih bersih dan compact.
-  6. **Pembaruan Service Worker:**
-     - Versi dinaikkan ke **`charging-ev-v21`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+  6. **Ikon Vektor SVG Monokrom (Tanpa Warna):**
+     - Seluruh emoji pada Footer Ribbon Visual KPI (`🌐`, `📷`, `📘`, `🔗`, `⛏️`) diganti 100% dengan ikon vektor SVG outline monokrom murni (`stroke="currentColor"`).
+     - Tombol-tombol aksi utama (`Simpan Transaksi`, `Export Data`, `Export IPCC`, `Input Swap`, `Edit Kolektif`, `Hapus Kolektif`, `Table Actions`) diperbarui menggunakan SVG outline netral.
+     - Area Visual KPI kini **0% Emoji / 100% Bersih Monokrom**.
+  7. **Pembaruan Service Worker:**
+     - Versi dinaikkan ke **`charging-ev-v22`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@67`
+   - **Versi Rilis:** `@68`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v21`
+   - **Service Worker Cache:** `charging-ev-v22`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 
