@@ -325,18 +325,39 @@
   3. **Indikator Mode pada Topbar & Sidebar:** Header aplikasi dan sidebar drawer kini dengan tegas menampilkan mode aktif operator: `ROOM .. (SWAP ..) • SHIFT .. • ON-DEMAND` atau `• SCHEDULE`.
   4. **Pembaruan Cache Service Worker:** Versi dinaikkan ke **`charging-ev-v27`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 17. 👥 Sinkronisasi Penuh Database Pengguna & Akun (CRUD USER) (29 September 2026):
+- **Masalah:** Saat menambah, mengedit, atau menghapus pengguna di menu *Kelola Pengguna & Akun*, perubahan tidak tersimpan ke database Google Sheets (sheet `USER`). Pengguna yang dihapus muncul kembali saat halaman dimuat ulang (*refresh*), pengguna baru hilang, dan password yang diubah tidak tersinkron.
+- **Akar Masalah:**
+  1. Backend `Code.gs` belum memiliki endpoint API untuk `save_user`, `delete_user`, dan `sync_all_users`.
+  2. Modul frontend `gasSync` belum memiliki fungsi untuk mengirim aksi perubahan user ke Google Apps Script (baik mode iframe maupun direct fetch API di Netlify).
+  3. Logika `window.saveAppUsers` sebelumnya menggabungkan kembali daftar *hardcoded* `OPERATOR_USERS`, sehingga user yang dihapus otomatis ter-insert kembali.
+  4. Penyimpanan lokal (*localStorage*) belum diaktifkan untuk daftar akun pengguna.
+- **Solusi & Perbaikan:**
+  1. **Backend Google Apps Script (`Code.gs`):**
+     - Dibuat fungsi `apiSaveUser(user)` untuk insert & update baris di sheet `USER` (7 kolom: NO, NIK, NAMA LENGKAP, JABATAN, ROLE, PASSWORD, DEPARTEMEN) dan sinkronisasi ke Firestore.
+     - Dibuat fungsi `apiDeleteUser(nik)` untuk menghapus baris user di sheet `USER` dan Firestore serta merapikan kembali penomoran kolom `NO`.
+     - Dibuat fungsi `apiSyncAllUsers(usersList)` untuk sinkronisasi massal seluruh data pengguna.
+     - Ditambahkan *routing action* pada `doPost(e)`: `save_user`, `delete_user`, dan `sync_all_users`.
+  2. **Modul Sinkronisasi Frontend (`index.html`):**
+     - Ditambahkan metode `gasSync.saveUser()`, `gasSync.deleteUser()`, dan `gasSync.syncAllUsers()` yang bekerja dual-engine (iframe GAS dan direct API Netlify).
+     - `appUsersList` kini dipersistensikan langsung ke `localStorage` (`voltswap_users_data`) dan di-update saat `loadAll` mengambil data terbaru dari sheet `USER`.
+     - Logika `saveAppUsers` diperbaiki: tidak lagi me-restore akun yang dihapus, dan langsung menyinkronkan aksi tambah/edit/hapus ke Google Sheets dan Firebase.
+     - `findOperatorUser()` diselaraskan agar mengambil dari daftar aktif `window.getAppUsers()`, sehingga akun yang telah dihapus tidak dapat login kembali.
+  3. **Pembaruan Service Worker:**
+     - Cache dinaikkan ke versi **`charging-ev-v28`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@73`
+   - **Versi Rilis:** `@74`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v27`
+   - **Service Worker Cache:** `charging-ev-v28`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 

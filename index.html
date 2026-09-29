@@ -15080,6 +15080,105 @@ const gasSync = {
       .apiAddUnit(code);
   },
 
+  saveUser: function(user, callback) {
+    if (!user || !user.nik) return;
+    gasSync._showSyncBadge('⏳ Menyimpan akun user ke Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('save_user', { user: user }, function(res) {
+        gasSync._showSyncBadge('User tersimpan di Google Sheets', 'success');
+        showToast(`Akun ${user.name || user.nik} tersinkron ke Google Sheets!`, 'success');
+        if (typeof callback === 'function') callback(res);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('Gagal simpan user ke Sheets', 'warn');
+        showToast('Error simpan user ke Sheets: ' + errMsg, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.status === 'success') {
+          gasSync._showSyncBadge('User tersimpan di Google Sheets', 'success');
+          showToast(`Akun ${user.name || user.nik} tersinkron ke Google Sheets!`, 'success');
+        } else {
+          gasSync._showSyncBadge('Gagal simpan user ke Sheets', 'warn');
+        }
+        if (typeof callback === 'function') callback(res);
+      })
+      .withFailureHandler(function(err) {
+        gasSync._showSyncBadge('Error simpan user', 'error');
+        showToast('GAS Error saat simpan user: ' + err, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: String(err) });
+      })
+      .apiSaveUser(user);
+  },
+
+  deleteUser: function(nik, callback) {
+    if (!nik) return;
+    gasSync._showSyncBadge('⏳ Menghapus akun user di Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('delete_user', { nik: nik }, function(res) {
+        gasSync._showSyncBadge('User dihapus dari Google Sheets', 'success');
+        showToast(`Akun (${nik}) berhasil dihapus dari Google Sheets!`, 'info');
+        if (typeof callback === 'function') callback(res);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('Gagal hapus user di Sheets', 'warn');
+        showToast('Error hapus user di Sheets: ' + errMsg, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.status === 'success') {
+          gasSync._showSyncBadge('User dihapus dari Google Sheets', 'success');
+          showToast(`Akun (${nik}) berhasil dihapus dari Google Sheets!`, 'info');
+        } else {
+          gasSync._showSyncBadge('Gagal hapus user di Sheets', 'warn');
+        }
+        if (typeof callback === 'function') callback(res);
+      })
+      .withFailureHandler(function(err) {
+        gasSync._showSyncBadge('Error hapus user', 'error');
+        showToast('GAS Error saat hapus user: ' + err, 'danger');
+        if (typeof callback === 'function') callback({ status: 'error', message: String(err) });
+      })
+      .apiDeleteUser(nik);
+  },
+
+  syncAllUsers: function(usersList, callback) {
+    if (!Array.isArray(usersList)) return;
+    gasSync._showSyncBadge('⏳ Menyinkronkan daftar pengguna ke Google Sheets...', 'loading');
+
+    if (!IS_GAS_ENV) {
+      gasSync._callGasApi('sync_all_users', { usersList: usersList }, function(res) {
+        gasSync._showSyncBadge('Pengguna tersinkron di Sheets', 'success');
+        showToast(`${usersList.length} akun pengguna tersinkron ke Google Sheets!`, 'success');
+        if (typeof callback === 'function') callback(res);
+      }, function(errMsg) {
+        gasSync._showSyncBadge('Gagal sync pengguna', 'warn');
+        if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
+      });
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        gasSync._showSyncBadge('Pengguna tersinkron di Sheets', 'success');
+        showToast(`${usersList.length} akun pengguna tersinkron ke Google Sheets!`, 'success');
+        if (typeof callback === 'function') callback(res);
+      })
+      .withFailureHandler(function(err) {
+        gasSync._showSyncBadge('Error sync pengguna', 'error');
+        if (typeof callback === 'function') callback({ status: 'error', message: String(err) });
+      })
+      .apiSyncAllUsers(usersList);
+  },
+
   validateLogin: function(nik, password, onResult) {
     if (!IS_GAS_ENV) {
       // Direct API validation on Netlify
@@ -15523,24 +15622,52 @@ const OPERATOR_USERS = [
   { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "SUPERVISOR", dept: "Operations Administration" }
 ];
 
-let appUsersList = [...OPERATOR_USERS];
+let appUsersList = (function() {
+  try {
+    const stored = (typeof localStorage !== 'undefined') ? localStorage.getItem('voltswap_users_data') : null;
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return [...OPERATOR_USERS];
+})();
 
 window.getAppUsers = function() {
   return [...appUsersList];
 };
 
-window.saveAppUsers = function(list, syncToCloud = false) {
+window.saveAppUsers = function(list, syncToCloud = false, targetItem = null, actionType = 'sync') {
   if (Array.isArray(list)) {
-    const mergedMap = new Map();
-    OPERATOR_USERS.forEach(u => mergedMap.set(u.nik, { ...u }));
-    list.forEach(u => {
-      if (u && u.nik) {
-        mergedMap.set(String(u.nik).trim(), { ...mergedMap.get(String(u.nik).trim()), ...u });
+    appUsersList = [...list];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('voltswap_users_data', JSON.stringify(appUsersList));
       }
-    });
-    appUsersList = Array.from(mergedMap.values());
-    if (syncToCloud && typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
-      list.forEach(u => VoltFirebase.saveUser(u));
+    } catch (e) {}
+
+    if (syncToCloud) {
+      // 1. Sinkronisasi ke Google Sheets (GAS Database)
+      if (typeof gasSync !== 'undefined') {
+        if (actionType === 'delete' && targetItem) {
+          gasSync.deleteUser(targetItem);
+        } else if (actionType === 'save' && targetItem) {
+          gasSync.saveUser(targetItem);
+        } else {
+          gasSync.syncAllUsers(appUsersList);
+        }
+      }
+
+      // 2. Sinkronisasi ke Firebase Firestore (jika aktif)
+      if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+        if (actionType === 'delete' && targetItem) {
+          VoltFirebase.deleteUser(targetItem);
+        } else if (actionType === 'save' && targetItem) {
+          VoltFirebase.saveUser(targetItem);
+        } else {
+          appUsersList.forEach(u => VoltFirebase.saveUser(u));
+        }
+      }
     }
   }
 };
@@ -16019,8 +16146,7 @@ function initSplitCardLogin() {
     if (!val) return null;
     const raw = String(val).trim();
     if (!raw) return null;
-    const dynamicList = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : [];
-    const userList = [...OPERATOR_USERS, ...dynamicList];
+    const userList = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : [...OPERATOR_USERS];
 
     // 1. Direct match by NIK
     let match = userList.find(u => String(u.nik).trim() === raw);
@@ -24335,19 +24461,21 @@ function handleDbUserFormSubmit(e) {
 
   let users = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : [...OPERATOR_USERS];
 
+  let targetUser = null;
   if (mode === 'add') {
     if (users.some(u => String(u.nik).trim() === nik)) {
       showToast(`NIK ${nik} sudah terdaftar dalam sistem!`, 'warning');
       return;
     }
-    users.push({
+    targetUser = {
       nik: nik,
       name: name,
       title: title,
       role: role,
       password: password,
       dept: role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations'
-    });
+    };
+    users.push(targetUser);
     showToast(`Pengguna baru ${name} (${nik}) berhasil ditambahkan!`, 'success');
   } else {
     // Mode edit
@@ -24358,7 +24486,7 @@ function handleDbUserFormSubmit(e) {
         showToast(`NIK baru ${nik} sudah digunakan oleh pengguna lain!`, 'warning');
         return;
       }
-      users[idx] = {
+      targetUser = {
         ...users[idx],
         nik: nik,
         name: name,
@@ -24367,6 +24495,7 @@ function handleDbUserFormSubmit(e) {
         password: password,
         dept: role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations'
       };
+      users[idx] = targetUser;
       // Jika user yang diedit sedang login, update sesi
       if (currentAuthUser && currentAuthUser.nik === origNik) {
         currentAuthUser.nik = nik;
@@ -24381,7 +24510,7 @@ function handleDbUserFormSubmit(e) {
     }
   }
 
-  window.saveAppUsers(users, true);
+  window.saveAppUsers(users, true, targetUser, 'save');
   closeModal('modalDbUser');
   updateDbSummaryMetrics();
   renderDbUsersTable();
@@ -24394,10 +24523,7 @@ window.confirmDeleteDbUser = function(nik, name) {
     () => {
       let users = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : [...OPERATOR_USERS];
       users = users.filter(u => String(u.nik).trim() !== String(nik).trim());
-      window.saveAppUsers(users);
-      if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
-        VoltFirebase.deleteUser(nik);
-      }
+      window.saveAppUsers(users, true, nik, 'delete');
       showToast(`Pengguna ${name} berhasil dihapus dari sistem.`, 'success');
       updateDbSummaryMetrics();
       renderDbUsersTable();

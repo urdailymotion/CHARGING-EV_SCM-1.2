@@ -108,6 +108,27 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (body.action === 'save_user' || body.action === 'add_user' || body.action === 'update_user') {
+      const user = body.user || body.record || body.payload || body.data || body;
+      const result = apiSaveUser(user);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_user') {
+      const nik = body.nik || body.id;
+      const result = apiDeleteUser(nik);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'sync_all_users') {
+      const usersList = body.usersList || body.users || body.data;
+      const result = apiSyncAllUsers(usersList);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (body.action === 'validate_login') {
       const result = apiValidateLogin(body.nik, body.password);
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -2175,6 +2196,182 @@ function apiSyncAllUnits(unitCodesList) {
       sheet.getRange(2, 1, data.length, 1).setValues(data);
     }
     return { status: 'success', message: 'Seluruh populasi unit berhasil disinkronkan' };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+// =============================================================================
+// 6.5 USER MANAGEMENT (CRUD FOR USERS & CREDENTIALS -> Sheet USER)
+// =============================================================================
+function apiSaveUser(user) {
+  try {
+    if (!user) return { status: 'error', message: 'Data user kosong' };
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName('USER');
+    if (!sheet) {
+      ensureDatabaseStructure_(ss, true);
+      sheet = ss.getSheetByName('USER');
+    }
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak dapat dibuat/ditemukan' };
+
+    const cleanNik = String(user.nik || '').trim();
+    if (!cleanNik) return { status: 'error', message: 'NIK wajib diisi' };
+
+    const cleanName = String(user.name || '').trim().toUpperCase();
+    const cleanTitle = String(user.title || 'CHARGING MAN').trim().toUpperCase();
+    const cleanRole = String(user.role || 'OPERATOR').trim().toUpperCase();
+    const cleanPwd = String(user.password || user.nik || '').trim();
+    const cleanDept = String(user.dept || (cleanRole === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')).trim();
+
+    const rows = sheet.getDataRange().getValues();
+    let updated = false;
+    let targetRowIndex = -1;
+
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][1] || '').trim() === cleanNik) {
+        targetRowIndex = i + 1;
+        const no = rows[i][0] || i;
+        sheet.getRange(targetRowIndex, 1, 1, 7).setValues([[
+          no, cleanNik, cleanName, cleanTitle, cleanRole, cleanPwd, cleanDept
+        ]]);
+        updated = true;
+        break;
+      }
+    }
+
+    if (!updated) {
+      targetRowIndex = getLastDataRowInCol(sheet, 2) + 1;
+      const no = Math.max(1, targetRowIndex - 1);
+      sheet.getRange(targetRowIndex, 1, 1, 7).setValues([[
+        no, cleanNik, cleanName, cleanTitle, cleanRole, cleanPwd, cleanDept
+      ]]);
+    }
+
+    // Sync juga ke Firestore dari GAS jika Firebase terhubung
+    syncToFirestoreFromGas_('users', cleanNik, {
+      nik: cleanNik,
+      name: cleanName,
+      title: cleanTitle,
+      role: cleanRole,
+      password: cleanPwd,
+      dept: cleanDept
+    });
+
+    logAuditGAS_(ss, 'ADMIN/USER', updated ? 'UPDATE_USER' : 'ADD_USER', cleanNik, `User ${cleanName} (${cleanRole}) berhasil disimpan`);
+
+    return {
+      status: 'success',
+      message: `User ${cleanName} (${cleanNik}) berhasil disimpan ke Google Sheets`,
+      updated: updated,
+      user: {
+        nik: cleanNik,
+        name: cleanName,
+        title: cleanTitle,
+        role: cleanRole,
+        password: cleanPwd,
+        dept: cleanDept
+      }
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+function apiDeleteUser(nik) {
+  try {
+    const cleanNik = String(nik || '').trim();
+    if (!cleanNik) return { status: 'error', message: 'NIK user kosong' };
+
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName('USER');
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak ditemukan' };
+
+    const rows = sheet.getDataRange().getValues();
+    let deleted = false;
+    let deletedName = '';
+
+    for (let i = rows.length - 1; i >= 1; i--) {
+      if (String(rows[i][1] || '').trim() === cleanNik) {
+        deletedName = String(rows[i][2] || cleanNik);
+        sheet.deleteRow(i + 1);
+        deleted = true;
+      }
+    }
+
+    // Hapus juga dari Firestore
+    deleteFromFirestoreFromGas_('users', cleanNik);
+
+    // Re-index kolom NO agar rapi
+    const remainingRows = sheet.getLastRow();
+    if (remainingRows > 1) {
+      const numRows = remainingRows - 1;
+      const noCol = [];
+      for (let j = 1; j <= numRows; j++) {
+        noCol.push([j]);
+      }
+      sheet.getRange(2, 1, numRows, 1).setValues(noCol);
+    }
+
+    logAuditGAS_(ss, 'ADMIN/USER', 'DELETE_USER', cleanNik, `User ${deletedName} (${cleanNik}) dihapus`);
+
+    if (deleted) {
+      return { status: 'success', message: `Pengguna ${deletedName} (${cleanNik}) berhasil dihapus dari Google Sheets & Firebase`, nik: cleanNik };
+    } else {
+      return { status: 'error', message: `Pengguna dengan NIK ${cleanNik} tidak ditemukan di sheet USER` };
+    }
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+function apiSyncAllUsers(usersList) {
+  try {
+    if (!Array.isArray(usersList)) return { status: 'error', message: 'Data users list harus berupa array' };
+
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName('USER');
+    if (!sheet) {
+      ensureDatabaseStructure_(ss, true);
+      sheet = ss.getSheetByName('USER');
+    }
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak ditemukan' };
+
+    const lastRow = Math.max(sheet.getLastRow(), 2);
+    if (lastRow > 1) {
+      sheet.getRange(2, 1, lastRow - 1, 7).clearContent();
+    }
+
+    if (usersList.length > 0) {
+      const dataRows = usersList.map((u, idx) => [
+        idx + 1,
+        String(u.nik || '').trim(),
+        String(u.name || '').trim().toUpperCase(),
+        String(u.title || 'CHARGING MAN').trim().toUpperCase(),
+        String(u.role || 'OPERATOR').trim().toUpperCase(),
+        String(u.password || u.nik || '').trim(),
+        String(u.dept || (u.role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')).trim()
+      ]);
+      sheet.getRange(2, 1, dataRows.length, 7).setValues(dataRows);
+
+      usersList.forEach(u => {
+        const cNik = String(u.nik || '').trim();
+        if (cNik) {
+          syncToFirestoreFromGas_('users', cNik, {
+            nik: cNik,
+            name: String(u.name || '').trim().toUpperCase(),
+            title: String(u.title || 'CHARGING MAN').trim().toUpperCase(),
+            role: String(u.role || 'OPERATOR').trim().toUpperCase(),
+            password: String(u.password || u.nik || '').trim(),
+            dept: String(u.dept || '').trim()
+          });
+        }
+      });
+    }
+
+    logAuditGAS_(ss, 'ADMIN/USER', 'SYNC_ALL_USERS', 'USER_SHEET', `${usersList.length} akun user berhasil disinkronkan`);
+
+    return { status: 'success', message: `${usersList.length} akun pengguna berhasil disinkronkan ke Google Sheets`, count: usersList.length };
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
