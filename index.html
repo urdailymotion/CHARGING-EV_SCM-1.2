@@ -725,7 +725,10 @@
         formOpShift.className = 'status-pill ' + (activeShift === '2' ? 'amber' : 'purple');
       }
       if (formOpLoc) {
-        formOpLoc.textContent = '' + (activeLoc === 'SUPERVISOR' ? 'ROOM A1' : activeLoc);
+        var userMachEarly = user.swapStation || (activeLoc === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
+        var isSchEarly = (user.scheduleMode === 'ON' || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('voltswap_schedule_mode') === 'ON'));
+        var modeLbl = isSchEarly ? 'MODE SCHEDULE' : 'ON-DEMAND';
+        formOpLoc.textContent = '' + (activeLoc === 'SUPERVISOR' ? 'ROOM A1' : activeLoc) + ' • ' + userMachEarly + ' • ' + modeLbl;
       }
       if (dedSwapLoc) {
         dedSwapLoc.value = (activeLoc === 'SUPERVISOR') ? 'ROOM A1' : activeLoc;
@@ -15688,7 +15691,9 @@ function applyAuthUserSession(user) {
       formOpShift.className = `status-pill ${activeShift === '2' ? 'amber' : 'purple'}`;
     }
     if (formOpLoc) {
-      formOpLoc.textContent = `${user.location === 'SUPERVISOR' ? 'ROOM A1' : user.location} • ${userMach}`;
+      const isSchSess = (user.scheduleMode === 'ON' || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('voltswap_schedule_mode') === 'ON'));
+      const modeLabel = isSchSess ? 'MODE SCHEDULE' : 'ON-DEMAND';
+      formOpLoc.textContent = `${user.location === 'SUPERVISOR' ? 'ROOM A1' : user.location} • ${userMach} • ${modeLabel}`;
     }
     if (dedSwapLoc) {
       dedSwapLoc.value = (user.location === 'SUPERVISOR') ? 'ROOM A1' : user.location;
@@ -15918,24 +15923,28 @@ function initSplitCardLogin() {
 
   function updateLoginModeUI(mode) {
     if (mode === 'ON') {
+      if (radSch) radSch.checked = true;
+      if (radNonSch) radNonSch.checked = false;
       if (lblSch) lblSch.classList.add('active');
       if (lblNonSch) lblNonSch.classList.remove('active');
       if (badgeSchMode) {
-        badgeSchMode.innerHTML = '<span class="badge-dot">●</span> SCHEDULE';
+        badgeSchMode.innerHTML = '<span class="badge-dot">● </span> SCHEDULE';
         badgeSchMode.className = 'mode-status-badge schedule';
       }
       if (descSchMode) {
-        descSchMode.innerHTML = '<span class="note-icon">⏱️</span><span class="note-text"><strong>Mode Schedule Aktif:</strong> Jam kedatangan unit otomatis dikomparasikan dengan target jadwal.</span>';
+        descSchMode.innerHTML = '<span class="note-icon">⏱️</span><span class="note-text"><strong>Mode Schedule Aktif:</strong> Komparasi jadwal berlaku untuk semua lokasi (ROOM A1 &amp; ROOM A2).</span>';
       }
     } else {
+      if (radNonSch) radNonSch.checked = true;
+      if (radSch) radSch.checked = false;
       if (lblNonSch) lblNonSch.classList.add('active');
       if (lblSch) lblSch.classList.remove('active');
       if (badgeSchMode) {
-        badgeSchMode.innerHTML = '<span class="badge-dot">●</span> ON-DEMAND';
+        badgeSchMode.innerHTML = '<span class="badge-dot">● </span> ON-DEMAND';
         badgeSchMode.className = 'mode-status-badge ondemand';
       }
       if (descSchMode) {
-        descSchMode.innerHTML = '<span class="note-text"><strong>On-Demand (Default):</strong> Pencatatan langsung tanpa komparasi jadwal operasional.</span>';
+        descSchMode.innerHTML = '<span class="note-text"><strong>On-Demand (Demand):</strong> Pencatatan bebas jadwal tanpa penalti target (ROOM A1 &amp; ROOM A2).</span>';
       }
     }
   }
@@ -15943,6 +15952,12 @@ function initSplitCardLogin() {
   if (radNonSch && radSch) {
     radNonSch.addEventListener('change', () => { if (radNonSch.checked) updateLoginModeUI('OFF'); });
     radSch.addEventListener('change', () => { if (radSch.checked) updateLoginModeUI('ON'); });
+  }
+  if (lblNonSch) {
+    lblNonSch.addEventListener('click', () => updateLoginModeUI('OFF'));
+  }
+  if (lblSch) {
+    lblSch.addEventListener('click', () => updateLoginModeUI('ON'));
   }
 
   const savedMode = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || 'OFF';
@@ -15960,16 +15975,14 @@ function initSplitCardLogin() {
   const machineSelect = document.getElementById('splitLoginMachine');
   const shiftSelect = document.getElementById('splitLoginShift');
 
-  // Smart Auto-Default saat operator memilih Lokasi
+  // Smart Auto-Default Stasiun Mesin saat operator memilih Lokasi (Mode Operasional tetap bebas dipilih)
   if (stationSelect && machineSelect) {
     stationSelect.addEventListener('change', () => {
       const loc = stationSelect.value;
       if (loc === 'ROOM A1') {
         machineSelect.value = 'SWAP 01';
-        updateLoginModeUI('ON');
       } else if (loc === 'ROOM A2') {
         if (machineSelect.value === 'SWAP 01') machineSelect.value = 'SWAP 02';
-        updateLoginModeUI('OFF');
       }
     });
 
@@ -15977,10 +15990,8 @@ function initSplitCardLogin() {
       const mach = machineSelect.value;
       if (mach === 'SWAP 01' && stationSelect.value === 'ROOM A2') {
         stationSelect.value = 'ROOM A1';
-        updateLoginModeUI('ON');
       } else if ((mach === 'SWAP 02' || mach === 'SWAP 03') && stationSelect.value === 'ROOM A1') {
         stationSelect.value = 'ROOM A2';
-        updateLoginModeUI('OFF');
       }
     });
   }
@@ -16782,32 +16793,19 @@ function initTableControls() {
     const schInput = document.getElementById('newSwapTimeSch');
     const schNotice = document.getElementById('newSwapSchNotice');
 
-    // Cek Lokasi: ROOM A2 beroperasi On-Demand (Bebas Jadwal)
     const locInput = document.getElementById('newSwapLoc');
     const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
-    const isRoomA2 = (String(locVal).trim().toUpperCase() === 'ROOM A2');
 
-    if (isRoomA2) {
+    // Jika Mode On-Demand / Demand (Bebas Jadwal) untuk SEMUA LOKASI (ROOM A1, ROOM A2, DLL):
+    if (!isScheduleOn) {
       if (groupSch) groupSch.style.display = 'block';
       if (schInput) schInput.value = '-';
       if (schNotice) {
-        schNotice.innerHTML = `<strong>ROOM A2: NON-SCHEDULED</strong> (Jalur Fleksibel / Bebas Target Jadwal)`;
+        schNotice.innerHTML = `<strong>${locVal}: MODE ON-DEMAND</strong> (Jalur Bebas Target Jadwal)`;
         schNotice.style.color = '#4338ca';
       }
       if (statusSelect) statusSelect.value = 'Non-Schedule';
       if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
-      window.updateNewSwapKeteranganRequirement();
-      return;
-    }
-
-    if (!isScheduleOn) {
-      if (groupSch) groupSch.style.display = 'none';
-      if (statusSelect && !statusSelect.value) {
-        statusSelect.value = 'On Time';
-      }
-      if (statusSelect && statusSelect.value === 'On Time' && remarkSelect && !remarkSelect.value) {
-        remarkSelect.value = '13.NO PROBLEM';
-      }
       window.updateNewSwapKeteranganRequirement();
       return;
     }
@@ -17110,8 +17108,8 @@ function initTableControls() {
           if (ketVal) return ketVal;
           if (remarkVal && remarkVal !== '-' && remarkVal !== '13.NO PROBLEM') return remarkVal;
           if (statusVal === 'Out Off Time') {
-            const dedTime = document.getElementById('dedSwapTimeSch')?.value;
-            const jamInVal = document.getElementById('dedSwapJamIn')?.value;
+            const dedTime = document.getElementById('newSwapTimeSch')?.value || document.getElementById('dedSwapTimeSch')?.value;
+            const jamInVal = document.getElementById('newSwapJamIn')?.value || document.getElementById('dedSwapJamIn')?.value;
             if (dedTime && dedTime !== '-' && jamInVal) {
               const diff = calculateMinutesDifference(jamInVal, dedTime);
               return `Out Off Schedule (${diff > 0 ? '+' : ''}${diff} mnt)`;
@@ -17125,6 +17123,7 @@ function initTableControls() {
         timeSch: (function() {
           const mTime = document.getElementById('newSwapTimeSch')?.value;
           if (mTime && mTime !== '-') return mTime;
+          if (statusVal === 'Non-Schedule') return '-';
           const activeCompDate = (typeof parseDateComparable === 'function') ? parseDateComparable(document.getElementById('newSwapDate')?.value) : null;
           const m = (schedulesData || []).find(sc => {
             const scUnit = String(sc.unit).replace(/^DT[- ]?/i, '').trim();
@@ -17437,7 +17436,7 @@ function renderMainTable() {
   } else {
     pageItems.forEach((row) => {
       const tr = document.createElement('tr');
-      const isNonSch = (row.statusRemark === 'Non-Schedule' || String(row.location || '').toUpperCase() === 'ROOM A2');
+      const isNonSch = (row.statusRemark === 'Non-Schedule' || (row.statusRemark && String(row.statusRemark).toLowerCase().includes('non')));
       const isOnTime = (row.statusRemark === 'On Time');
       const statusPillHtml = isNonSch 
         ? '<span class="status-tag ondemand" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight:700;">Non-Schedule</span>'
@@ -17487,7 +17486,7 @@ function renderMainTable() {
       mobileCardsContainer.innerHTML = `<div class="mobile-empty-alert">Tidak ada transaksi yang cocok dengan filter pencarian.</div>`;
     } else {
       pageItems.forEach((row) => {
-        const isNonSch = (row.statusRemark === 'Non-Schedule' || String(row.location || '').toUpperCase() === 'ROOM A2');
+        const isNonSch = (row.statusRemark === 'Non-Schedule' || (row.statusRemark && String(row.statusRemark).toLowerCase().includes('non')));
         const isOnTime = (row.statusRemark === 'On Time');
         const statusPillHtml = isNonSch 
           ? '<span class="status-tag ondemand" style="background:#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe; font-weight:700;">Non-Schedule</span>'
@@ -18749,6 +18748,7 @@ function initDedicatedInputForm() {
         timeSch: (function() {
           const dedTime = document.getElementById('dedSwapTimeSch')?.value;
           if (dedTime && dedTime !== '-') return dedTime;
+          if (statusVal === 'Non-Schedule') return '-';
           const activeCompDate = (typeof parseDateComparable === 'function') ? parseDateComparable(document.getElementById('dedSwapDate')?.value) : null;
           const m = (schedulesData || []).find(sc => {
             const scUnit = String(sc.unit).replace(/^DT[- ]?/i, '').trim();
@@ -20223,16 +20223,12 @@ function updatePpaExecutiveDashboard() {
     if (!s) return false;
 
     // Filter Mode Operasional (ALL vs SCHEDULED vs ON_DEMAND)
-    const sLoc = String(s.location || '').trim().toUpperCase();
-    const hasSch = s.timeSch && s.timeSch !== '-' && s.timeSch !== 'NON-SCH';
-    const isA2 = (sLoc === 'ROOM A2') || String(s.statusRemark || '').toLowerCase().includes('non');
+    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
 
     if (opMode === 'SCHEDULED') {
-      if (sLoc === 'ROOM A2') return false;
-      if (!hasSch && sLoc !== 'ROOM A1') return false;
+      if (isNonSch) return false;
     } else if (opMode === 'ON_DEMAND') {
-      if (sLoc === 'ROOM A1') return false;
-      if (hasSch && !isA2) return false;
+      if (!isNonSch) return false;
     }
     
     // 1. Shift filter
@@ -20271,7 +20267,7 @@ function updatePpaExecutiveDashboard() {
       const st = String(s.statusRemark || 'On Time').trim().toLowerCase();
       if (statusVal === 'On Time' && !st.includes('on')) return false;
       if (statusVal === 'Out Off Time' && (!st.includes('out') && !st.includes('late'))) return false;
-      if (statusVal === 'Non-Schedule' && !st.includes('non') && !sLoc.includes('A2')) return false;
+      if (statusVal === 'Non-Schedule' && !st.includes('non')) return false;
     }
 
     // 5. Problem filter
@@ -20526,8 +20522,7 @@ function renderChartKetepatan() {
     let outTimeCount = 0;
     let nonSchCount = 0;
     ppaFilteredSwaps.forEach(s => {
-      const loc = String(s.location || '').toUpperCase();
-      const isNon = String(s.statusRemark || '').toLowerCase().includes('non') || (loc === 'ROOM A2');
+      const isNon = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
       if (isNon) {
         nonSchCount++;
       } else {
@@ -20540,7 +20535,7 @@ function renderChartKetepatan() {
     const schTotal = onTimeCount + outTimeCount;
     const otpPct = schTotal > 0 ? ((onTimeCount / schTotal) * 100).toFixed(1) : (total > 0 ? '100.0' : '0.0');
 
-    labels = ['ON SCHEDULE', 'OUT OFF TIME', 'NON-SCHEDULE (A2)'];
+    labels = ['ON SCHEDULE', 'OUT OFF TIME', 'NON-SCHEDULE'];
     dataVals = [onTimeCount, outTimeCount, nonSchCount];
     if (total === 0) { dataVals = [1, 0, 0]; }
     bgColors = [EV_COLORS.green, EV_COLORS.red, EV_COLORS.cyan];
@@ -21120,7 +21115,7 @@ function renderPpaExecTable() {
   const pageItems = ppaFilteredSwaps.slice(startIdx, endIdx);
 
   pageItems.forEach((s, i) => {
-    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (String(s.location || '').toUpperCase() === 'ROOM A2');
+    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
     const isLate = !isNonSch && (String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late'));
     
     // Status pill HTML (EV Intelligence style)
@@ -21694,7 +21689,7 @@ function calculateMinutesDifference(timeA, timeB) {
 
 function getSwapScheduleTime(s) {
   if (!s) return '-';
-  if (String(s.location || '').toUpperCase() === 'ROOM A2' || String(s.statusRemark || '').toLowerCase().includes('non')) return '-';
+  if (String(s.statusRemark || '').toLowerCase().includes('non') || s.timeSch === '-' || s.timeSch === 'NON-SCH') return '-';
   if (s && s.timeSch && s.timeSch !== '-' && s.timeSch !== 'null' && s.timeSch !== 'undefined') {
     return s.timeSch;
   }
@@ -21737,28 +21732,19 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   const shiftSelect = document.getElementById('dedSwapShift');
   const jamInInput = document.getElementById('dedSwapJamIn');
 
-  // Cek Lokasi: ROOM A2 beroperasi On-Demand (Bebas Jadwal)
   const locInput = document.getElementById('dedSwapLoc');
   const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
-  const isRoomA2 = (String(locVal).trim().toUpperCase() === 'ROOM A2');
 
-  if (isRoomA2) {
+  // Jika Mode On-Demand / Demand (Bebas Jadwal) untuk SEMUA LOKASI (ROOM A1, ROOM A2, DLL):
+  if (!isScheduleOn) {
     if (groupSch) groupSch.style.display = 'block';
     if (schInput) schInput.value = '-';
     if (schNotice) {
-      schNotice.innerHTML = '<strong>ROOM A2: NON-SCHEDULED</strong> (Jalur Fleksibel / Bebas Target Jadwal)';
+      schNotice.innerHTML = `<strong>${locVal}: MODE ON-DEMAND</strong> (Jalur Bebas Target Jadwal)`;
       schNotice.style.color = '#4338ca';
     }
     if (statusSelect) statusSelect.value = 'Non-Schedule';
     if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
-    if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
-    return;
-  }
-
-  if (!isScheduleOn) {
-    if (groupSch) groupSch.style.display = 'none';
-    if (statusSelect && !statusSelect.value) statusSelect.value = 'On Time';
-    if (statusSelect && statusSelect.value === 'On Time' && remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
     if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
     return;
   }

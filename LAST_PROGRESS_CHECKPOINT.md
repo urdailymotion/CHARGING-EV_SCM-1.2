@@ -296,6 +296,27 @@
 
 ---
 
+#### 15. 🔄 Fleksibilitas Universal Mode Operasional (Schedule & On-Demand) di Semua Lokasi (29 September 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Sebelumnya sistem mengunci `ROOM A1` wajib menggunakan Mode Schedule dan `ROOM A2` wajib menggunakan Mode On-Demand (Non-Schedule).
+  - Pengguna meminta agar seluruh lokasi (`ROOM A1` maupun `ROOM A2`) bebas memilih ingin beroperasi dengan **Mode Schedule** ataupun **Mode Demand (On-Demand)** saat login.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Layar Login (`loginPortalScreen`):**
+     - Memilih Lokasi (`ROOM A1` / `ROOM A2`) maupun Mesin Swap (`SWAP 01`, `SWAP 02`, `SWAP 03`) tidak lagi memaksa/mengubah pilihan mode operasional.
+     - Operator bebas memilih tombol **`On-Demand`** atau **`Mode Schedule`** untuk ruangan manapun.
+     - Event listener interaktif: mengklik label maupun radio button langsung menyinkronkan status aktif, indikator badge, dan teks petunjuk.
+  2. **Form Input Transaksi (Dedicated & Modal Pop-Up):**
+     - Evaluasi schedule target kini berlaku untuk **SEMUA lokasi** (`ROOM A1` dan `ROOM A2`) jika Mode Schedule aktif.
+     - Jika unit DT memiliki jadwal di shift & tanggal aktif, target jam otomatis dicocokkan dan dievaluasi toleransi keterlambatan **55 menit** (On Time vs Out Off Time) baik di Room A1 maupun Room A2.
+     - Jika Mode On-Demand dipilih, seluruh lokasi beroperasi bebas jadwal (Target Jam: `-`, Status: `Non-Schedule`, Remark: `13.NO PROBLEM`).
+     - Indikator banner sesi form input diperbarui menampilkan: `ROOM .. • SWAP .. • MODE SCHEDULE` atau `ON-DEMAND`.
+  3. **Visual KPI & Telemetri BI:**
+     - Pemfilteran Mode Operasional di Visual KPI (`[Semua Operasional]`, `[SCHEDULE]`, `[NON SCHEDULE]`) disesuaikan berbasis status transaksi aktual (`s.statusRemark` / `s.timeSch`), bukan lagi berdasarkan filter kaku nama ruangan.
+  4. **Pembaruan Service Worker:**
+     - Cache Service Worker pada `sw.js` dinaikkan ke versi **`charging-ev-v26`**.
+
+---
+
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
@@ -305,8 +326,9 @@
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v22`
+   - **Service Worker Cache:** `charging-ev-v26`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
 
 
 
