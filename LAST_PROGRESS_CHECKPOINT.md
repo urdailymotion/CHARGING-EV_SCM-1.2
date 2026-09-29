@@ -361,19 +361,34 @@
   4. **Pembaruan Service Worker:**
      - Cache Service Worker dinaikkan ke **`charging-ev-v29`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 19. 📱 Tampilan Login Full-Screen Edge-to-Edge pada Akses Mobile (HP):
+- **Latar Belakang & Permintaan Pengguna:**
+  - Saat aplikasi diakses dari perangkat ponsel (HP), pengguna meminta agar tampilan form login dibuat *full screen* tanpa ada warna sisa atau margin di tepian layar (sebelumnya kartu login melayang dengan margin dan sudut membulat di atas latar belakang `#dbe4f0`).
+- **Pembaruan Desain & CSS Responsif:**
+  1. **Reset Total Margin & Padding Overlay:**
+     - Pada `@media (max-width: 860px)`, `.login-portal-overlay` diatur `padding: 0 !important`, `margin: 0 !important`, `border-radius: 0 !important`, dan `background: #ffffff !important` (serta `background-image: none !important`) sehingga tidak ada lagi warna latar belakang abu-abu kebiruan di tepian layar HP.
+  2. **Kartu Login Penuh 100% Layar (`.split-login-card`):**
+     - `max-width: 100% !important; width: 100% !important; margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; min-height: 100dvh !important;`.
+  3. **Banner Atas & Form Bawah Seamless Edge-to-Edge:**
+     - `.login-left-banner`: Melebar 100% dari tepi kiri ke kanan layar tanpa sudut melengkung, dengan penyesuaian `safe-area-inset-top` untuk notch kamera HP.
+     - `.login-right-form`: Mengalir langsung ke bawah menyatu dengan layar tanpa border-radius bawah, dengan padding internal yang proporsional dan `safe-area-inset-bottom`.
+  4. **Pembaruan Service Worker & Anti-Cache:**
+     - Cache Service Worker dinaikkan ke **`charging-ev-v30`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@75`
+   - **Versi Rilis:** `@77`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v29`
+   - **Service Worker Cache:** `charging-ev-v30`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
 
 
 
