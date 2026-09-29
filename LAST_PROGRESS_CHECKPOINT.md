@@ -391,19 +391,39 @@
 - **Pembaruan Service Worker:**
   - Cache Service Worker dinaikkan ke **`charging-ev-v31`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
 
+#### 21. ✨ Pop-up Animasi Keren Sertifikat Hak Cipta & Lisensi Pengembang Pasca Verifikasi PIN:
+- **Latar Belakang & Permintaan Pengguna:**
+  - Pengguna meminta agar informasi hak cipta & pengembang ditampilkan dalam bentuk **Pop-up Modal interaktif dengan animasi yang keren**, otomatis muncul setelah memasukkan PIN keamanan, serta dapat ditutup dengan mudah (*closeable*).
+- **Fitur Baru & Implementasi Animasi:**
+  1. **Animasi Pop-up Keren (`devPopElastic` & `devAvatarPulse`):**
+     - Dialog muncul dengan animasi elastis membal halus (*elastic spring bounce*) dari bawah (`transform: scale(0.75) translateY(40px)` -> `scale(1.03)` -> `scale(1)`).
+     - Avatar Developer (`👨‍💻`) dilengkapi *glowing cyber pulse* (`@keyframes devAvatarPulse`) yang berpendar dinamis secara terus menerus.
+     - Lencana status `VERIFIED` berdenyut lembut (`@keyframes devBadgePulse`).
+  2. **Triger Otomatis Pasca Input PIN:**
+     - Pada fungsi `handleVerifyBackupPin()`, begitu PIN diverifikasi benar dan tab terbuka, modal `#modalDevAttribution` otomatis terpicu muncul setelah jeda halus 280ms.
+  3. **Multi-Method Dismiss (Mudah Ditutup):**
+     - Tombol silang `[ ✕ ]` di pojok kanan atas dengan animasi putar halus (*rotate 90deg* saat di-hover).
+     - Tombol utama di bagian bawah: `[ ✕ Lanjut ke Pengaturan Database ]` dengan efek gradasi cerah.
+     - Klik di luar area modal (*backdrop dismiss*) maupun penekanan tombol keyboard `Escape (ESC)`.
+  4. **Tombol Buka Kembali di Tab Backup:**
+     - Ditambahkan tombol `[ ✨ Buka Pop-up ]` pada header kartu di tab `#dbPaneBackup` sehingga pengguna dapat membuka kembali pop-up sertifikat kapan saja.
+- **Pembaruan Service Worker:**
+  - Cache Service Worker dinaikkan ke **`charging-ev-v32`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@78`
+   - **Versi Rilis:** `@79`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v31`
+   - **Service Worker Cache:** `charging-ev-v32`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
 
 
 
