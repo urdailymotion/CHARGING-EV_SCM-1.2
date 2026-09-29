@@ -9617,8 +9617,8 @@ html.needs-login .sidebar-backdrop {
                 </div>
 
                 <!-- Row 6: Status Ketepatan (Remark) & Problem Remark (2 Kolom Kompak) -->
-                <div class="form-group-ent">
-                  <label class="form-label-ent">Status / Remark Ketepatan</label>
+                <div class="form-group-ent" id="wrapDedSwapStatus">
+                  <label class="form-label-ent" id="lblDedSwapStatus">Status / Remark Ketepatan</label>
                   <select id="dedSwapStatus" class="form-control-ent">
                     <option value="On Time" selected>On Time</option>
                     <option value="Out Off Time">Out Off Time</option>
@@ -9627,7 +9627,7 @@ html.needs-login .sidebar-backdrop {
                   
                 </div>
 
-                <div class="form-group-ent">
+                <div class="form-group-ent" id="wrapDedSwapProblem">
                   <label class="form-label-ent">Problem Remark</label>
                   <select id="dedSwapRemark2" class="form-control-ent">
                     <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
@@ -11712,8 +11712,8 @@ html.needs-login .sidebar-backdrop {
             </div>
 
             <!-- Row 6: Status Ketepatan (Remark) & Problem Remark (2 Kolom Kompak) -->
-            <div class="form-group-ent">
-              <label class="form-label-ent">Status / Remark Ketepatan</label>
+            <div class="form-group-ent" id="wrapNewSwapStatus">
+              <label class="form-label-ent" id="lblNewSwapStatus">Status / Remark Ketepatan</label>
               <select id="newSwapStatus" class="form-control-ent">
                 <option value="On Time" selected>On Time</option>
                 <option value="Out Off Time">Out Off Time</option>
@@ -11722,7 +11722,7 @@ html.needs-login .sidebar-backdrop {
               
             </div>
 
-            <div class="form-group-ent">
+            <div class="form-group-ent" id="wrapNewSwapProblem">
               <label class="form-label-ent">Problem Remark</label>
               <select id="newSwapRemark2" class="form-control-ent">
                 <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
@@ -15642,9 +15642,11 @@ function applyAuthUserSession(user) {
     if (topName) topName.textContent = user.name;
     if (topNikRole) topNikRole.textContent = `NIK: ${user.nik} | ${user.role}`;
     const userMach = user.swapStation || (user.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
+    const isScheduleOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || user.scheduleMode || 'OFF') === 'ON';
+    const modeLabel = isScheduleOn ? 'SCHEDULE' : 'ON-DEMAND';
     if (topBadge) {
       const isSmallScreen = window.innerWidth <= 600;
-      topBadge.textContent = isSmallScreen ? `${user.location} (${userMach}) • S${activeShift}` : `${user.location} (${userMach}) • SHIFT ${activeShift}`;
+      topBadge.textContent = isSmallScreen ? `${user.location} (${userMach}) • S${activeShift} • ${modeLabel}` : `${user.location} (${userMach}) • SHIFT ${activeShift} • ${modeLabel}`;
     }
 
     // Sidebar drawer user identity
@@ -15653,7 +15655,7 @@ function applyAuthUserSession(user) {
     const sidePill = document.getElementById('sidebarStationPill');
     if (sideName) sideName.textContent = user.name;
     if (sideNikRole) sideNikRole.textContent = `NIK: ${user.nik} • ${user.role}`;
-    if (sidePill) sidePill.textContent = `${user.location} (${userMach}) • S${activeShift}`;
+    if (sidePill) sidePill.textContent = `${user.location} (${userMach}) • S${activeShift} • ${modeLabel}`;
 
     // Tampilkan tombol pemilih mesin cepat jika ROOM A2
     const isRoomA2 = (user.location === 'ROOM A2');
@@ -16796,21 +16798,24 @@ function initTableControls() {
     const locInput = document.getElementById('newSwapLoc');
     const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
 
+    const wrapStatus = document.getElementById('wrapNewSwapStatus');
+    const wrapProblem = document.getElementById('wrapNewSwapProblem');
+
     // Jika Mode On-Demand / Demand (Bebas Jadwal) untuk SEMUA LOKASI (ROOM A1, ROOM A2, DLL):
     if (!isScheduleOn) {
-      if (groupSch) groupSch.style.display = 'block';
+      if (groupSch) groupSch.style.display = 'none';
       if (schInput) schInput.value = '-';
-      if (schNotice) {
-        schNotice.innerHTML = `<strong>${locVal}: MODE ON-DEMAND</strong> (Jalur Bebas Target Jadwal)`;
-        schNotice.style.color = '#4338ca';
-      }
       if (statusSelect) statusSelect.value = 'Non-Schedule';
       if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+      if (wrapStatus) wrapStatus.style.display = 'none';
+      if (wrapProblem) wrapProblem.classList.add('form-full-width');
       window.updateNewSwapKeteranganRequirement();
       return;
     }
 
     if (groupSch) groupSch.style.display = 'block';
+    if (wrapStatus) wrapStatus.style.display = '';
+    if (wrapProblem) wrapProblem.classList.remove('form-full-width');
 
     const rawUnit = unitSelect ? unitSelect.value.trim() : '';
     const matchDigit = rawUnit.match(/\b\d{4}\b/) || rawUnit.match(/\d+/);
@@ -21735,21 +21740,24 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   const locInput = document.getElementById('dedSwapLoc');
   const locVal = (locInput ? locInput.value : (window.currentAuthUser && window.currentAuthUser.location)) || 'ROOM A1';
 
+  const wrapStatus = document.getElementById('wrapDedSwapStatus');
+  const wrapProblem = document.getElementById('wrapDedSwapProblem');
+
   // Jika Mode On-Demand / Demand (Bebas Jadwal) untuk SEMUA LOKASI (ROOM A1, ROOM A2, DLL):
   if (!isScheduleOn) {
-    if (groupSch) groupSch.style.display = 'block';
+    if (groupSch) groupSch.style.display = 'none';
     if (schInput) schInput.value = '-';
-    if (schNotice) {
-      schNotice.innerHTML = `<strong>${locVal}: MODE ON-DEMAND</strong> (Jalur Bebas Target Jadwal)`;
-      schNotice.style.color = '#4338ca';
-    }
     if (statusSelect) statusSelect.value = 'Non-Schedule';
     if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+    if (wrapStatus) wrapStatus.style.display = 'none';
+    if (wrapProblem) wrapProblem.classList.add('form-full-width');
     if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
     return;
   }
 
   if (groupSch) groupSch.style.display = 'block';
+  if (wrapStatus) wrapStatus.style.display = '';
+  if (wrapProblem) wrapProblem.classList.remove('form-full-width');
 
   const rawUnit = unitSelect ? unitSelect.value.trim() : '';
   const matchDigit = rawUnit.match(/\b\d{4}\b/) || rawUnit.match(/\d+/);

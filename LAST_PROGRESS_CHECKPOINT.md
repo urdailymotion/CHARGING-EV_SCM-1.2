@@ -317,16 +317,26 @@
 
 ---
 
+#### 16. ⚡ Pembersihan Tampilan Form Input Sesuai Mode On-Demand (29 September 2026):
+- **Masalah:** Saat operator login menggunakan Mode Demand (On-Demand), form input masih menampilkan bar *"WAKTU SCHEDULE SWAP TERJADWAL"* dengan *"Target Jam: -"* dan dropdown *"Status / Remark Ketepatan"*, sehingga format form masih berkesan mode jadwal.
+- **Solusi & Perbaikan:**
+  1. **Sembunyikan Total Bar Target Jadwal:** Bar jadwal (`groupDedSwapSchedule` dan `groupNewSwapSchedule`) disembunyikan 100% (`display: none`) saat Mode On-Demand aktif.
+  2. **Penyederhanaan Kolom Status:** Dropdown Status Ketepatan (`wrapDedSwapStatus` dan `wrapNewSwapStatus`) disembunyikan di Mode On-Demand, dan field Problem Remark (`wrapDedSwapProblem`) otomatis melebar penuh (`form-full-width`). Nilai status tetap tersimpan otomatis sebagai `'Non-Schedule'` di database.
+  3. **Indikator Mode pada Topbar & Sidebar:** Header aplikasi dan sidebar drawer kini dengan tegas menampilkan mode aktif operator: `ROOM .. (SWAP ..) • SHIFT .. • ON-DEMAND` atau `• SCHEDULE`.
+  4. **Pembaruan Cache Service Worker:** Versi dinaikkan ke **`charging-ev-v27`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
+---
+
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@72`
+   - **Versi Rilis:** `@73`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v26`
+   - **Service Worker Cache:** `charging-ev-v27`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 
