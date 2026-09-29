@@ -346,18 +346,33 @@
   3. **Pembaruan Service Worker:**
      - Cache dinaikkan ke versi **`charging-ev-v28`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
+#### 18. 🔒 Pembersihan Riwayat / Datalist Akun pada Input NIK Layar Login (29 September 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Sebelumnya kolom NIK pada layar login (`loginPortalScreen`) terhubung ke `<datalist id="splitNikDatalist">` yang menampilkan seluruh daftar NIK dan nama lengkap karyawan saat disentuh/difokuskan.
+  - Hal ini menimbulkan celah privasi/keamanan (*user enumeration*) di mana orang lain bisa melihat dan memilih NIK orang lain, serta memunculkan pop-up dropdown panjang yang menutupi layar smartphone.
+- **Solusi & Perbaikan:**
+  1. **Penghapusan Total Elemen `<datalist>`:**
+     - Elemen `<datalist id="splitNikDatalist">` dihapus sepenuhnya dari DOM.
+     - Atribut `list="splitNikDatalist"` pada input `#splitLoginNik` dihapus.
+  2. **Penguatan Anti-Autofill Browser:**
+     - Ditambahkan atribut `autocomplete="off"`, `autocorrect="off"`, `autocapitalize="off"`, dan `spellcheck="false"` dengan name unik `name="login_nik_field"` untuk mencegah browser memunculkan riwayat NIK yang pernah diketik di perangkat bersama/lapangan.
+  3. **Preservasi Deteksi Cerdas Real-Time:**
+     - Fitur deteksi otomatis nama operator (`#splitNikAutoResult`) tetap aktif dan bekerja responsif di latar belakang saat 8 digit NIK diketik oleh operator yang bersangkutan.
+  4. **Pembaruan Service Worker:**
+     - Cache Service Worker dinaikkan ke **`charging-ev-v29`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@74`
+   - **Versi Rilis:** `@75`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v28`
+   - **Service Worker Cache:** `charging-ev-v29`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 

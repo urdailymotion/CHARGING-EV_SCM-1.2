@@ -9093,10 +9093,13 @@ html.needs-login .sidebar-backdrop {
               <div class="login-input-wrap">
                 <span class="login-input-icon"><svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
                 <input type="text" id="splitLoginNik" class="login-text-input" 
-                  placeholder="Ketik NIK" 
-                  maxlength="60" 
+                  name="login_nik_field"
+                  placeholder="Ketik 8 Digit NIK" 
+                  maxlength="20" 
                   autocomplete="off" 
-                  list="splitNikDatalist"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
                   oninput="window.handleSplitNikInput(this.value);"
                   onchange="window.handleSplitNikInput(this.value);">
               </div>
@@ -9112,29 +9115,9 @@ html.needs-login .sidebar-backdrop {
 
           <!-- Auto Detected Operator Name Status -->
           <div id="splitNikAutoResult" class="nik-auto-indicator" style="margin-top: 8px; margin-bottom: 12px;">
-            <span class="indicator-icon">ℹ️</span>
+            <span class="indicator-icon">ℹ️ </span>
             <span class="indicator-text">Ketik 8 digit NIK karyawan Anda</span>
           </div>
-
-          <datalist id="splitNikDatalist">
-            <option value="81230529">81230529 - ZAKARIYA ABIDIN (Charging Man / Operator)</option>
-            <option value="81230588">81230588 - DAFFA GEDE KURNIAWAN (Charging Man / Operator)</option>
-            <option value="81230176">81230176 - ABI SETIAWAN (Charging Man / Operator)</option>
-            <option value="81230594">81230594 - VIRNANDA AGUS SETIAWAN (Charging Man / Operator)</option>
-            <option value="81230596">81230596 - SRIVASTA NASOKA FARIMBA (Charging Man / Operator)</option>
-            <option value="81230112">81230112 - BACHTIAR PUTRA DANANJAYA (Charging Man / Operator)</option>
-            <option value="81230103">81230103 - APRIL YULIUS PESSIWARISA (Charging Man / Operator)</option>
-            <option value="81230134">81230134 - INDRA ARIVYANTO (Charging Man / Operator)</option>
-            <option value="11050104">11050104 - ANTON WAHYU ANTAT WULAN (Group Leader / Supervisor)</option>
-            <option value="21002786">21002786 - TONI PURWANTO (Group Leader / Supervisor)</option>
-            <option value="22002555">22002555 - YUDA PUGUH WIDODO (Group Leader / Supervisor)</option>
-            <option value="24006305">24006305 - AHMAD ZAENAL MUNTAHA (Group Leader / Supervisor)</option>
-            <option value="25001040">25001040 - MURY AGUNG PRASETYA (Group Leader / Supervisor)</option>
-            <option value="25001710">25001710 - LAURENSIUS APRI PRASETYO CALDAS (Group Leader / Supervisor)</option>
-            <option value="25001776">25001776 - ANDI MUHAMMAD ALFERY (Group Leader / Supervisor)</option>
-            <option value="26002909">26002909 - BAMBY PRASETYO (Group Leader / Supervisor)</option>
-            <option value="81230177">81230177 - SRIYANTO (Admin / Supervisor)</option>
-          </datalist>
 
           <!-- 3 & 4. PILIH LOKASI & PILIH MESIN SWAP -->
           <div class="login-grid-2col">
