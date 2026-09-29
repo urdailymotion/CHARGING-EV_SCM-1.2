@@ -375,19 +375,36 @@
   4. **Pembaruan Service Worker & Anti-Cache:**
      - Cache Service Worker dinaikkan ke **`charging-ev-v30`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
 
+#### 20. 🛡️ Penambahan Kartu Informasi Hak Cipta & Pengembang di Tab Backup, Restore & Migrasi:
+- **Latar Belakang & Kebutuhan:**
+  - Pengguna meminta agar tanda kepemilikan/hak cipta dan pengembang resmi sistem dicantumkan secara rapi di dalam menu **Backup, Restore & Migrasi** (area administrasi & database yang diproteksi PIN).
+- **Detail Informasi yang Dicantumkan (Sesuai Permintaan Pengguna):**
+  - **Lead Developer / Pencipta:** `SRIYANTO / 81230177`
+  - **Departemen / Unit:** `-`
+  - **Versi Arsitektur:** `v1.0 Enterprise (Dual Sync: Sheets + Cloud Firestore)`
+  - **Status Hak Cipta:** `-`
+  - **Lisensi Penggunaan:** `Proprietary Internal Operational System`
+  - **Keterangan Khusus:** *"Didesain dan dikembangkan secara khusus untuk standarisasi & pemantauan kinerja stasiun swap baterai kendaraan listrik PT Putra Perkasa Abadi."*
+- **Implementasi Komponen UI (`index.html`):**
+  - Komponen `.db-dev-attribution-card` dipasang di bagian bawah tab `#dbPaneBackup` melintasi 2 kolom (*full-width card*).
+  - Dilengkapi *header dark navy* bergradasi dengan lencana status *VERIFIED OPERATIONAL BUILD*, kartu metadata modular dengan ikon penjelas, serta kutipan tujuan pengembangan bersudut lengkung khas enterprise.
+- **Pembaruan Service Worker:**
+  - Cache Service Worker dinaikkan ke **`charging-ev-v31`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@77`
+   - **Versi Rilis:** `@78`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v30`
+   - **Service Worker Cache:** `charging-ev-v31`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
 
 
 
