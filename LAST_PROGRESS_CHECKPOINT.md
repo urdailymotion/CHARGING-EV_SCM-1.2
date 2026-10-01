@@ -410,18 +410,41 @@
 - **Pembaruan Service Worker:**
   - Cache Service Worker dinaikkan ke **`charging-ev-v32`** pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dan registrasi [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
 
+#### 22. 📄 Penambahan Fitur Download PDF & Print A4 pada Tampilan Visual KPI (01 Oktober 2026):
+- **Latar Belakang & Permintaan Pengguna:**
+  - Pengguna meminta agar pada tampilan **Visual KPI** ditambahkan fitur untuk mengunduh laporan dalam format **PDF** dari data dan grafik visual yang sedang ditampilkan.
+- **Fitur Baru & Implementasi yang Diterapkan:**
+  1. **Tombol Aksi pada Header Visual KPI:**
+     - Ditambahkan tombol **`[ 📄 Download PDF ]`** dengan ikon dokumen unduh modern di barisan header atas Visual KPI (`.header-bar`).
+     - Ditambahkan tombol pendamping **`[ 🖨️ Print A4 ]`** untuk opsi cetak langsung ke printer fisik maupun dialog Save as PDF bawaan browser.
+     - Dilengkapi indikator loading interaktif (`.ppa-spin`) saat dokumen sedang diproses.
+  2. **Mesin Kompilasi PDF Berstandar Eksekutif (`#kpiPdfReportWrapper`):**
+     - Dibuat template laporan A4 Landscape profesional (2 halaman) yang mengagregasikan seluruh telemetri aktif secara instan:
+       - **Header Resmi:** Logo PPA (Circle runner badge), identitas PT Putra Perkasa Abadi Site BIB, judul dokumen, serta metadata filter aktif (Mode Operasional, Rentang Tanggal, Shift, Lokasi, Mesin, Unit, Status, waktu unduh WITA, dan nama operator).
+       - **5 Kartu KPI Utama:** Armada EV Aktif, Throughput Swap, Green Mining & ESG (MWh, Solar, CO₂), SLA Durasi Swap, dan Beban Stasiun.
+       - **8 Diagram Telemetri Resolusi Tinggi:** Mengambil snapshot grafik langsung dari Chart.js (`ppaChartKetepatan`, `ppaChartFreqDaily`, `ppaChartFreqWeekly`, `ppaChartFreqMonthly`, `ppaChartRoomCompare`, `ppaChartEnergyUnit`, `ppaChartEnergyDaily`, `ppaChartProblemBreakdown`) berlatar belakang putih tajam (anti-blur & bebas transparansi).
+       - **Tabel Ringkasan Telemetri Operasional:** Rekapitulasi transaksi terkini yang sesuai dengan filter pengguna.
+       - **Blok Otentikasi & Tanda Tangan Digital:** Catatan resmi sistem Dual-Sync serta kolom tanda tangan "Disiapkan Oleh" dan "Mengetahui GL / Supervisor".
+  3. **Dual Export Pipeline:**
+     - **Direct Download:** Menggunakan pustaka `html2pdf.js` (`html2pdf.bundle.min.js`) yang di-bundling secara lokal di `assets/` (mendukung offline PWA 100%) dan dilengkapi fallback CDN.
+     - **Print Media Fallback:** Dilengkapi rule `@media print` sehingga saat dicetak langsung via dialog browser, seluruh elemen antarmuka web (sidebar, header, dsb.) otomatis disembunyikan dan hanya laporan eksekutif 2-halaman A4 yang dicetak.
+  4. **Pembaruan Service Worker & Deployment:**
+     - Cache Service Worker pada [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js) dinaikkan ke versi **`charging-ev-v33`**.
+     - Build ID dinaikkan ke **`2026.10.01.v33`**.
+     - Berhasil dideploy ke Google Apps Script Production Versi 80 (`@80`).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@79`
+   - **Versi Rilis:** `@80`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v32`
+   - **Service Worker Cache:** `charging-ev-v33`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 

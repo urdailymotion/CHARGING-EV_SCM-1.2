@@ -1,9 +1,11 @@
-// CHARGING EV SCM - Service Worker v32.0
-const CACHE_NAME = 'charging-ev-v32';
+// CHARGING EV SCM - Service Worker v33.0
+const CACHE_NAME = 'charging-ev-v33';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './html2pdf.bundle.min.js',
+  './assets/html2pdf.bundle.min.js',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
