@@ -489,18 +489,52 @@
   7. **Deployment:**
      - Berhasil dideploy ke Google Apps Script Production Versi 82 (`@82`).
 
+#### 25. 📱💻🖥️ Master Universal Responsive & UI/UX Audit Engine v35 (Mobile, iPad, Tablet, Desktop, 4K & Ultra-Wide) (02 Oktober 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Pengguna meminta perombakan total audit style UI/UX pada versi Mobile, iPad/Tablet, dan Desktop agar otomatis menyesuaikan dengan sempurna saat berpindah perangkat (*auto-fit, auto-scale, auto-sync*).
+  - Tampilan harus responsif dan adaptif di seluruh resolusi layar (dari layar saku 320px iPhone SE, foldable, iPad Air/Pro portrait & landscape, laptop FHD, hingga monitor 4K 3840px).
+- **Hasil Audit Masalah UI/UX Terdahulu:**
+  1. *iPad Trap:* Breakpoint sidebar sebelumnya adalah `@media (max-width: 768px)`. Perangkat iPad Air (820px) dan iPad Pro 11" (834px) dalam orientasi portrait terjebak dalam mode desktop dengan sidebar kaku 250px dan padding 22px, menyisakan area konten hanya ~500px sehingga tabel dan kartu terjepit.
+  2. *Chart Distortion on Rotate:* Sebanyak 8 grafik analitik Chart.js tidak memiliki listener event `resize` / `orientationchange`, menyebabkan grafik terdistorsi atau terpotong saat orientasi perangkat diputar (portrait ke landscape).
+  3. *Inconsistent Touch Targets:* Tombol aksi tertentu pada mobile memiliki area sentuh < 36px, rentan salah pencet (*fat-finger issues*) di lapangan.
+  4. *iOS Input Auto-Zoom:* Input field dengan font-size di bawah 16px memicu auto-zoom browser iOS Safari/WebKit yang mengganggu navigasi.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Solusi "iPad Trap" & Drawer Adaptif 1024px:**
+     - Di `index.html`, fungsi `closeAppSidebar`, `openAppSidebar`, dan `toggleAppSidebar` diperbarui menggunakan kondisi `window.innerWidth <= 1024`.
+     - CSS drawer sidebar dinaikkan dari `max-width: 768px` ke `max-width: 1024px`. Tablet dan iPad kini mendapatkan pengalaman kanvas 100% full-screen dengan drawer off-canvas yang mulus dan backdrop sentuh.
+  2. **Fluid Typography & CSS Root Dynamic Clamp:**
+     - Diinjeksikan Master Universal Responsive CSS Suite (V35.0) dengan root `--fs-root: clamp(13px, 0.85rem + 0.35vw, 16px)`.
+     - Teks judul, angka KPI, sub-heading, dan badan kartu menggunakan fluid `clamp()` sehingga tidak pernah terpotong di layar kecil (320px) dan tetap elegan di monitor 4K.
+  3. **Auto-Fit & Responsive Grid System:**
+     - Grid metrik KPI otomatis menyesuaikan: `grid-template-columns: repeat(auto-fit, minmax(clamp(150px, 22vw, 240px), 1fr))`.
+     - Quad Chart Grid analitik BI otomatis bertransisi mulus: 4 kolom pada ultra-wide 4K, 2 kolom pada desktop/tablet landscape, dan 1 kolom bertumpuk rapi pada tablet portrait & mobile.
+  4. **Auto-Resize & Orientation Synchronization Controller di JS:**
+     - Ditambahkan controller sinkronisasi otomatis dengan listener `resize` dan `orientationchange` (debounce 120ms).
+     - Menyelaraskan ulang seluruh 8 instance Chart.js (`chartPpaKetepatan`, `chartPpaFreqDaily`, `chartPpaFreqWeekly`, `chartPpaFreqMonthly`, `chartPpaRoomCompare`, `chartPpaEnergyUnit`, `chartPpaEnergyDaily`, `chartPpaProblemBreakdown`) secara otomatis tanpa delay ataupun canvas blur.
+     - Menyinkronkan penutupan drawer saat viewport membesar/mengecil dan menandai atribut `data-device-mode` pada `<body>`.
+  5. **Touch Ergonomics & Apple HIG / Material 3 Compliance:**
+     - Tombol aksi dan kontrol sentuh memiliki ukuran target minimal 44x44px pada layar pointer sentuh.
+     - Penambahan padding safe-area insets (`env(safe-area-inset-bottom)`, `env(safe-area-inset-top)`) untuk dukungan iPhone Dynamic Island dan Home Indicator.
+     - Proteksi font-size input minimal 16px pada viewport mobile untuk mencegah iOS WebKit auto-zoom.
+  6. **Modal Dialog Container Containment:**
+     - Seluruh 24 modal dialog dibatasi dengan `width: min(94vw, 680px)` dan `max-height: min(90vh, 760px)` dengan scroll elastis `-webkit-overflow-scrolling: touch` dan backdrop filter blur.
+  7. **Pembaruan Build & Cache:**
+     - `APP_BUILD_ID`: `'2026.10.02.v35'` di `index.html`.
+     - Service Worker Cache: `'charging-ev-v35'` di `sw.js`.
+     - Validasi sintaks JS Service Worker dan inline scripts diuji dan lolos 100%.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@82`
+   - **Versi Rilis:** `@83` (Master Universal Responsive & UI/UX Engine v35)
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v34`
+   - **Service Worker Cache:** `charging-ev-v35`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 
