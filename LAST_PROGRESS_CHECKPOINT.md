@@ -458,18 +458,49 @@
     - **Sampel Data Transaksi:** `DA01/CHG/2026/SWAP/0001` (Unit 1651, Battery Before 0.19 -> After 1, Operator SRIYANTO, Swap Station SWAP 02).
 - **Status Akhir:** Sinkronisasi antara aplikasi PWA (Netlify) dan database Google Sheets telah pulih sepenuhnya dan beroperasi normal.
 
+#### 24. 🔄 Pengurutan Riwayat Transaksi Charging Swap (Inputan Terakhir Tampil Paling Atas) (02 Oktober 2026):
+- **Latar Belakang & Kebutuhan:**
+  - Pengguna meminta agar pada menu **Operation** ➔ sub-menu **Charging Swap**, daftar histori transaksi diurutkan sehingga data yang terakhir di-input selalu tampil di baris paling atas (*newest input at the top*).
+- **Akar Penyebab Masalah Sebelumnya:**
+  - Fungsi pembanding `sortTransactionsLatestFirst` sebelumnya mendahulukan pembandingan tanggal kalender (`date`) dan jam transaksi (`jamIn`).
+  - Hal ini menyebabkan transaksi yang diinput dengan tanggal terdahulu (misal data susulan `28/09/2026` pada ID `SWAP/0061`) atau jam lebih pagi terlempar ke urutan paling bawah tabel, meskipun transaksi tersebut adalah inputan paling akhir di database.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Helper Ekstraksi ID Presisi (`extractSwapIdNumber`):**
+     - Mengekstrak angka urut sekuensial ID (`DA01/CHG/2026/SWAP/XXXX` ➔ integer numerik) secara akurat.
+  2. **Restrukturisasi Total `sortTransactionsLatestFirst(a, b)`:**
+     - **Prioritas 1:** Timestamp input lokal (`_inputTimestamp`) saat input baru disimpan pada sesi browser aktif.
+     - **Prioritas 2:** Nomor urut sekuensial ID (`numB - numA`, descending) sehingga nomor transaksi terbesar/terakhir selalu di posisi #1.
+     - **Prioritas 3:** Urutan baris asli Google Sheets (`_sheetRow`, descending) sehingga baris terbawah sheet selalu tampil di puncak tabel.
+     - **Fallback:** Tanggal kalender descending dan jam transaksi descending.
+  3. **Penanda Input Baru pada Form Input:**
+     - Menetapkan `_inputTimestamp: Date.now()` dan `_sheetRow` tertinggi pada `modalAddSwap` dan `dedicatedSwap` saat tombol simpan ditekan.
+  4. **Penyelarasan Sinkronisasi:**
+     - Menyelaraskan pengurutan pada `initDataSync` dan `handleFirestoreSwapsUpdate`.
+  5. **Pengujian Nyata Data Riil Database (61 Records):**
+     - Posisi 1 (Paling Atas): `DA01/CHG/2026/SWAP/0061` (Row 62, DT 1602, 28/09/2026).
+     - Posisi 2: `DA01/CHG/2026/SWAP/0060` (Row 61, DT 1606, 01/10/2026).
+     - Posisi 3: `DA01/CHG/2026/SWAP/0059` (Row 60, DT 1660).
+     - ...
+     - Posisi 61 (Paling Bawah): `DA01/CHG/2026/SWAP/0001` (Row 2, DT 1651).
+     - Transaksi baru (`0062`) otomatis menempati posisi puncak #1 seketika disimpan.
+  6. **Pembaruan Cache & Service Worker:**
+     - Build ID dinaikkan ke **`2026.10.02.v34`**.
+     - Service Worker cache dinaikkan ke **`charging-ev-v34`** di `sw.js`.
+  7. **Deployment:**
+     - Berhasil dideploy ke Google Apps Script Production Versi 82 (`@82`).
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@81`
+   - **Versi Rilis:** `@82`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v33`
+   - **Service Worker Cache:** `charging-ev-v34`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 

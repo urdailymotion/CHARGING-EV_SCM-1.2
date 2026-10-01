@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.01.v33';
+      var APP_BUILD_ID = '2026.10.02.v34';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -15240,38 +15240,65 @@ function parseDateComparable(dStr) {
 }
 window.parseDateComparable = parseDateComparable;
 
-// Helper sortir data transaksi: data yang terakhir di-input selalu di urutan paling atas
+// Helper ekstraksi angka urut ID swap secara presisi (contoh: DA01/CHG/2026/SWAP/0061 -> 61)
+function extractSwapIdNumber(id) {
+  if (!id) return 0;
+  const str = String(id).trim();
+  const slashMatch = str.match(/\/(\d+)\s*$/);
+  if (slashMatch) return parseInt(slashMatch[1], 10) || 0;
+  const dashMatch = str.match(/[-_](\d+)\s*$/);
+  if (dashMatch) return parseInt(dashMatch[1], 10) || 0;
+  const endDigits = str.match(/(\d+)\s*$/);
+  if (endDigits) return parseInt(endDigits[1], 10) || 0;
+  return 0;
+}
+window.extractSwapIdNumber = extractSwapIdNumber;
+
+// Helper sortir data transaksi: data yang terakhir di-input selalu di urutan paling atas (Newest Input First)
 function sortTransactionsLatestFirst(a, b) {
   if (!a && !b) return 0;
   if (!a) return 1;
   if (!b) return -1;
 
-  // 1. Tanggal transaksi (descending - tanggal terbaru di atas)
+  // 1. Prioritas Utama: Timestamp input lokal (jika baru di-input pada sesi browser aktif)
+  const tA = a._inputTimestamp || 0;
+  const tB = b._inputTimestamp || 0;
+  if (tA && tB && tA !== tB) {
+    return tB - tA;
+  }
+  if (tA && !tB) return -1; // a baru di-input, tampil di atas
+  if (!tA && tB) return 1;  // b baru di-input, tampil di atas
+
+  // 2. Prioritas Urutan Nomor ID Transaksi (DA01/CHG/2026/SWAP/XXXX) - Angka ID terbesar/terakhir di atas
+  const numA = (typeof extractSwapIdNumber === 'function') 
+    ? extractSwapIdNumber(a.id) 
+    : (parseInt(String(a.id || '').replace(/\D/g, '').slice(-6), 10) || 0);
+  const numB = (typeof extractSwapIdNumber === 'function') 
+    ? extractSwapIdNumber(b.id) 
+    : (parseInt(String(b.id || '').replace(/\D/g, '').slice(-6), 10) || 0);
+  if (numA > 0 && numB > 0 && numA !== numB) {
+    return numB - numA;
+  }
+
+  // 3. Urutan Baris Database / Google Sheets (_sheetRow descending - baris terakhir sheet di paling atas)
+  const rA = a._sheetRow || 0;
+  const rB = b._sheetRow || 0;
+  if (rA > 0 && rB > 0 && rA !== rB) {
+    return rB - rA;
+  }
+
+  // 4. Fallback jika nomor ID & nomor baris sama: Tanggal transaksi (terbaru di atas)
   const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a.date) : (a.date || '');
   const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b.date) : (b.date || '');
   if (da && db && da !== db) {
     return db.localeCompare(da);
   }
 
-  // 2. Jam transaksi (jamIn atau jamOut descending - jam terbaru di atas)
+  // 5. Fallback Jam transaksi (terbaru di atas)
   const ja = a.jamIn || a.jamOut || '';
   const jb = b.jamIn || b.jamOut || '';
   if (ja && jb && ja !== jb) {
     return jb.localeCompare(ja);
-  }
-
-  // 3. ID Transaksi (angka urut ID terbesar / terbaru di atas)
-  const numA = parseInt(String(a.id || '').replace(/\D/g, '').slice(-6), 10) || 0;
-  const numB = parseInt(String(b.id || '').replace(/\D/g, '').slice(-6), 10) || 0;
-  if (numA !== numB) {
-    return numB - numA;
-  }
-
-  // 4. Urutan baris sheet / input asli (_sheetRow descending)
-  const rA = a._sheetRow || 0;
-  const rB = b._sheetRow || 0;
-  if (rA !== rB) {
-    return rB - rA;
   }
 
   return 0;
@@ -16003,6 +16030,10 @@ function initDataState() {
       s.category = 'CHARGING SWAP';
     }
   });
+
+  if (typeof sortTransactionsLatestFirst === 'function') {
+    swapsData.sort(sortTransactionsLatestFirst);
+  }
 
   if (window._pendingFirestoreData && Array.isArray(window._pendingFirestoreData.problems) && window._pendingFirestoreData.problems.length > 0) {
     problemsData = [...window._pendingFirestoreData.problems];
@@ -17901,7 +17932,13 @@ function initTableControls() {
         })()
       };
 
+      newRec._inputTimestamp = Date.now();
+      const currentMaxRow = (swapsData || []).reduce((max, s) => Math.max(max, s._sheetRow || 0), 1);
+      newRec._sheetRow = currentMaxRow + 1;
       swapsData.unshift(newRec);
+      if (typeof sortTransactionsLatestFirst === 'function') {
+        swapsData.sort(sortTransactionsLatestFirst);
+      }
       persistData();
       const storageCfg = (typeof getDbStorageConfig === 'function') ? getDbStorageConfig() : { saveToSheets: true, saveToFirebase: true };
 
@@ -18089,8 +18126,8 @@ function renderMainTable() {
           valB = (typeof parseDateComparable === 'function') ? parseDateComparable(b.date) : (b.date || '');
           break;
         case 'id':
-          valA = parseInt(String(a.id || '').replace(/\D/g, '').slice(-6), 10) || 0;
-          valB = parseInt(String(b.id || '').replace(/\D/g, '').slice(-6), 10) || 0;
+          valA = (typeof extractSwapIdNumber === 'function') ? extractSwapIdNumber(a.id) : (parseInt(String(a.id || '').replace(/\D/g, '').slice(-6), 10) || 0);
+          valB = (typeof extractSwapIdNumber === 'function') ? extractSwapIdNumber(b.id) : (parseInt(String(b.id || '').replace(/\D/g, '').slice(-6), 10) || 0);
           break;
         case 'unit':
           valA = parseInt(String(a.unit || '').replace(/\D/g, ''), 10) || 0;
@@ -19528,7 +19565,13 @@ function initDedicatedInputForm() {
 
       // 1. Simpan lokal seketika
       try {
+        newRec._inputTimestamp = Date.now();
+        const currentMaxRow = (swapsData || []).reduce((max, s) => Math.max(max, s._sheetRow || 0), 1);
+        newRec._sheetRow = currentMaxRow + 1;
         swapsData.unshift(newRec);
+        if (typeof sortTransactionsLatestFirst === 'function') {
+          swapsData.sort(sortTransactionsLatestFirst);
+        }
         window.swapsData = swapsData;
         persistData();
       } catch (errPersist) {
@@ -27655,15 +27698,10 @@ window.handleFirestoreSwapsUpdate = function(remoteSwaps) {
     if (!s.category) s.category = 'CHARGING SWAP';
   });
 
-  // Urutkan data berdasarkan tanggal dan jam (terbaru di atas)
-  list.sort((a, b) => {
-    const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a.date) : (a.date || '');
-    const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b.date) : (b.date || '');
-    if (da && db && da !== db) return db > da ? 1 : -1;
-    const ja = a.jamIn || a.jamOut || '';
-    const jb = b.jamIn || b.jamOut || '';
-    return jb.localeCompare(ja);
-  });
+  // Urutkan data transaksi: Inputan terakhir tampil paling atas
+  if (typeof sortTransactionsLatestFirst === 'function') {
+    list.sort(sortTransactionsLatestFirst);
+  }
 
   if (list.length === 0 && Array.isArray(swapsData) && swapsData.length > 0) return;
   swapsData = list;
