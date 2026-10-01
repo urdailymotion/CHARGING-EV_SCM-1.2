@@ -5,6 +5,17 @@
 *.log
 *.zip
 *.js
+**/*.js
+assets/**
 .git/**
 scratch/**
 backup*/**
+node_modules/**
+
+# Only allow GAS files and HTML
+!appsscript.json
+!Code.gs
+!EvIntelligenceBackend.gs
+!index.html
+!intelligence.html
+

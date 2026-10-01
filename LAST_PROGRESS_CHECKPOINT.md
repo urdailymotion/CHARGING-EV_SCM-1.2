@@ -433,12 +433,37 @@
      - Build ID dinaikkan ke **`2026.10.01.v33`**.
      - Berhasil dideploy ke Google Apps Script Production Versi 80 (`@80`).
 
+#### 23. 🛠️ Perbaikan Sinkronisasi Database Google Sheets (Resolusi ReferenceError GAS & Deployment @81) (01 Oktober 2026):
+- **Latar Belakang & Gejala:**
+  - Pengguna melaporkan kegagalan koneksi antara aplikasi dan database Google Sheets ("MASIH GAGAL DALAM KONEK KE DATABASE NYA").
+- **Akar Penyebab (Root Cause):**
+  - Saat penambahan fitur unduh PDF, file pustaka client-side `assets/html2pdf.bundle.min.js` tersimpan di direktori lokal.
+  - Perintah `clasp push` secara default menganggap semua file `.js` sebagai skrip server-side Google Apps Script, sehingga file tersebut terdorong menjadi file skrip server GAS `assets/html2pdf.bundle.min`.
+  - Ketika runtime V8 Google Apps Script dijalankan untuk menangani `doGet` dan `doPost`, V8 langsung mengalami crash fatal: `ReferenceError: self is not defined (baris 2, file "assets/html2pdf.bundle.min")`.
+  - Akibatnya, seluruh panggilan API Web App (`gasSync.loadAll()`, `get_all`, CRUD) gagal dengan pesan error dari Google sebelum kode `Code.gs` sempat dieksekusi.
+- **Tindakan Perbaikan:**
+  1. **Konfigurasi Proteksi `.claspignore`:**
+     - Menambahkan aturan ketat `**/*.js`, `assets/**`, dan whitelist spesifik hanya untuk skrip server GAS (`!appsscript.json`, `!Code.gs`, `!EvIntelligenceBackend.gs`, `!index.html`, `!intelligence.html`).
+  2. **Pembersihan Skrip Server & Push Ulang:**
+     - Mengeksekusi `clasp push -f` untuk menghapus bersih skrip `assets/html2pdf.bundle.min` dari server Google Apps Script.
+  3. **Pembuatan Versi Rilis Baru Production (`@81`):**
+     - Dibuat rilis baru versi **`@81`** pada Deployment ID aktif: `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`.
+- **Hasil Verifikasi Live API Test:**
+  - Pengujian live HTTP POST `action=get_all` langsung ke endpoint GAS Web App berhasil 100%:
+    - **HTTP Status:** `200 OK`
+    - **Status Respon JSON:** `success`
+    - **Data Swaps:** Terbaca `61` record data riil Google Sheets (sheet `SWAP`).
+    - **Data Schedules:** Terbaca `7` jadwal (sheet `SCEDHULE`).
+    - **Data Users:** Terbaca `18` pengguna aktif (sheet `USER`).
+    - **Sampel Data Transaksi:** `DA01/CHG/2026/SWAP/0001` (Unit 1651, Battery Before 0.19 -> After 1, Operator SRIYANTO, Swap Station SWAP 02).
+- **Status Akhir:** Sinkronisasi antara aplikasi PWA (Netlify) dan database Google Sheets telah pulih sepenuhnya dan beroperasi normal.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@80`
+   - **Versi Rilis:** `@81`
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
