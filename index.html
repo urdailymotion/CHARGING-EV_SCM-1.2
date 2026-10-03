@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v43';
+      var APP_BUILD_ID = '2026.10.03.v44';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -9987,7 +9987,7 @@ html, body {
   position: relative;
   width: 100% !important;
   min-width: 0 !important;
-  height: 280px !important;
+  height: 185px !important;
   box-sizing: border-box !important;
 }
 
@@ -11577,6 +11577,9 @@ html, body {
             </div>
           </div>
 
+          <!-- PAGE 1 (PICTURE 3): CONTROLS, 5 KPI CARDS & 8 BI TELEMETRY CHARTS -->
+          <div id="ppaKpiPage1" class="ppa-kpi-landscape-page" style="background: #F8F9FA; width: 100%; box-sizing: border-box;">
+
           <!-- Controls Wrapper: Segmented Switcher & Quick Presets -->
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
             <div class="ppa-opmode-pills">
@@ -11859,6 +11862,10 @@ html, body {
               </div>
             </div>
           </div>
+          </div> <!-- End #ppaKpiPage1 (Picture 3) -->
+
+          <!-- PAGE 2 (PICTURE 4): PROBLEM LOG, DOWNTIME, TRANSACTIONS TABLE & PPA FOOTER -->
+          <div id="ppaKpiPage2" class="ppa-kpi-landscape-page" style="background: #F8F9FA; width: 100%; box-sizing: border-box; margin-top: 20px;">
 
           <!-- ===============================================================
                SEKSI INTEGRASI PROBLEM LOG & DOWNTIME ANALYTICS
@@ -12066,6 +12073,7 @@ html, body {
               <span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 4l6 6-3 3-6-6 3-3z"/><path d="M14.5 14.5L4 25"/></svg>SYNERGY TO BE NUMBER 1</span>
             </div>
           </div>
+          </div> <!-- End #ppaKpiPage2 (Picture 4) -->
 
         </div>
 
@@ -23883,58 +23891,52 @@ function buildVisualKpiPdfReportHtml() {
 // without ANY truncation or missing sections (Charts, Cards, Problems, Tables)
 // =============================================================================
 
-// Helper: captures the entire live Visual KPI Dashboard (.ppa-dashboard-wrapper)
-async function renderFullVisualKpiDashboardCanvas(scaleMultiplier) {
-  scaleMultiplier = scaleMultiplier || 1.5;
-  const dashWrapper = document.querySelector('.ppa-dashboard-wrapper');
-  if (!dashWrapper) {
-    throw new Error('Tampilan Visual KPI Dashboard tidak ditemukan di halaman.');
+// Helper: captures both Page 1 (Picture 3) and Page 2 (Picture 4) as crisp canvases
+async function renderVisualKpiCanvases() {
+  const p1 = document.getElementById('ppaKpiPage1');
+  const p2 = document.getElementById('ppaKpiPage2');
+  if (!p1 || !p2) {
+    throw new Error('Elemen Visual KPI Halaman 1 & 2 tidak ditemukan.');
   }
 
-  // Hide action buttons during capture so the exported output looks like a clean document
-  const actionToolbar = dashWrapper.querySelector('.header-bar > div:last-child');
-  const originalDisplay = actionToolbar ? actionToolbar.style.display : '';
-  if (actionToolbar) actionToolbar.style.display = 'none';
-
-  // Apply clean export styles
-  dashWrapper.classList.add('ppa-dashboard-exporting');
-
-  try {
-    // Small pause to allow styles and charts to settle
-    await new Promise(r => setTimeout(r, 200));
-
-    const opt = {
-      margin: [0, 0, 0, 0],
-      html2canvas: {
-        scale: scaleMultiplier,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#F8F9FA',
-        windowWidth: 1350,
-        scrollX: 0,
-        scrollY: 0
-      }
-    };
-
-    let canvas;
-    if (typeof html2pdf !== 'undefined') {
-      canvas = await new Promise((resolve, reject) => {
-        html2pdf().set(opt).from(dashWrapper).toCanvas().get('canvas').then(resolve).catch(reject);
-      });
-    } else if (typeof html2canvas !== 'undefined') {
-      canvas = await html2canvas(dashWrapper, opt.html2canvas);
-    } else {
-      throw new Error('Library rendering gambar/PDF belum selesai dimuat.');
+  const opt = {
+    margin: [0, 0, 0, 0],
+    html2canvas: {
+      scale: 1.6,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#F8F9FA',
+      windowWidth: 1400,
+      scrollX: 0,
+      scrollY: 0
     }
+  };
 
-    return canvas;
-  } finally {
-    dashWrapper.classList.remove('ppa-dashboard-exporting');
-    if (actionToolbar) actionToolbar.style.display = originalDisplay;
-  }
+  const canvas1 = await new Promise((resolve, reject) => {
+    html2pdf().set(opt).from(p1).toCanvas().get('canvas').then(resolve).catch(reject);
+  });
+
+  const canvas2 = await new Promise((resolve, reject) => {
+    html2pdf().set(opt).from(p2).toCanvas().get('canvas').then(resolve).catch(reject);
+  });
+
+  return { canvas1, canvas2 };
 }
 
-// 1. Download PDF: Full Visual KPI Dashboard (Semua Tampilan Tanpa Terpotong)
+// Helper: stitches canvas1 (Page 1 / Picture 3) and canvas2 (Page 2 / Picture 4) into a master widescreen canvas
+function stitchVisualKpiMasterCanvas(canvas1, canvas2) {
+  const masterCanvas = document.createElement('canvas');
+  masterCanvas.width = Math.max(canvas1.width, canvas2.width);
+  masterCanvas.height = canvas1.height + canvas2.height + 24;
+  const ctx = masterCanvas.getContext('2d');
+  ctx.fillStyle = '#F8F9FA';
+  ctx.fillRect(0, 0, masterCanvas.width, masterCanvas.height);
+  ctx.drawImage(canvas1, 0, 0);
+  ctx.drawImage(canvas2, 0, canvas1.height + 24);
+  return masterCanvas;
+}
+
+// 1. Download PDF: 2-Page Landscape PDF (Persis Gambar 3 dan Gambar 4, Plek Ketiplek)
 window.downloadVisualKpiPdf = async function() {
   const btn = document.getElementById('btnDownloadVisualKpiPdf');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -23946,62 +23948,59 @@ window.downloadVisualKpiPdf = async function() {
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
       </svg>
-      <span>Menyiapkan PDF Full...</span>
+      <span>Menyiapkan PDF 2 Halaman Landscape...</span>
     `;
   }
 
   if (typeof showToast === 'function') {
-    showToast('⏳ Sedang memproses dan menyusun Laporan PDF seluruh tampilan Visual KPI...', 'info');
+    showToast('⏳ Menyusun Laporan PDF Landscape (Persis Tampilan Visual KPI)...', 'info');
   }
-
-  const dashWrapper = document.querySelector('.ppa-dashboard-wrapper');
-  if (!dashWrapper) {
-    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
-    if (typeof showToast === 'function') showToast('⚠️ Tampilan Visual KPI tidak ditemukan', 'danger');
-    return;
-  }
-
-  // Hide action buttons during capture
-  const actionToolbar = dashWrapper.querySelector('.header-bar > div:last-child');
-  const originalDisplay = actionToolbar ? actionToolbar.style.display : '';
-  if (actionToolbar) actionToolbar.style.display = 'none';
-  dashWrapper.classList.add('ppa-dashboard-exporting');
 
   try {
-    await new Promise(r => setTimeout(r, 200));
+    const { canvas1, canvas2 } = await renderVisualKpiCanvases();
 
     const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
     const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
-    const filename = `Laporan_Visual_KPI_Full_${dateStamp}_${timeStamp}.pdf`;
+    const filename = `Laporan_Visual_KPI_PPA_${dateStamp}_${timeStamp}.pdf`;
 
-    const opt = {
-      margin: [6, 6, 6, 6],
+    const pdfOpt = {
+      margin: [4, 4, 4, 4],
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#F8F9FA',
-        windowWidth: 1350,
-        scrollX: 0,
-        scrollY: 0
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      html2canvas: { scale: 1.6, useCORS: true, backgroundColor: '#F8F9FA', windowWidth: 1400 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
 
-    if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opt).from(dashWrapper).save();
-      if (typeof showToast === 'function') {
-        showToast('✅ Laporan PDF seluruh tampilan Visual KPI berhasil diunduh utuh!', 'success');
-      }
-    } else {
-      window.print();
+    const p1 = document.getElementById('ppaKpiPage1');
+
+    await new Promise((resolve, reject) => {
+      html2pdf().set(pdfOpt).from(p1).toPdf().get('pdf').then(pdfInstance => {
+        // Page 2: Add landscape page and place canvas 2 (Picture 4)
+        pdfInstance.addPage('a4', 'landscape');
+        const pageWidth = 297;
+        const pageHeight = 210;
+        const margin = 4;
+        const targetW = pageWidth - (margin * 2);
+        const targetH = pageHeight - (margin * 2);
+
+        const r2 = canvas2.height / canvas2.width;
+        let w2 = targetW;
+        let h2 = targetW * r2;
+        if (h2 > targetH) {
+          h2 = targetH;
+          w2 = h2 / r2;
+        }
+        const x2 = margin + (targetW - w2) / 2;
+        const y2 = margin + (targetH - h2) / 2;
+
+        pdfInstance.addImage(canvas2.toDataURL('image/jpeg', 0.98), 'JPEG', x2, y2, w2, h2);
+        pdfInstance.save(filename);
+        resolve(pdfInstance);
+      }).catch(reject);
+    });
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Laporan PDF 2 Halaman Landscape berhasil diunduh persis seperti tampilan Visual KPI!', 'success');
     }
   } catch (err) {
     console.error('Error saat membuat PDF:', err);
@@ -24010,8 +24009,6 @@ window.downloadVisualKpiPdf = async function() {
     }
     window.print();
   } finally {
-    dashWrapper.classList.remove('ppa-dashboard-exporting');
-    if (actionToolbar) actionToolbar.style.display = originalDisplay;
     if (btn) {
       btn.disabled = false;
       btn.classList.remove('is-generating');
@@ -24020,7 +24017,7 @@ window.downloadVisualKpiPdf = async function() {
   }
 };
 
-// 2. Download Gambar: Full Visual KPI Dashboard (PNG HD Panjang Utuh)
+// 2. Download Gambar: Full Visual KPI Dashboard (PNG Widescreen HD Panjang Utuh)
 window.downloadVisualKpiImage = async function() {
   const btn = document.getElementById('btnDownloadVisualKpiImg');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -24037,22 +24034,24 @@ window.downloadVisualKpiImage = async function() {
   }
 
   if (typeof showToast === 'function') {
-    showToast('⏳ Sedang memproses gambar seluruh tampilan Visual KPI...', 'info');
+    showToast('⏳ Sedang memproses gambar seluruh tampilan Visual KPI (Widescreen HD)...', 'info');
   }
 
   try {
-    const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
+    const { canvas1, canvas2 } = await renderVisualKpiCanvases();
+    const masterCanvas = stitchVisualKpiMasterCanvas(canvas1, canvas2);
+
     const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
     const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
     const filename = `Tampilan_Visual_KPI_Full_${dateStamp}_${timeStamp}.png`;
 
     const link = document.createElement('a');
     link.download = filename;
-    link.href = canvas.toDataURL('image/png');
+    link.href = masterCanvas.toDataURL('image/png');
     link.click();
 
     if (typeof showToast === 'function') {
-      showToast('✅ Gambar seluruh tampilan Visual KPI (PNG HD) berhasil diunduh utuh!', 'success');
+      showToast('✅ Gambar seluruh tampilan Visual KPI (PNG Widescreen HD) berhasil diunduh utuh!', 'success');
     }
   } catch (err) {
     console.error('Gagal mengunduh gambar KPI:', err);
@@ -24089,13 +24088,14 @@ window.copyVisualKpiImageToClipboard = async function() {
   }
 
   try {
-    const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
+    const { canvas1, canvas2 } = await renderVisualKpiCanvases();
+    const masterCanvas = stitchVisualKpiMasterCanvas(canvas1, canvas2);
 
     if (!navigator.clipboard || !window.ClipboardItem) {
       // Fallback: download PNG
       const link = document.createElement('a');
       link.download = `Tampilan_Visual_KPI_Full_${new Date().toISOString().slice(0, 10)}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = masterCanvas.toDataURL('image/png');
       link.click();
       if (typeof showToast === 'function') {
         showToast('ℹ️ Clipboard browser terbatas. Gambar otomatis diunduh sebagai file PNG.', 'info');
@@ -24103,7 +24103,7 @@ window.copyVisualKpiImageToClipboard = async function() {
       return;
     }
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const blob = await new Promise(resolve => masterCanvas.toBlob(resolve, 'image/png'));
     await navigator.clipboard.write([
       new ClipboardItem({ 'image/png': blob })
     ]);
@@ -24199,7 +24199,8 @@ window.shareVisualKpiToWhatsApp = async function() {
     const waUrl = `https://api.whatsapp.com/send?text=${waText}`;
 
     try {
-      const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
+      const { canvas1, canvas2 } = await renderVisualKpiCanvases();
+      const canvas = stitchVisualKpiMasterCanvas(canvas1, canvas2);
       if (navigator.clipboard && window.ClipboardItem) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         await navigator.clipboard.write([
