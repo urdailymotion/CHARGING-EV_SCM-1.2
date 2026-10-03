@@ -1,6 +1,40 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 27 September 2026, Pukul 06:55 WITA  
-**Status Sesi:** Penanganan Integrasi Database PWA Netlify (Input & Hapus Data via Cloud API) (Status: Sukses & Teruji 100%)
+**Tanggal Pencatatan:** 03 Oktober 2026, Pukul 19:00 WITA  
+**Status Sesi:** Integrasi Problem Log & Analisis Downtime ke Dashboard Visual KPI (Status: Sukses & Teruji 100%, GAS @85, Git 3c44030, Build v37)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (03 Oktober 2026):
+
+#### 1. 📱 Perbaikan Mobile Modal Scrolling pada Sub-menu Charging Swap (Operation):
+- **Masalah:** Saat diakses menggunakan ponsel dan operator ingin merevisi transaksi (Edit Data Transaksi), modal dialog tidak bisa di-scroll naik-turun sehingga field bagian bawah dan tombol batal/simpan terpotong.
+- **Penyebab:** `<form id="formEditRecord">` di dalam modal dialog flexbox tidak memiliki aturan `display: flex; flex-direction: column; min-height: 0;`, sehingga body modal mengembang melebihi viewport tanpa memicu scroll internal.
+- **Solusi:** Menambahkan aturan flexbox eksplisit pada `.modal-dialog > form`, momentum touch scrolling pada `.modal-body-ent`, dan inline scroll lock guard.
+
+#### 2. 📊 Integrasi Problem Log & Analisis Downtime ke Dashboard Visual KPI:
+- **Kebutuhan:** Menampilkan hasil inputan dari Problem Log (sheet `DATA PROBLEM`) secara visual dan interaktif di menu **Visual KPI**.
+- **Komponen yang Diimplementasikan:**
+  1. **Executive Problem Stat Ribbon (4 Kartu Ringkasan):**
+     - **Total Gangguan (`INCIDENTS`)**: Menghitung jumlah insiden dalam periode aktif.
+     - **Akumulasi Downtime (`DURATION`)**: Total jam dan menit stasiun/unit mengalami hambatan.
+     - **Status Penanganan (`RESOLUTION`)**: Rasio insiden Selesai vs Berlangsung (disertai indikator animasi merah berdenyut untuk insiden aktif).
+     - **Top Bottleneck (`HIGHEST DOWNTIME`)**: Otomatis mendeteksi fasilitas/unit dengan total downtime terbesar dan persentasenya.
+  2. **Dual Visual Problem Charts:**
+     - **Chart A (Pareto Frekuensi Kendala per Fasilitas / Unit)**: Bar chart horizontal modern palet Cobalt Blue.
+     - **Chart B (Distribusi Durasi Downtime)**: Bar chart vertikal palet Ruby Red mengukur total menit terbuang per unit.
+  3. **Mini Incident Log Table (Tabel Rincian Insiden Terkini):**
+     - Kolom: No, Tanggal, Shift, Fasilitas/Unit, Deskripsi Masalah, Jam Open, Jam Close, Downtime, Status.
+     - Tersinkron otomatis dengan filter tanggal, shift, dan unit di Visual KPI.
+     - Dilengkapi pagination internal (5 baris/halaman) dan tombol cepat "Buka Modul &rarr;" untuk menuju modul Problem Log lengkap.
+  4. **Penyempurnaan Chart 8 (Pareto Kendala):**
+     - Mengubah sumber data Chart 8 lama yang sebelumnya hanya membaca remark swap menjadi langsung membaca database `problemsData`.
+  5. **Auto-Resize & Sinkronisasi Filter:**
+     - Menghubungkan canvas problem log ke universal resize observer (`chartInstances`).
+- **Versi Build & Deployment:**
+  - Build Version: `2026.10.03.v37` di `index.html`.
+  - Service Worker Cache: `charging-ev-v37` di `sw.js`.
+  - Google Apps Script Deployment: **`@85`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+  - Git Commit & Push: `3c44030` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
 
 ---
 
