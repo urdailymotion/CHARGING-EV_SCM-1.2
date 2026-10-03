@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v38';
+      var APP_BUILD_ID = '2026.10.03.v39';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -16065,6 +16065,7 @@ function parseDateComparable(dStr) {
     }
   }
   return null;
+}
 window.parseDateComparable = parseDateComparable;
 
 // Helper universal normalisasi inputan energi (kWh vs Wh / display meter Bachtiar)
@@ -16077,6 +16078,8 @@ function normalizeEnergyKwh(raw) {
   if (n >= 1000) {
     return Number((n / 1000).toFixed(2));
   }
+  return Number(n.toFixed(2));
+}
 window.normalizeEnergyKwh = normalizeEnergyKwh;
 
 // Helper live preview konversi energi pada input field
