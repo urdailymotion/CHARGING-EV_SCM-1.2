@@ -1203,6 +1203,22 @@ function apiGetTransactionData() {
  *  17 KETERANGAN / TIME SCH
  *  18 (reserved)
  */
+/**
+ * Normalisasi nilai energi kWh (mencegah penulisan ribuan tanpa koma, misal 281410 -> 281.41)
+ */
+function cleanEnergyKwh_(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'string') {
+    val = val.trim().replace(',', '.');
+  }
+  var n = parseFloat(val);
+  if (isNaN(n) || n <= 0) return 0;
+  if (n > 1000) {
+    n = n / 1000;
+  }
+  return Math.round(n * 100) / 100;
+}
+
 function apiReadTransactions_(ss) {
   const sheet = ss.getSheetByName('DATA INPUT');
   const swaps = [];
@@ -1227,7 +1243,7 @@ function apiReadTransactions_(ss) {
       batteryAfter:  String(r[9] || '-').trim(),
       jamOut:        formatTimeHHMM(r[10]),
       durationMin:   parseFloat(r[11]) || 6,
-      energyKwh:     parseFloat(r[12]) || 0,
+      energyKwh:     cleanEnergyKwh_(r[12]),
       statusRemark:  String(r[13] || 'On Time').trim(),
       problemRemark: String(r[14] || '13.NO PROBLEM').trim(),
       operator:      String(r[15] || '-').trim(),
@@ -1828,7 +1844,7 @@ function apiSaveSwapTransaction(rec) {
       rec.batteryAfter  || '',
       rec.jamOut        || '',
       rec.durationMin   || 6,
-      rec.energyKwh     || 0,
+      cleanEnergyKwh_(rec.energyKwh),
       rec.statusRemark  || 'On Time',
       rec.problemRemark || '13.NO PROBLEM',
       rec.operator      || '',
@@ -1876,7 +1892,7 @@ function apiUpdateTransaction(rec) {
           rec.batteryAfter  || '',
           rec.jamOut        || '',
           rec.durationMin   || 6,
-          rec.energyKwh     || 0,
+          cleanEnergyKwh_(rec.energyKwh),
           rec.statusRemark  || 'On Time',
           rec.problemRemark || '13.NO PROBLEM',
           rec.operator      || '',
@@ -2513,7 +2529,7 @@ function apiBackupAllToSheets(payload) {
           rec.batteryAfter  || '',
           rec.jamOut        || '',
           rec.durationMin   || 6,
-          rec.energyKwh     || 0,
+          cleanEnergyKwh_(rec.energyKwh),
           rec.statusRemark  || 'On Time',
           rec.problemRemark || '13.NO PROBLEM',
           rec.operator      || '',
@@ -2551,7 +2567,7 @@ function apiBackupAllToSheets(payload) {
               rec.batteryAfter  || '',
               rec.jamOut        || '',
               rec.durationMin   || 6,
-              rec.energyKwh     || 0,
+              cleanEnergyKwh_(rec.energyKwh),
               rec.statusRemark  || 'On Time',
               rec.problemRemark || '13.NO PROBLEM',
               rec.operator      || '',
@@ -2877,7 +2893,7 @@ function apiGetEvIntelligenceData(sheetName, limit) {
               r[9] || 0,   // BATTERY AFTER
               r[10] instanceof Date ? Utilities.formatDate(r[10], 'Asia/Makassar', 'HH:mm') : (r[10] || '-'),
               r[11] || 0,  // CHARGING TIME
-              r[12] || 0,  // ENERGY (KWH)
+              cleanEnergyKwh_(r[12]),  // ENERGY (KWH)
               r[13] || r[14] || '-', // REMARK
               r[17] || ''  // KETERANGAN
             ];

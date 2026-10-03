@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v37';
+      var APP_BUILD_ID = '2026.10.03.v38';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -10621,8 +10621,9 @@ html, body {
                 </div>
 
                 <div class="form-group-ent">
-                  <label class="form-label-ent">Energi (kWh)</label>
-                  <input type="number" id="dedSwapEnergy" class="form-control-ent" placeholder="" step="0.1" required>
+                  <label class="form-label-ent">Energi (kWh / Meter)</label>
+                  <input type="number" id="dedSwapEnergy" class="form-control-ent" placeholder="Contoh: 281410 atau 281.4" step="any" required>
+                  <small id="hintDedSwapEnergy" style="font-size: 11px; color: #168A5B; font-weight: 600; min-height: 15px; display: block; margin-top: 3px;"></small>
                 </div>
 
                 <!-- Row 4: Jam Masuk, Jam Keluar & Charging Time (Terintegrasi) -->
@@ -13004,8 +13005,9 @@ html, body {
             </div>
 
             <div class="form-group-ent">
-              <label class="form-label-ent">Energi (kWh)</label>
-              <input type="number" id="newSwapEnergy" class="form-control-ent" placeholder="" step="0.1" required>
+              <label class="form-label-ent">Energi (kWh / Meter)</label>
+              <input type="number" id="newSwapEnergy" class="form-control-ent" placeholder="Contoh: 281410 atau 281.4" step="any" required>
+              <small id="hintNewSwapEnergy" style="font-size: 11px; color: #168A5B; font-weight: 600; min-height: 15px; display: block; margin-top: 3px;"></small>
             </div>
 
             <!-- Row 4: Jam Masuk, Jam Keluar & Charging Time (Terintegrasi) -->
@@ -13210,8 +13212,9 @@ html, body {
               <input type="number" id="editHM" class="form-control-ent">
             </div>
             <div class="form-group-ent">
-              <label class="form-label-ent">Energi (kWh)</label>
-              <input type="number" id="editEnergy" class="form-control-ent" step="0.1" required>
+              <label class="form-label-ent">Energi (kWh / Meter)</label>
+              <input type="number" id="editEnergy" class="form-control-ent" placeholder="Contoh: 281410 atau 281.4" step="any" required>
+              <small id="hintEditEnergy" style="font-size: 11px; color: #168A5B; font-weight: 600; min-height: 15px; display: block; margin-top: 3px;"></small>
             </div>
             <div class="form-group-ent">
               <label class="form-label-ent">Time In</label>
@@ -16062,8 +16065,46 @@ function parseDateComparable(dStr) {
     }
   }
   return null;
-}
 window.parseDateComparable = parseDateComparable;
+
+// Helper universal normalisasi inputan energi (kWh vs Wh / display meter Bachtiar)
+function normalizeEnergyKwh(raw) {
+  if (raw === null || raw === undefined) return 0;
+  let str = String(raw).trim().replace(/,/g, '');
+  const n = parseFloat(str);
+  if (isNaN(n) || n <= 0) return 0;
+  // Jika diinput gaya Bachtiar (>= 1000 seperti 281410 / Wh), otomatis konversi ke kWh (281.41)
+  if (n >= 1000) {
+    return Number((n / 1000).toFixed(2));
+  }
+window.normalizeEnergyKwh = normalizeEnergyKwh;
+
+// Helper live preview konversi energi pada input field
+function attachEnergyHintLive(inputId, hintId) {
+  const input = document.getElementById(inputId);
+  const hint = document.getElementById(hintId);
+  if (!input || !hint || input.dataset.hintBound) return;
+  input.dataset.hintBound = 'true';
+  const updateHint = () => {
+    const raw = parseFloat(input.value);
+    if (!input.value || isNaN(raw) || raw <= 0) {
+      hint.textContent = '';
+      return;
+    }
+    if (raw >= 1000) {
+      const kwh = (raw / 1000).toFixed(2);
+      hint.innerHTML = `⚡ Terbaca: <b>${kwh} kWh</b> (otomatis disimpan dalam kWh)`;
+      hint.style.color = '#168A5B';
+    } else {
+      hint.innerHTML = `⚡ Terbaca: <b>${raw.toFixed(2)} kWh</b>`;
+      hint.style.color = '#2563EB';
+    }
+  };
+  input.addEventListener('input', updateHint);
+  input.addEventListener('change', updateHint);
+  updateHint();
+}
+window.attachEnergyHintLive = attachEnergyHintLive;
 
 // Helper ekstraksi angka urut ID swap secara presisi (contoh: DA01/CHG/2026/SWAP/0061 -> 61)
 function extractSwapIdNumber(id) {
@@ -16163,6 +16204,7 @@ const gasSync = {
       swapsData = result.swaps.filter(s => s && (s.unit || s.date)).map((s, idx) => ({
         ...s,
         id: (typeof canonicalSwapId === 'function') ? canonicalSwapId(s.id) : (s.id || ''),
+        energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(s.energyKwh) : (parseFloat(s.energyKwh) || 0),
         _sheetRow: idx + 2
       }));
       if (typeof sortTransactionsLatestFirst === 'function') {
@@ -16836,10 +16878,14 @@ function initDataState() {
     swapsData = [];
   }
 
-  // Normalisasi seluruh ID swap ke format resmi DA01/CHG/2026/SWAP/XXXX
+  // Normalisasi seluruh ID swap ke format resmi DA01/CHG/2026/SWAP/XXXX dan perbaiki jika ada kWh tanpa koma
   swapsData = swapsData.map(s => {
     const cid = canonicalSwapId(s.id);
-    return { ...s, id: cid };
+    return {
+      ...s,
+      id: cid,
+      energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(s.energyKwh) : (parseFloat(s.energyKwh) || 0)
+    };
   });
   window.swapsData = swapsData;
 
@@ -18531,6 +18577,9 @@ function initTableControls() {
 
   window.initModalAddSwapForm = function() {
     window.initModalSearchableUnitCombobox();
+    if (typeof attachEnergyHintLive === 'function') {
+      attachEnergyHintLive('newSwapEnergy', 'hintNewSwapEnergy');
+    }
 
     const batIn = document.getElementById('newSwapBatIn');
     const batOut = document.getElementById('newSwapBatOut');
@@ -18628,6 +18677,8 @@ function initTableControls() {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    const energyHint = document.getElementById('hintNewSwapEnergy');
+    if (energyHint) energyHint.textContent = '';
 
     const now = new Date();
     const sixAgo = new Date(now.getTime() - 6 * 60000);
@@ -18714,7 +18765,7 @@ function initTableControls() {
         batteryAfter: formattedBatOut,
         jamOut: document.getElementById('newSwapJamOut')?.value || '',
         durationMin: durationMinVal,
-        energyKwh: parseFloat(document.getElementById('newSwapEnergy')?.value) || 0,
+        energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(document.getElementById('newSwapEnergy')?.value) : (parseFloat(document.getElementById('newSwapEnergy')?.value) || 0),
         statusRemark: statusVal,
         problemRemark: remarkVal ? remarkVal : (statusVal === 'On Time' ? '13.NO PROBLEM' : '-'),
         keterangan: (function() {
@@ -18810,7 +18861,7 @@ function initTableControls() {
         rec.swapStation = document.getElementById('editSwapStation')?.value || (rec.location === 'ROOM A2' ? 'SWAP 02' : 'SWAP 01');
         rec.unit = document.getElementById('editUnit').value;
         rec.hm = document.getElementById('editHM').value;
-        rec.energyKwh = parseFloat(document.getElementById('editEnergy').value) || 0;
+        rec.energyKwh = (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(document.getElementById('editEnergy').value) : (parseFloat(document.getElementById('editEnergy').value) || 0);
         rec.jamIn = document.getElementById('editJamIn').value;
         rec.jamOut = document.getElementById('editJamOut').value;
         rec.batteryBefore = formatBatteryPercentage(document.getElementById('editBatIn').value);
@@ -19274,6 +19325,19 @@ window.editRecord = function(id) {
   document.getElementById('editRemark').value = rec.problemRemark;
 
   openModal('modalEdit');
+  if (typeof attachEnergyHintLive === 'function') {
+    attachEnergyHintLive('editEnergy', 'hintEditEnergy');
+    const hint = document.getElementById('hintEditEnergy');
+    if (hint) {
+      const raw = parseFloat(rec.energyKwh);
+      if (!isNaN(raw) && raw > 0) {
+        hint.innerHTML = `⚡ Terbaca: <b>${raw.toFixed(2)} kWh</b>`;
+        hint.style.color = '#2563EB';
+      } else {
+        hint.textContent = '';
+      }
+    }
+  }
 };
 
 window.deletePrompt = function(id) {
@@ -20057,6 +20121,8 @@ window.resetDedicatedInputForm = function() {
   if (timeDisplay) timeDisplay.value = '-- Menit';
   const hiddenDur = document.getElementById('dedSwapDurationMin');
   if (hiddenDur) hiddenDur.value = '0';
+  const energyHint = document.getElementById('hintDedSwapEnergy');
+  if (energyHint) energyHint.textContent = '';
 
   const statusEl = document.getElementById('dedSwapStatus');
   if (statusEl) statusEl.value = 'On Time';
@@ -20108,6 +20174,9 @@ function initDedicatedInputForm() {
   populateUnitSelects();
   initSearchableUnitCombobox();
   window.resetDedicatedInputForm();
+  if (typeof attachEnergyHintLive === 'function') {
+    attachEnergyHintLive('dedSwapEnergy', 'hintDedSwapEnergy');
+  }
 
   const batIn = document.getElementById('dedSwapBatIn');
   const batOut = document.getElementById('dedSwapBatOut');
@@ -20345,7 +20414,7 @@ function initDedicatedInputForm() {
         batteryAfter: formattedBatOut,
         jamOut: document.getElementById('dedSwapJamOut').value,
         durationMin: durationMinVal,
-        energyKwh: parseFloat(document.getElementById('dedSwapEnergy').value) || 0,
+        energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(document.getElementById('dedSwapEnergy').value) : (parseFloat(document.getElementById('dedSwapEnergy').value) || 0),
         statusRemark: statusVal,
         problemRemark: remarkVal ? remarkVal : (statusVal === 'On Time' ? '13.NO PROBLEM' : '-'),
         keterangan: (function() {
