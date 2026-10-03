@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v40';
+      var APP_BUILD_ID = '2026.10.03.v41';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -9477,30 +9477,50 @@ html.needs-login .sidebar-backdrop {
 
 #kpiPdfReportWrapper {
   display: none;
-  background: #ffffff;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 297mm !important;
+  max-width: 297mm !important;
+  z-index: 99999 !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .kpi-pdf-container {
-  width: 285mm;
-  margin: 0 auto;
-  background: #ffffff;
-  color: #172033;
-  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  box-sizing: border-box;
+  width: 297mm !important;
+  max-width: 297mm !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  color: #172033 !important;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  box-sizing: border-box !important;
 }
 
 .kpi-pdf-page {
-  width: 285mm;
-  height: 198mm;
-  max-height: 198mm;
-  box-sizing: border-box;
-  padding: 4mm 6mm;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: #ffffff;
-  overflow: hidden;
-  position: relative;
+  width: 297mm !important;
+  max-width: 297mm !important;
+  height: 205mm !important;
+  min-height: 205mm !important;
+  max-height: 205mm !important;
+  box-sizing: border-box !important;
+  padding: 4.5mm 6mm !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  position: relative !important;
+  page-break-after: always !important;
+  break-after: page !important;
+}
+
+.kpi-pdf-page:last-child {
+  page-break-after: avoid !important;
+  break-after: avoid !important;
 }
 
 .kpi-pdf-page-break {
@@ -9658,28 +9678,35 @@ html.needs-login .sidebar-backdrop {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 4mm;
+    margin: 0;
   }
-  body > *:not(#kpiPdfReportWrapper) {
-    display: none !important;
+  body * {
+    visibility: hidden;
+  }
+  #kpiPdfReportWrapper,
+  #kpiPdfReportWrapper * {
+    visibility: visible;
   }
   #kpiPdfReportWrapper {
-    display: block !important;
-    position: static !important;
-    width: 100% !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
+    display: block !important;
   }
   .kpi-pdf-page {
-    width: 100% !important;
-    height: 198mm !important;
-    max-height: 198mm !important;
-    page-break-after: always;
-    break-after: page;
+    width: 297mm !important;
+    height: 205mm !important;
+    min-height: 205mm !important;
+    max-height: 205mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
   }
   .kpi-pdf-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 
@@ -23286,7 +23313,7 @@ function getChartImageWithWhiteBackground(canvas) {
 function buildVisualKpiPdfReportHtml() {
   const ppaCircleLogo = 'data:image/png;base64,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';
 
-  // 1. Filter Context
+  // 1. Context Metadata
   const opMode = window.ppaOperationalMode || 'ALL';
   const opModeText = (opMode === 'SCHEDULED') ? 'SCHEDULE' : (opMode === 'ON_DEMAND' ? 'NON SCHEDULE' : 'SEMUA OPERASIONAL');
   const dStart = document.getElementById('ppaFilterDateStart')?.value || '';
@@ -23301,17 +23328,12 @@ function buildVisualKpiPdfReportHtml() {
   const locVal = document.getElementById('ppaFilterLocation')?.value || 'ALL';
   const stationVal = document.getElementById('ppaFilterStation')?.value || 'ALL';
   const unitVal = document.getElementById('ppaFilterUnit')?.value || 'ALL';
-  const statusVal = document.getElementById('ppaFilterStatus')?.value || 'ALL';
-  const probVal = document.getElementById('ppaFilterProblem')?.value || 'ALL';
-
   const filterDetails = [];
   if (weekVal !== 'ALL') filterDetails.push(`Week: ${weekVal}`);
   if (shiftVal !== 'ALL') filterDetails.push(`Shift: ${shiftVal}`);
   if (locVal !== 'ALL') filterDetails.push(`Lokasi: ${locVal}`);
   if (stationVal !== 'ALL') filterDetails.push(`Mesin: ${stationVal}`);
   if (unitVal !== 'ALL') filterDetails.push(`Unit: ${unitVal}`);
-  if (statusVal !== 'ALL') filterDetails.push(`Status: ${statusVal}`);
-  if (probVal !== 'ALL') filterDetails.push(`Problem: ${probVal}`);
   const filterDetailText = filterDetails.length > 0 ? filterDetails.join(' • ') : 'Semua Kondisi / Tanpa Filter';
 
   let userText = 'Operator Lapangan';
@@ -23320,34 +23342,31 @@ function buildVisualKpiPdfReportHtml() {
     if (storedUser.name) userText = `${storedUser.name} (${storedUser.nik || '-'})`;
   } catch (e) {}
 
-  const now = new Date();
-  const timestampStr = new Intl.DateTimeFormat('id-ID', {
-    timeZone: 'Asia/Makassar',
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  }).format(now).replace(/\./g, ':') + ' WITA';
+  const timestampStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Makassar' }).replace(/\./g, ':') + ' WITA';
 
-  // 2. Metrics
+  // 2. Metrics Primary
   const kpi1Num = document.getElementById('ppaKpiTotalUnit')?.textContent || '60';
   const kpi1Unit = document.getElementById('ppaKpiUnitFleetMax')?.textContent || '/ 60 UNIT';
   const kpi1Sub = document.getElementById('ppaKpiUnitSub')?.textContent || '100% Aktif di Operasional';
-
   const kpi2Num = document.getElementById('ppaKpiFreqSwab')?.textContent || '0';
   const kpi2Sub = document.getElementById('ppaKpiFreqSub')?.textContent || 'Rata-rata 0 swap/hari';
-
   const kpi3Num = document.getElementById('ppaKpiTotalEnergy')?.textContent || '0.0';
   const kpi3Unit = document.getElementById('ppaKpiEnergyUnitText')?.textContent || 'MWh';
   const kpi3Diesel = document.getElementById('ppaKpiDieselSaved')?.textContent || 'Hemat 0 L Solar';
   const kpi3Co2 = document.getElementById('ppaKpiCo2Saved')?.textContent || '• 0 Ton CO₂';
-
   const kpi4Num = document.getElementById('ppaKpiChargingTime')?.textContent || '0.00';
   const kpi4Sub = document.getElementById('ppaKpiSlaSub')?.textContent || 'Target < 8.0 min (OK)';
-
   const kpi5S1 = document.getElementById('ppaKpiWk01')?.textContent || '50%';
   const kpi5S2 = document.getElementById('ppaKpiWk02')?.textContent || '50%';
   const kpi5S3 = document.getElementById('ppaKpiWk03')?.textContent || '0%';
 
-  // 3. Capture Charts Images
+  // 3. Problem Log Metrics
+  const probTotal = document.getElementById('ppaProbKpiTotalIncidents')?.textContent || '0';
+  const probDowntime = document.getElementById('ppaProbKpiTotalDowntime')?.textContent || '0 Menit';
+  const probStatusRes = document.getElementById('ppaProbKpiStatusRes')?.textContent || '0 Selesai • 0 Berlangsung';
+  const probTopUnit = document.getElementById('ppaProbKpiTopUnit')?.textContent || '-';
+
+  // 4. Capture Charts Images
   const imgKetepatan = getChartImageWithWhiteBackground(document.getElementById('ppaChartKetepatan'));
   const imgFreqDaily = getChartImageWithWhiteBackground(document.getElementById('ppaChartFreqDaily'));
   const imgFreqWeekly = getChartImageWithWhiteBackground(document.getElementById('ppaChartFreqWeekly'));
@@ -23357,12 +23376,12 @@ function buildVisualKpiPdfReportHtml() {
   const imgEnergyDaily = getChartImageWithWhiteBackground(document.getElementById('ppaChartEnergyDaily'));
   const imgProblem = getChartImageWithWhiteBackground(document.getElementById('ppaChartProblemBreakdown'));
 
-  // 4. Sample Table Rows
-  const totalFiltered = (ppaFilteredSwaps || []).length;
-  const sampleSwaps = (ppaFilteredSwaps || []).slice(0, 10);
+  // 5. Sample Tables
+  const totalFiltered = (window.ppaFilteredSwaps || []).length;
+  const sampleSwaps = (window.ppaFilteredSwaps || []).slice(0, 14);
   let tableRowsHtml = '';
   if (sampleSwaps.length === 0) {
-    tableRowsHtml = '<tr><td colspan="8" style="text-align:center; padding: 12px; color:#667085;">Tidak ada transaksi swap sesuai filter yang dipilih</td></tr>';
+    tableRowsHtml = '<tr><td colspan="8" style="text-align:center; padding: 10px; color:#667085;">Tidak ada transaksi swap sesuai filter yang dipilih</td></tr>';
   } else {
     sampleSwaps.forEach(s => {
       const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
@@ -23371,82 +23390,98 @@ function buildVisualKpiPdfReportHtml() {
       const statusColor = isNonSch ? '#287C8E' : (isLate ? '#D64545' : '#168A5B');
 
       tableRowsHtml += `
-        <tr style="border-bottom: 1px solid #E4E7EC; font-size: 8.5px;">
-          <td style="padding: 4px 6px; text-align: center;">${s.dateDisplay || s.date || '-'}</td>
-          <td style="padding: 4px 6px; text-align: center;">Shift ${s.shift || '1'}</td>
-          <td style="padding: 4px 6px; text-align: center; font-weight: 700; color: #172033;">${s.unit || '-'}</td>
-          <td style="padding: 4px 6px; text-align: center; font-family: monospace; color: #2563EB;">${getSwapScheduleTime(s)}</td>
-          <td style="padding: 4px 6px; text-align: center; font-family: monospace; font-weight: 600;">${s.jamIn ? s.jamIn.substring(0, 5) : '-'}</td>
-          <td style="padding: 4px 6px; text-align: center; font-weight: 700; color: ${statusColor};">${statusText}</td>
-          <td style="padding: 4px 6px; text-align: center;">${s.swapStation || (String(s.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')}</td>
-          <td style="padding: 4px 6px; text-align: right; font-weight: 600; color: #168A5B;">${parseFloat(s.energyKwh || 0).toLocaleString('id-ID')} kWh</td>
+        <tr style="border-bottom: 1px solid #E4E7EC; font-size: 8px;">
+          <td style="padding: 3.5px 5px; text-align: center;">${s.dateDisplay || s.date || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center;">Shift ${s.shift || '1'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-weight: 700; color: #172033;">${s.unit || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-family: monospace; color: #2563EB;">${getSwapScheduleTime(s)}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-family: monospace; font-weight: 600;">${s.jamIn ? s.jamIn.substring(0, 5) : '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-weight: 700; color: ${statusColor};">${statusText}</td>
+          <td style="padding: 3.5px 5px; text-align: center;">${s.swapStation || (String(s.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')}</td>
+          <td style="padding: 3.5px 5px; text-align: right; font-weight: 600; color: #168A5B;">${parseFloat(s.energyKwh || 0).toLocaleString('id-ID')} kWh</td>
         </tr>
       `;
     });
   }
 
-  // 5. Construct Complete 2-Page Landscape Template
+  // Sample Problem Incidents
+  const sampleProblems = (window.ppaFilteredProblems || []).slice(0, 5);
+  let problemRowsHtml = '';
+  if (sampleProblems.length === 0) {
+    problemRowsHtml = '<tr><td colspan="6" style="text-align:center; padding: 8px; color:#168A5B; font-weight: 600;">✓ Tidak ada laporan kendala / gangguan operasional (Zero Incident)</td></tr>';
+  } else {
+    sampleProblems.forEach(p => {
+      const isClosed = p.timeClose && p.timeClose !== '-' && p.timeClose.trim() !== '' && p.duration !== 'MASIH BERLANGSUNG';
+      problemRowsHtml += `
+        <tr style="border-bottom: 1px solid #E4E7EC; font-size: 8px;">
+          <td style="padding: 3.5px 5px; text-align: center;">${p.date || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-weight: 700;">${p.unit || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: left; color: #172033;">${p.problem || p.kendala || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-family: monospace;">${p.timeOpen || '-'} - ${p.timeClose || 'Aktif'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-weight: 600;">${p.duration || '-'}</td>
+          <td style="padding: 3.5px 5px; text-align: center; font-weight: 700; color: ${isClosed ? '#168A5B' : '#D64545'};">${isClosed ? 'SELESAI' : 'BERLANGSUNG'}</td>
+        </tr>
+      `;
+    });
+  }
+
+  // 6. Construct 3-Page HTML Template
   return `
     <div class="kpi-pdf-container">
       
-      <!-- PAGE 1: EXECUTIVE OVERVIEW & PRIMARY TELEMETRY -->
+      <!-- ================= PAGE 1: PRIMARY TELEMETRY & OPERATIONS ================= -->
       <div class="kpi-pdf-page">
-        <!-- Top Header -->
         <div class="kpi-pdf-header">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 38px; height: 38px; border-radius: 50%; background: #ffffff; padding: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; padding: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <img src="${ppaCircleLogo}" alt="Logo PPA" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
             </div>
             <div>
-              <div style="font-size: 13.5px; font-weight: 800; color: #ffffff; letter-spacing: -0.01em; line-height: 1.2;">
+              <div style="font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: -0.01em; line-height: 1.2;">
                 PT PUTRA PERKASA ABADI • SITE BIB
               </div>
-              <div style="font-size: 10.5px; font-weight: 700; color: #F6B91F; letter-spacing: 0.02em;">
+              <div style="font-size: 10px; font-weight: 700; color: #F6B91F; letter-spacing: 0.02em;">
                 MONITORING KETEPATAN SCHEDULE SWAP (VISUAL KPI &amp; TELEMETRI BI)
               </div>
-              <div style="font-size: 8.5px; color: #cbd5e1;">
+              <div style="font-size: 8px; color: #cbd5e1;">
                 Pit Mining Electric Vehicle (EV 90T) Fleet Management System
               </div>
             </div>
           </div>
 
-          <div style="text-align: right; font-size: 8.5px; color: #f1f5f9; line-height: 1.4;">
+          <div style="text-align: right; font-size: 8px; color: #f1f5f9; line-height: 1.35;">
             <div><b>MODE OPERASIONAL:</b> <span style="background: #2563EB; color: #fff; padding: 1px 6px; border-radius: 3px; font-weight: 700;">${opModeText}</span></div>
             <div><b>PERIODE:</b> ${periodeText}</div>
             <div><b>FILTER:</b> ${filterDetailText}</div>
-            <div style="color: #94a3b8; margin-top: 2px;">Dicetak: ${timestampStr} • Oleh: ${userText}</div>
+            <div style="color: #94a3b8; margin-top: 1px;">Dicetak: ${timestampStr} • Oleh: ${userText}</div>
           </div>
         </div>
 
-        <!-- 5 KPI Stat Cards -->
+        <!-- 5 KPI Cards -->
         <div class="kpi-pdf-cards-row">
           <div class="kpi-pdf-card" style="border-top: 3px solid #2563EB;">
             <div class="kpi-pdf-card-title">ARMADA EV AKTIF</div>
-            <div class="kpi-pdf-card-num">${kpi1Num} <small style="font-size: 10px; color:#64748b;">${kpi1Unit}</small></div>
+            <div class="kpi-pdf-card-num">${kpi1Num} <small style="font-size: 9.5px; color:#64748b;">${kpi1Unit}</small></div>
             <div class="kpi-pdf-card-sub" style="color: #168A5B;">${kpi1Sub}</div>
           </div>
-
           <div class="kpi-pdf-card" style="border-top: 3px solid #0F2747;">
             <div class="kpi-pdf-card-title">THROUGHPUT SWAP</div>
-            <div class="kpi-pdf-card-num">${kpi2Num} <small style="font-size: 10px; color:#64748b;">SWAPS</small></div>
+            <div class="kpi-pdf-card-num">${kpi2Num} <small style="font-size: 9.5px; color:#64748b;">SWAPS</small></div>
             <div class="kpi-pdf-card-sub">${kpi2Sub}</div>
           </div>
-
           <div class="kpi-pdf-card" style="border-top: 3px solid #168A5B;">
             <div class="kpi-pdf-card-title">GREEN MINING &amp; ESG</div>
-            <div class="kpi-pdf-card-num">${kpi3Num} <small style="font-size: 10px; color:#64748b;">${kpi3Unit}</small></div>
+            <div class="kpi-pdf-card-num">${kpi3Num} <small style="font-size: 9.5px; color:#64748b;">${kpi3Unit}</small></div>
             <div class="kpi-pdf-card-sub" style="color: #168A5B;">${kpi3Diesel} ${kpi3Co2}</div>
           </div>
-
           <div class="kpi-pdf-card" style="border-top: 3px solid #D99000;">
             <div class="kpi-pdf-card-title">RATA-RATA DURASI SLA</div>
-            <div class="kpi-pdf-card-num">${kpi4Num} <small style="font-size: 10px; color:#64748b;">MENIT</small></div>
+            <div class="kpi-pdf-card-num">${kpi4Num} <small style="font-size: 9.5px; color:#64748b;">MENIT</small></div>
             <div class="kpi-pdf-card-sub">${kpi4Sub}</div>
           </div>
-
           <div class="kpi-pdf-card" style="border-top: 3px solid #287C8E;">
             <div class="kpi-pdf-card-title">BEBAN STASIUN SWAP</div>
-            <div style="font-size: 12px; font-weight: 800; color: #172033; margin: 4px 0;">
+            <div style="font-size: 11.5px; font-weight: 800; color: #172033; margin: 3px 0;">
               S1: ${kpi5S1} • S2: ${kpi5S2} • S3: ${kpi5S3}
             </div>
             <div class="kpi-pdf-card-sub" style="color: #287C8E;">Workload Distribution</div>
@@ -23460,130 +23495,170 @@ function buildVisualKpiPdfReportHtml() {
               <span class="kpi-pdf-chart-title">1. Ach Ketepatan Schedule Swap</span>
               <span class="kpi-pdf-chart-tag">SLA KEPATUHAN</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
               <img src="${imgKetepatan}" class="kpi-pdf-chart-img" alt="Chart Ketepatan">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">2. Frekuensi Swab Harian</span>
               <span class="kpi-pdf-chart-tag">VOLUME &amp; MOVING AVG</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
               <img src="${imgFreqDaily}" class="kpi-pdf-chart-img" alt="Chart Frekuensi Harian">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">3. Target vs Aktual Mingguan</span>
               <span class="kpi-pdf-chart-tag">WEEKLY SPRINT</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
               <img src="${imgFreqWeekly}" class="kpi-pdf-chart-img" alt="Chart Mingguan">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">4. 24-Jam Peak Swap Rush Hour</span>
               <span class="kpi-pdf-chart-tag">PIT BOTTLENECK</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
               <img src="${imgFreqMonthly}" class="kpi-pdf-chart-img" alt="Chart 24 Jam">
             </div>
           </div>
         </div>
 
-        <!-- Page 1 Bottom Footer -->
+        <!-- Page 1 Footer -->
         <div class="kpi-pdf-bottom-bar">
           <span>PT Putra Perkasa Abadi • Charging EV Management System • Site BIB</span>
-          <span>Dokumen Laporan Visual KPI • Halaman 1 dari 2</span>
+          <span>Dokumen Laporan Visual KPI • Halaman 1 dari 3</span>
         </div>
       </div>
 
-      <!-- PAGE BREAK -->
-      <div class="kpi-pdf-page-break"></div>
-
-      <!-- PAGE 2: SECONDARY TELEMETRY & RECAPITULATION TABLE -->
+      <!-- ================= PAGE 2: SECONDARY TELEMETRY & PROBLEM LOG ANALYTICS ================= -->
       <div class="kpi-pdf-page">
-        <!-- Top Mini Header Page 2 -->
         <div class="kpi-pdf-header-mini">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 26px; height: 26px; border-radius: 50%; background: #ffffff; padding: 2px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #ffffff; padding: 2px; display: flex; align-items: center; justify-content: center;">
               <img src="${ppaCircleLogo}" alt="Logo PPA" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
             </div>
             <div>
-              <strong style="font-size: 11px; color: #ffffff;">PT PUTRA PERKASA ABADI • SITE BIB</strong>
-              <span style="font-size: 9px; color: #F6B91F; margin-left: 6px;">TELEMETRI BI LANJUTAN &amp; REKAPITULASI DATA</span>
+              <strong style="font-size: 10.5px; color: #ffffff;">PT PUTRA PERKASA ABADI • SITE BIB</strong>
+              <span style="font-size: 8.5px; color: #F6B91F; margin-left: 6px;">TELEMETRI BI LANJUTAN &amp; ANALISIS KENDALA PROBLEM LOG</span>
             </div>
           </div>
-          <div style="font-size: 8.5px; color: #cbd5e1;">
-            Periode: ${periodeText} • Mode: ${opModeText} • Halaman 2 dari 2
+          <div style="font-size: 8px; color: #cbd5e1;">
+            Periode: ${periodeText} • Mode: ${opModeText} • Halaman 2 dari 3
           </div>
         </div>
 
-        <!-- 4 Secondary Charts (2x2 Grid) -->
-        <div class="kpi-pdf-charts-grid" style="margin-top: 6px; margin-bottom: 8px;">
+        <!-- 4 Charts Secondary (2x2 Grid) -->
+        <div class="kpi-pdf-charts-grid" style="margin-top: 4px; margin-bottom: 5px;">
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">5. Distribusi Beban Stasiun</span>
               <span class="kpi-pdf-chart-tag">ROOM &amp; MESIN</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 48mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 44mm;">
               <img src="${imgRoomCompare}" class="kpi-pdf-chart-img" alt="Chart Beban Stasiun">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">6. Top 10 Armada EV Konsumsi Energi</span>
               <span class="kpi-pdf-chart-tag">PARETO KWH</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 48mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 44mm;">
               <img src="${imgEnergyUnit}" class="kpi-pdf-chart-img" alt="Chart Konsumsi Energi">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">7. Penyaluran Energi Bersih Harian</span>
               <span class="kpi-pdf-chart-tag">GREEN MWH</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 48mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 44mm;">
               <img src="${imgEnergyDaily}" class="kpi-pdf-chart-img" alt="Chart Energi Bersih">
             </div>
           </div>
-
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
               <span class="kpi-pdf-chart-title">8. Analisis Kendala &amp; Problem Log</span>
               <span class="kpi-pdf-chart-tag">ROOT CAUSE</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 48mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 44mm;">
               <img src="${imgProblem}" class="kpi-pdf-chart-img" alt="Chart Kendala">
             </div>
           </div>
         </div>
 
-        <!-- Telemetry Data Table Summary -->
-        <div class="kpi-pdf-table-box">
-          <div style="font-size: 9.5px; font-weight: 700; color: #0F2747; padding: 4px 8px; background: #F8F9FA; border-bottom: 1px solid #E4E7EC; display: flex; justify-content: space-between;">
-            <span>Ringkasan Transaksi Operasional Terbaru (Sesuai Filter Aktif)</span>
-            <span>Total Transaksi Sesuai Filter: <b>${totalFiltered}</b> Data</span>
+        <!-- Dedicated Problem Log KPI Banner & Cards -->
+        <div style="background: #F8F9FA; border: 1px solid #E4E7EC; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px;">
+          <div style="font-size: 8.5px; font-weight: 800; color: #0F2747; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+            <span>⚠️ INTEGRASI PROBLEM LOG &amp; ANALISIS DOWNTIME STASIUN</span>
+            <span style="font-size: 7.5px; color: #2563EB; font-weight: 600;">Sinkronisasi Realtime Google Sheets</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+            <div style="background: #ffffff; border: 1px solid #E4E7EC; border-left: 3px solid #D64545; padding: 4px 6px; border-radius: 3px;">
+              <div style="font-size: 7px; color: #64748b; font-weight: 700;">TOTAL GANGGUAN</div>
+              <div style="font-size: 13px; font-weight: 800; color: #172033;">${probTotal} <small style="font-size: 8px; color: #64748b;">Insiden</small></div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #E4E7EC; border-left: 3px solid #D99000; padding: 4px 6px; border-radius: 3px;">
+              <div style="font-size: 7px; color: #64748b; font-weight: 700;">DOWNTIME TERBUANG</div>
+              <div style="font-size: 13px; font-weight: 800; color: #172033;">${probDowntime}</div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #E4E7EC; border-left: 3px solid #168A5B; padding: 4px 6px; border-radius: 3px;">
+              <div style="font-size: 7px; color: #64748b; font-weight: 700;">STATUS PENANGANAN</div>
+              <div style="font-size: 10px; font-weight: 800; color: #172033; margin-top: 2px;">${probStatusRes}</div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #E4E7EC; border-left: 3px solid #287C8E; padding: 4px 6px; border-radius: 3px;">
+              <div style="font-size: 7px; color: #64748b; font-weight: 700;">TOP BOTTLENECK</div>
+              <div style="font-size: 13px; font-weight: 800; color: #172033;">${probTopUnit}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page 2 Footer -->
+        <div class="kpi-pdf-bottom-bar">
+          <span>PT Putra Perkasa Abadi • Charging EV Management System • Site BIB</span>
+          <span>Dokumen Laporan Visual KPI • Halaman 2 dari 3</span>
+        </div>
+      </div>
+
+      <!-- ================= PAGE 3: TELEMETRY LOGSHEET & SIGN-OFF ================= -->
+      <div class="kpi-pdf-page">
+        <div class="kpi-pdf-header-mini">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #ffffff; padding: 2px; display: flex; align-items: center; justify-content: center;">
+              <img src="${ppaCircleLogo}" alt="Logo PPA" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
+            </div>
+            <div>
+              <strong style="font-size: 10.5px; color: #ffffff;">PT PUTRA PERKASA ABADI • SITE BIB</strong>
+              <span style="font-size: 8.5px; color: #F6B91F; margin-left: 6px;">REKAPITULASI DATA TRANSAKSI &amp; OTENTIKASI SISTEM</span>
+            </div>
+          </div>
+          <div style="font-size: 8px; color: #cbd5e1;">
+            Periode: ${periodeText} • Halaman 3 dari 3
+          </div>
+        </div>
+
+        <!-- Table 1: Swap Transactions -->
+        <div class="kpi-pdf-table-box" style="margin-top: 4px; margin-bottom: 4px;">
+          <div style="font-size: 8.5px; font-weight: 700; color: #0F2747; padding: 3px 6px; background: #F8F9FA; border-bottom: 1px solid #E4E7EC; display: flex; justify-content: space-between;">
+            <span>1. Rekapitulasi Transaksi Swap Terkini (Sesuai Filter Aktif)</span>
+            <span>Total Data Sesuai Filter: <b>${totalFiltered}</b> Transaksi</span>
           </div>
           <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
             <thead>
-              <tr style="background: #0F2747; color: #ffffff; font-size: 8px; text-transform: uppercase;">
-                <th style="padding: 4px 6px; text-align: center; width: 65px;">Date</th>
-                <th style="padding: 4px 6px; text-align: center; width: 45px;">Shift</th>
-                <th style="padding: 4px 6px; text-align: center; width: 65px;">Kode Unit</th>
-                <th style="padding: 4px 6px; text-align: center; width: 75px;">Schedule</th>
-                <th style="padding: 4px 6px; text-align: center; width: 75px;">Time Aktual</th>
-                <th style="padding: 4px 6px; text-align: center; width: 95px;">Resume Ketepatan</th>
-                <th style="padding: 4px 6px; text-align: center; width: 65px;">Mesin</th>
-                <th style="padding: 4px 6px; text-align: right; width: 85px;">Energy (kWh)</th>
+              <tr style="background: #0F2747; color: #ffffff; font-size: 7.5px; text-transform: uppercase;">
+                <th style="padding: 3.5px 5px; text-align: center; width: 65px;">Date</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 45px;">Shift</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 65px;">Kode Unit</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 75px;">Schedule</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 75px;">Time Aktual</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 95px;">Resume Ketepatan</th>
+                <th style="padding: 3.5px 5px; text-align: center; width: 65px;">Mesin</th>
+                <th style="padding: 3.5px 5px; text-align: right; width: 85px;">Energy (kWh)</th>
               </tr>
             </thead>
             <tbody>
@@ -23592,34 +23667,57 @@ function buildVisualKpiPdfReportHtml() {
           </table>
         </div>
 
+        <!-- Table 2: Problem Log Incidents -->
+        <div class="kpi-pdf-table-box" style="margin-bottom: 4px;">
+          <div style="font-size: 8.5px; font-weight: 700; color: #0F2747; padding: 3px 6px; background: #F8F9FA; border-bottom: 1px solid #E4E7EC; display: flex; justify-content: space-between;">
+            <span>2. Rekapitulasi Catatan Hambatan Operasional &amp; Problem Log Terkini</span>
+            <span>Total Insiden: <b>${sampleProblems.length}</b> Tercatat</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
+            <thead>
+              <tr style="background: #172033; color: #ffffff; font-size: 7.5px; text-transform: uppercase;">
+                <th style="padding: 3px 5px; text-align: center; width: 65px;">Tanggal</th>
+                <th style="padding: 3px 5px; text-align: center; width: 55px;">Unit</th>
+                <th style="padding: 3px 5px; text-align: left;">Deskripsi Masalah / Kendala</th>
+                <th style="padding: 3px 5px; text-align: center; width: 95px;">Waktu Kejadian</th>
+                <th style="padding: 3px 5px; text-align: center; width: 70px;">Durasi</th>
+                <th style="padding: 3px 5px; text-align: center; width: 75px;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${problemRowsHtml}
+            </tbody>
+          </table>
+        </div>
+
         <!-- Verification & Sign-off Block -->
         <div class="kpi-pdf-sign-row">
-          <div style="font-size: 8px; color: #64748b; line-height: 1.4; max-width: 55%;">
+          <div style="font-size: 7.5px; color: #64748b; line-height: 1.35; max-width: 55%;">
             <b>CATATAN OTENTIKASI SISTEM:</b><br>
-            Laporan ini dibuat dan diekstrak secara langsung dari Telemetri Real-Time Sistem Manajemen Operasional Charging EV &amp; Battery Swap PT Putra Perkasa Abadi Site BIB. Seluruh data transaksi tercatat dan terenkripsi pada Dual-Sync Engine (Google Sheets &amp; Cloud Firestore).
+            Laporan ini diekstrak secara otomatis dari Telemetri Real-Time Sistem Manajemen Operasional Charging EV &amp; Battery Swap PT Putra Perkasa Abadi Site BIB. Seluruh data transaksi tercatat dan terenkripsi pada Dual-Sync Engine (Google Sheets &amp; Cloud Firestore).
           </div>
 
           <div style="display: flex; gap: 30px;">
-            <div style="text-align: center; font-size: 8px; color: #172033; min-width: 100px;">
+            <div style="text-align: center; font-size: 7.5px; color: #172033; min-width: 95px;">
               <div>Disiapkan Oleh:</div>
-              <div style="height: 18px;"></div>
+              <div style="height: 16px;"></div>
               <div style="font-weight: 700; border-top: 1px solid #94a3b8; padding-top: 2px;">${userText}</div>
-              <div style="color: #64748b; font-size: 7.5px;">Operator / Administrator</div>
+              <div style="color: #64748b; font-size: 7px;">Operator / Administrator</div>
             </div>
 
-            <div style="text-align: center; font-size: 8px; color: #172033; min-width: 100px;">
+            <div style="text-align: center; font-size: 7.5px; color: #172033; min-width: 95px;">
               <div>Mengetahui:</div>
-              <div style="height: 18px;"></div>
+              <div style="height: 16px;"></div>
               <div style="font-weight: 700; border-top: 1px solid #94a3b8; padding-top: 2px;">Group Leader / GL SCM</div>
-              <div style="color: #64748b; font-size: 7.5px;">Supervisor Operasional</div>
+              <div style="color: #64748b; font-size: 7px;">Supervisor Operasional</div>
             </div>
           </div>
         </div>
 
-        <!-- Page 2 Bottom Footer -->
-        <div class="kpi-pdf-bottom-bar" style="margin-top: 4px;">
+        <!-- Page 3 Footer -->
+        <div class="kpi-pdf-bottom-bar" style="margin-top: 2px;">
           <span>PT Putra Perkasa Abadi • Charging EV Management System • Site BIB</span>
-          <span>Dokumen Resmi Internal • Halaman 2 dari 2 • Cetak: ${timestampStr}</span>
+          <span>Dokumen Resmi Internal • Halaman 3 dari 3 • Dicetak: ${timestampStr}</span>
         </div>
       </div>
 
@@ -23643,7 +23741,7 @@ window.downloadVisualKpiPdf = async function() {
   }
 
   if (typeof showToast === 'function') {
-    showToast('⏳ Sedang memproses dan menyusun Laporan PDF Visual KPI...', 'info');
+    showToast('⏳ Sedang memproses dan menyusun Laporan PDF Visual KPI Lengkap...', 'info');
   }
 
   try {
@@ -23656,14 +23754,14 @@ window.downloadVisualKpiPdf = async function() {
     reportContainer.style.display = 'block';
 
     // Beri jeda sejenak agar DOM dan gambar siap
-    await new Promise(r => setTimeout(r, 220));
+    await new Promise(r => setTimeout(r, 300));
 
     const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
     const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
     const filename = `Laporan_Visual_KPI_PPA_EV_${dateStamp}_${timeStamp}.pdf`;
 
     const opt = {
-      margin: [4, 4, 4, 4],
+      margin: [0, 0, 0, 0],
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
@@ -23671,7 +23769,9 @@ window.downloadVisualKpiPdf = async function() {
         useCORS: true,
         logging: false,
         allowTaint: true,
+        scrollX: 0,
         scrollY: 0,
+        windowWidth: 1250,
         backgroundColor: '#ffffff'
       },
       jsPDF: {
@@ -23685,7 +23785,7 @@ window.downloadVisualKpiPdf = async function() {
     if (typeof html2pdf !== 'undefined') {
       await html2pdf().set(opt).from(reportContainer).save();
       if (typeof showToast === 'function') {
-        showToast('✅ Laporan PDF Visual KPI berhasil diunduh!', 'success');
+        showToast('✅ Laporan PDF Visual KPI berhasil diunduh utuh!', 'success');
       }
     } else {
       console.warn('html2pdf library tidak terdeteksi, membuka dialog Print native');
