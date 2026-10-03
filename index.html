@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v42';
+      var APP_BUILD_ID = '2026.10.03.v43';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -9748,40 +9748,66 @@ html.needs-login .sidebar-backdrop {
   border-top: 1px solid #E4E7EC;
 }
 
-/* Print CSS Media Query */
+/* Print & Full Dashboard Export CSS Rules */
 @media print {
   @page {
-    size: A4 landscape;
-    margin: 0;
+    size: auto;
+    margin: 8mm 6mm;
   }
   body * {
     visibility: hidden;
   }
-  #kpiPdfReportWrapper,
-  #kpiPdfReportWrapper * {
-    visibility: visible;
+  #viewAnalyticsDashboard,
+  #viewAnalyticsDashboard *,
+  .ppa-dashboard-wrapper,
+  .ppa-dashboard-wrapper * {
+    visibility: visible !important;
   }
-  #kpiPdfReportWrapper {
+  #viewAnalyticsDashboard {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
-    width: 297mm !important;
+    width: 100% !important;
+    display: block !important;
     margin: 0 !important;
     padding: 0 !important;
-    display: block !important;
   }
-  .kpi-pdf-page {
-    width: 297mm !important;
-    height: 205mm !important;
-    min-height: 205mm !important;
-    max-height: 205mm !important;
-    page-break-after: always !important;
-    break-after: page !important;
+  .ppa-dashboard-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  .kpi-pdf-page:last-child {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
+  .ppa-dashboard-wrapper .header-bar > div:last-child {
+    display: none !important;
   }
+  .ppa-stat-card,
+  .ppa-chart-card-box,
+  .prob-card,
+  .ppa-problem-ribbon,
+  .ppa-exec-table-card,
+  .ppa-corporate-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Dynamic Class Applied While Exporting Full Live Visual KPI */
+.ppa-dashboard-exporting {
+  background: #f8fafc !important;
+  box-sizing: border-box !important;
+}
+.ppa-dashboard-exporting .header-bar > div:last-child {
+  display: none !important;
+}
+.ppa-dashboard-exporting .ppa-stat-card,
+.ppa-dashboard-exporting .ppa-chart-card-box,
+.ppa-dashboard-exporting .prob-card,
+.ppa-dashboard-exporting .ppa-problem-ribbon,
+.ppa-dashboard-exporting .ppa-exec-table-card,
+.ppa-dashboard-exporting .ppa-corporate-footer {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
 }
 
 /* ==========================================================================
@@ -9945,8 +9971,14 @@ html, body {
 /* 8 BI Charts Quad Grid */
 .ppa-charts-quad-grid {
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 14px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ppa-charts-quad-grid > * {
+  min-width: 0 !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -9954,7 +9986,14 @@ html, body {
 .ppa-canvas-wrapper {
   position: relative;
   width: 100% !important;
+  min-width: 0 !important;
   height: 280px !important;
+  box-sizing: border-box !important;
+}
+
+.ppa-canvas-wrapper canvas {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* 8. Universal Responsive Modals (All 24 Dialogs) */
@@ -11489,7 +11528,7 @@ html, body {
               </span>
 
               <!-- Quick Export: Salin Gambar ke Clipboard -->
-              <button type="button" class="btn-ppa-action-copy" id="btnCopyVisualKpiImg" onclick="window.copyVisualKpiImageToClipboard()" title="Salin Gambar Ringkasan ke Clipboard (Bisa langsung Ctrl+V di WhatsApp / Chat)">
+              <button type="button" class="btn-ppa-action-copy" id="btnCopyVisualKpiImg" onclick="window.copyVisualKpiImageToClipboard()" title="Salin Seluruh Tampilan Visual KPI ke Clipboard (Bisa langsung Ctrl+V di WhatsApp / Chat)">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -11498,7 +11537,7 @@ html, body {
               </button>
 
               <!-- Quick Export: Download Gambar PNG HD -->
-              <button type="button" class="btn-ppa-action-img" id="btnDownloadVisualKpiImg" onclick="window.downloadVisualKpiImage()" title="Download Gambar Infografis KPI (PNG HD)">
+              <button type="button" class="btn-ppa-action-img" id="btnDownloadVisualKpiImg" onclick="window.downloadVisualKpiImage()" title="Download Gambar Seluruh Tampilan Visual KPI (PNG HD Panjang Tanpa Terpotong)">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -11516,7 +11555,7 @@ html, body {
               </button>
 
               <!-- Official PDF Document Export -->
-              <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download Laporan Resmi PDF 3 Halaman Lengkap">
+              <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download PDF Seluruh Tampilan Visual KPI (Semua Grafik & Data Utuh)">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
@@ -11527,7 +11566,7 @@ html, body {
               </button>
 
               <!-- Print A4 -->
-              <button type="button" class="btn-ppa-action-print" id="btnPrintVisualKpi" onclick="window.printVisualKpiReport()" title="Cetak / Print Laporan A4 Visual KPI">
+              <button type="button" class="btn-ppa-action-print" id="btnPrintVisualKpi" onclick="window.printVisualKpiReport()" title="Cetak Seluruh Tampilan Visual KPI">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <polyline points="6 9 6 2 18 2 18 9"></polyline>
                   <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
@@ -23838,6 +23877,64 @@ function buildVisualKpiPdfReportHtml() {
   `;
 }
 
+// =============================================================================
+// 10.4. VISUAL KPI FULL DASHBOARD CAPTURE & EXPORT ENGINE
+// Downloads the ENTIRE live Visual KPI screen (.ppa-dashboard-wrapper)
+// without ANY truncation or missing sections (Charts, Cards, Problems, Tables)
+// =============================================================================
+
+// Helper: captures the entire live Visual KPI Dashboard (.ppa-dashboard-wrapper)
+async function renderFullVisualKpiDashboardCanvas(scaleMultiplier) {
+  scaleMultiplier = scaleMultiplier || 1.5;
+  const dashWrapper = document.querySelector('.ppa-dashboard-wrapper');
+  if (!dashWrapper) {
+    throw new Error('Tampilan Visual KPI Dashboard tidak ditemukan di halaman.');
+  }
+
+  // Hide action buttons during capture so the exported output looks like a clean document
+  const actionToolbar = dashWrapper.querySelector('.header-bar > div:last-child');
+  const originalDisplay = actionToolbar ? actionToolbar.style.display : '';
+  if (actionToolbar) actionToolbar.style.display = 'none';
+
+  // Apply clean export styles
+  dashWrapper.classList.add('ppa-dashboard-exporting');
+
+  try {
+    // Small pause to allow styles and charts to settle
+    await new Promise(r => setTimeout(r, 200));
+
+    const opt = {
+      margin: [0, 0, 0, 0],
+      html2canvas: {
+        scale: scaleMultiplier,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#F8F9FA',
+        windowWidth: 1350,
+        scrollX: 0,
+        scrollY: 0
+      }
+    };
+
+    let canvas;
+    if (typeof html2pdf !== 'undefined') {
+      canvas = await new Promise((resolve, reject) => {
+        html2pdf().set(opt).from(dashWrapper).toCanvas().get('canvas').then(resolve).catch(reject);
+      });
+    } else if (typeof html2canvas !== 'undefined') {
+      canvas = await html2canvas(dashWrapper, opt.html2canvas);
+    } else {
+      throw new Error('Library rendering gambar/PDF belum selesai dimuat.');
+    }
+
+    return canvas;
+  } finally {
+    dashWrapper.classList.remove('ppa-dashboard-exporting');
+    if (actionToolbar) actionToolbar.style.display = originalDisplay;
+  }
+}
+
+// 1. Download PDF: Full Visual KPI Dashboard (Semua Tampilan Tanpa Terpotong)
 window.downloadVisualKpiPdf = async function() {
   const btn = document.getElementById('btnDownloadVisualKpiPdf');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -23849,63 +23946,62 @@ window.downloadVisualKpiPdf = async function() {
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
       </svg>
-      <span>Menyiapkan PDF...</span>
+      <span>Menyiapkan PDF Full...</span>
     `;
   }
 
   if (typeof showToast === 'function') {
-    showToast('⏳ Sedang memproses dan menyusun Laporan PDF Visual KPI Lengkap...', 'info');
+    showToast('⏳ Sedang memproses dan menyusun Laporan PDF seluruh tampilan Visual KPI...', 'info');
   }
 
+  const dashWrapper = document.querySelector('.ppa-dashboard-wrapper');
+  if (!dashWrapper) {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    if (typeof showToast === 'function') showToast('⚠️ Tampilan Visual KPI tidak ditemukan', 'danger');
+    return;
+  }
+
+  // Hide action buttons during capture
+  const actionToolbar = dashWrapper.querySelector('.header-bar > div:last-child');
+  const originalDisplay = actionToolbar ? actionToolbar.style.display : '';
+  if (actionToolbar) actionToolbar.style.display = 'none';
+  dashWrapper.classList.add('ppa-dashboard-exporting');
+
   try {
-    const reportContainer = document.getElementById('kpiPdfReportWrapper');
-    if (!reportContainer) {
-      throw new Error('Container PDF tidak ditemukan di halaman');
-    }
-
-    reportContainer.innerHTML = buildVisualKpiPdfReportHtml();
-    reportContainer.style.display = 'block';
-
-    // Beri jeda sejenak agar DOM dan gambar siap
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 200));
 
     const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
     const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
-    const filename = `Laporan_Visual_KPI_PPA_EV_${dateStamp}_${timeStamp}.pdf`;
+    const filename = `Laporan_Visual_KPI_Full_${dateStamp}_${timeStamp}.pdf`;
 
     const opt = {
-      margin: [0, 0, 0, 0],
+      margin: [6, 6, 6, 6],
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         logging: false,
-        allowTaint: true,
+        backgroundColor: '#F8F9FA',
+        windowWidth: 1350,
         scrollX: 0,
-        scrollY: 0,
-        windowWidth: 1250,
-        backgroundColor: '#ffffff'
+        scrollY: 0
       },
       jsPDF: {
         unit: 'mm',
         format: 'a4',
-        orientation: 'landscape'
+        orientation: 'portrait'
       },
-      pagebreak: { mode: ['css', 'legacy'] }
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opt).from(reportContainer).save();
+      await html2pdf().set(opt).from(dashWrapper).save();
       if (typeof showToast === 'function') {
-        showToast('✅ Laporan PDF Visual KPI berhasil diunduh utuh!', 'success');
+        showToast('✅ Laporan PDF seluruh tampilan Visual KPI berhasil diunduh utuh!', 'success');
       }
     } else {
-      console.warn('html2pdf library tidak terdeteksi, membuka dialog Print native');
       window.print();
-      if (typeof showToast === 'function') {
-        showToast('ℹ️ Membuka dialog Cetak / Simpan sebagai PDF...', 'info');
-      }
     }
   } catch (err) {
     console.error('Error saat membuat PDF:', err);
@@ -23914,82 +24010,65 @@ window.downloadVisualKpiPdf = async function() {
     }
     window.print();
   } finally {
+    dashWrapper.classList.remove('ppa-dashboard-exporting');
+    if (actionToolbar) actionToolbar.style.display = originalDisplay;
     if (btn) {
       btn.disabled = false;
       btn.classList.remove('is-generating');
       btn.innerHTML = originalHtml;
     }
-    // Sembunyikan kembali wrapper di luar media print
-    setTimeout(() => {
-      const reportContainer = document.getElementById('kpiPdfReportWrapper');
-      if (reportContainer) reportContainer.style.display = 'none';
-    }, 1500);
   }
 };
 
-window.printVisualKpiReport = function() {
-  const reportContainer = document.getElementById('kpiPdfReportWrapper');
-  if (reportContainer) {
-    reportContainer.innerHTML = buildVisualKpiPdfReportHtml();
-    reportContainer.style.display = 'block';
-  }
-  setTimeout(function() {
-    window.print();
-  }, 180);
-};
-
-// =============================================================================
-// 10.4.1. FAST SHARING & QUICK EXPORT (CLIPBOARD, PNG HD, WHATSAPP)
-// =============================================================================
-
-// Helper: render Page 1 (Summary Executive Infographic) of KPI to an offscreen Canvas
-async function renderKpiInfographicCanvas() {
-  const reportContainer = document.getElementById('kpiPdfReportWrapper');
-  if (!reportContainer) {
-    throw new Error('Container PDF/Export tidak ditemukan.');
+// 2. Download Gambar: Full Visual KPI Dashboard (PNG HD Panjang Utuh)
+window.downloadVisualKpiImage = async function() {
+  const btn = document.getElementById('btnDownloadVisualKpiImg');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('is-generating');
+    btn.innerHTML = `
+      <svg class="ppa-spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+      </svg>
+      <span>Menyiapkan PNG Full...</span>
+    `;
   }
 
-  // Populate report HTML and show offscreen
-  reportContainer.innerHTML = buildVisualKpiPdfReportHtml();
-  reportContainer.style.display = 'block';
-
-  // Target Page 1 for compact, high-impact executive infographic
-  const page1 = reportContainer.querySelector('.kpi-pdf-page');
-  if (!page1) {
-    throw new Error('Halaman ringkasan tidak ditemukan.');
+  if (typeof showToast === 'function') {
+    showToast('⏳ Sedang memproses gambar seluruh tampilan Visual KPI...', 'info');
   }
 
-  // Small delay for images to load
-  await new Promise(r => setTimeout(r, 250));
+  try {
+    const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
+    const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
+    const filename = `Tampilan_Visual_KPI_Full_${dateStamp}_${timeStamp}.png`;
 
-  const opt = {
-    margin: [0, 0, 0, 0],
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 1250,
-      backgroundColor: '#ffffff'
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Gambar seluruh tampilan Visual KPI (PNG HD) berhasil diunduh utuh!', 'success');
     }
-  };
-
-  if (typeof html2pdf !== 'undefined') {
-    const canvas = await new Promise((resolve, reject) => {
-      html2pdf().set(opt).from(page1).toCanvas().get('canvas').then(resolve).catch(reject);
-    });
-    return canvas;
-  } else if (typeof html2canvas !== 'undefined') {
-    const canvas = await html2canvas(page1, opt.html2canvas);
-    return canvas;
-  } else {
-    throw new Error('Library rendering gambar/PDF belum selesai dimuat.');
+  } catch (err) {
+    console.error('Gagal mengunduh gambar KPI:', err);
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Gagal memproses gambar: ' + (err.message || err), 'danger');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-generating');
+      btn.innerHTML = originalHtml;
+    }
   }
-}
+};
 
-// 1. Copy Image directly to Clipboard
+// 3. Salin Gambar: Full Visual KPI Dashboard ke Clipboard
 window.copyVisualKpiImageToClipboard = async function() {
   const btn = document.getElementById('btnCopyVisualKpiImg');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -24001,25 +24080,25 @@ window.copyVisualKpiImageToClipboard = async function() {
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
       </svg>
-      <span>Menyalin...</span>
+      <span>Menyalin Full...</span>
     `;
   }
 
   if (typeof showToast === 'function') {
-    showToast('⏳ Sedang menyusun gambar ringkasan Visual KPI...', 'info');
+    showToast('⏳ Sedang menyusun gambar seluruh tampilan Visual KPI...', 'info');
   }
 
   try {
-    const canvas = await renderKpiInfographicCanvas();
+    const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
 
     if (!navigator.clipboard || !window.ClipboardItem) {
-      // Fallback for browsers without ClipboardItem: download PNG
+      // Fallback: download PNG
       const link = document.createElement('a');
-      link.download = `Ringkasan_Visual_KPI_PPA_${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `Tampilan_Visual_KPI_Full_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
       if (typeof showToast === 'function') {
-        showToast('ℹ️ Clipboard browser terbatas. Gambar otomatis diunduh sebagai PNG.', 'info');
+        showToast('ℹ️ Clipboard browser terbatas. Gambar otomatis diunduh sebagai file PNG.', 'info');
       }
       return;
     }
@@ -24030,7 +24109,7 @@ window.copyVisualKpiImageToClipboard = async function() {
     ]);
 
     if (typeof showToast === 'function') {
-      showToast('✅ Gambar ringkasan KPI berhasil disalin ke Clipboard! Tekan Ctrl+V di WhatsApp/Chat untuk menempelkan.', 'success');
+      showToast('✅ Seluruh tampilan Visual KPI berhasil disalin ke Clipboard! Tekan Ctrl+V untuk menempelkan di WhatsApp / Chat.', 'success');
     }
   } catch (err) {
     console.error('Gagal menyalin gambar ke clipboard:', err);
@@ -24046,62 +24125,10 @@ window.copyVisualKpiImageToClipboard = async function() {
       btn.classList.remove('is-generating');
       btn.innerHTML = originalHtml;
     }
-    const reportContainer = document.getElementById('kpiPdfReportWrapper');
-    if (reportContainer) reportContainer.style.display = 'none';
   }
 };
 
-// 2. Download Image PNG HD
-window.downloadVisualKpiImage = async function() {
-  const btn = document.getElementById('btnDownloadVisualKpiImg');
-  const originalHtml = btn ? btn.innerHTML : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.classList.add('is-generating');
-    btn.innerHTML = `
-      <svg class="ppa-spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;">
-        <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
-        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
-      </svg>
-      <span>Menyiapkan PNG...</span>
-    `;
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('⏳ Membuat gambar infografis KPI resolusi tinggi...', 'info');
-  }
-
-  try {
-    const canvas = await renderKpiInfographicCanvas();
-    const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
-    const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
-    const filename = `Infografis_Visual_KPI_PPA_${dateStamp}_${timeStamp}.png`;
-
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-
-    if (typeof showToast === 'function') {
-      showToast('✅ Gambar Infografis KPI (PNG HD) berhasil diunduh!', 'success');
-    }
-  } catch (err) {
-    console.error('Gagal mengunduh gambar KPI:', err);
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Gagal memproses gambar: ' + (err.message || err), 'danger');
-    }
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.classList.remove('is-generating');
-      btn.innerHTML = originalHtml;
-    }
-    const reportContainer = document.getElementById('kpiPdfReportWrapper');
-    if (reportContainer) reportContainer.style.display = 'none';
-  }
-};
-
-// 3. Share Executive Summary Text + Copy Image to WhatsApp
+// 4. Share Executive Summary Text + Copy Full Image to WhatsApp
 window.shareVisualKpiToWhatsApp = async function() {
   const btn = document.getElementById('btnShareVisualKpiWa');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -24172,18 +24199,18 @@ window.shareVisualKpiToWhatsApp = async function() {
     const waUrl = `https://api.whatsapp.com/send?text=${waText}`;
 
     try {
-      const canvas = await renderKpiInfographicCanvas();
+      const canvas = await renderFullVisualKpiDashboardCanvas(1.5);
       if (navigator.clipboard && window.ClipboardItem) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
         if (typeof showToast === 'function') {
-          showToast('✅ Gambar Infografis disalin ke Clipboard! Tinggal Paste (Ctrl+V) di chat WhatsApp.', 'info');
+          showToast('✅ Gambar seluruh tampilan Visual KPI disalin ke Clipboard! Tinggal Paste (Ctrl+V) di chat WhatsApp.', 'info');
         }
       }
     } catch (eImg) {
-      console.log('Clipboard auto-copy optional note:', eImg);
+      console.log('Clipboard auto-copy note:', eImg);
     }
 
     window.open(waUrl, '_blank');
@@ -24198,9 +24225,12 @@ window.shareVisualKpiToWhatsApp = async function() {
       btn.classList.remove('is-generating');
       btn.innerHTML = originalHtml;
     }
-    const reportContainer = document.getElementById('kpiPdfReportWrapper');
-    if (reportContainer) reportContainer.style.display = 'none';
   }
+};
+
+// 5. Print A4: Cetak Langsung Seluruh Tampilan Visual KPI
+window.printVisualKpiReport = function() {
+  window.print();
 };
 
 // =============================================================================
