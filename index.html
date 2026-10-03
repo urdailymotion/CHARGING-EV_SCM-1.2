@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v41';
+      var APP_BUILD_ID = '2026.10.03.v42';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -9467,6 +9467,80 @@ html.needs-login .sidebar-backdrop {
   transform: translateY(-1px);
 }
 
+.btn-ppa-action-copy {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  color: #0F2747;
+  border: 1.5px solid #0F2747;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(15, 39, 71, 0.08);
+}
+.btn-ppa-action-copy:hover {
+  background: #EDF3FC;
+  border-color: #2563EB;
+  color: #2563EB;
+  transform: translateY(-1px);
+}
+.btn-ppa-action-copy.is-generating {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.btn-ppa-action-img {
+  display: inline-flex;
+  align-items: center;
+  background: #168A5B;
+  color: #ffffff;
+  border: 1px solid #13774f;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(22, 138, 91, 0.2);
+}
+.btn-ppa-action-img:hover {
+  background: #126e49;
+  border-color: #0e5b3c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(22, 138, 91, 0.3);
+}
+.btn-ppa-action-img.is-generating {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.btn-ppa-action-wa {
+  display: inline-flex;
+  align-items: center;
+  background: #25D366;
+  color: #ffffff;
+  border: 1px solid #1EBE5D;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(37, 211, 102, 0.25);
+}
+.btn-ppa-action-wa:hover {
+  background: #1EBE5D;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(37, 211, 102, 0.35);
+}
+.btn-ppa-action-wa.is-generating {
+  opacity: 0.75;
+  cursor: wait;
+}
+
 @keyframes ppaSpin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -9633,7 +9707,7 @@ html.needs-login .sidebar-backdrop {
 
 .kpi-pdf-chart-img-wrap {
   flex: 1;
-  height: 52mm;
+  height: 46mm;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11408,12 +11482,41 @@ html, body {
                 <div style="font-size: 12px; color: #667085; font-weight: 500;">Pit Mining Fleet &amp; Station Telemetry Intelligence • Site BIB</div>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <span style="font-size: 11.5px; color: #667085; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-right: 4px;">
                 <span class="ppa-dot-pulse-green" style="width: 8px; height: 8px;"></span>
                 Live Synced
               </span>
-              <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download Laporan PDF Visual KPI">
+
+              <!-- Quick Export: Salin Gambar ke Clipboard -->
+              <button type="button" class="btn-ppa-action-copy" id="btnCopyVisualKpiImg" onclick="window.copyVisualKpiImageToClipboard()" title="Salin Gambar Ringkasan ke Clipboard (Bisa langsung Ctrl+V di WhatsApp / Chat)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Salin Gambar</span>
+              </button>
+
+              <!-- Quick Export: Download Gambar PNG HD -->
+              <button type="button" class="btn-ppa-action-img" id="btnDownloadVisualKpiImg" onclick="window.downloadVisualKpiImage()" title="Download Gambar Infografis KPI (PNG HD)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Download Gambar</span>
+              </button>
+
+              <!-- Quick Export: Kirim ke WhatsApp -->
+              <button type="button" class="btn-ppa-action-wa" id="btnShareVisualKpiWa" onclick="window.shareVisualKpiToWhatsApp()" title="Kirim Ringkasan Laporan Operasional ke WhatsApp">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:-2px; margin-right: 5px;">
+                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+                </svg>
+                <span>Kirim WA</span>
+              </button>
+
+              <!-- Official PDF Document Export -->
+              <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download Laporan Resmi PDF 3 Halaman Lengkap">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                   <polyline points="14 2 14 8 20 8"></polyline>
@@ -11422,6 +11525,8 @@ html, body {
                 </svg>
                 <span>Download PDF</span>
               </button>
+
+              <!-- Print A4 -->
               <button type="button" class="btn-ppa-action-print" id="btnPrintVisualKpi" onclick="window.printVisualKpiReport()" title="Cetak / Print Laporan A4 Visual KPI">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
                   <polyline points="6 9 6 2 18 2 18 9"></polyline>
@@ -22064,6 +22169,7 @@ function updatePpaExecutiveDashboard() {
 
     return true;
   });
+  window.ppaFilteredSwaps = ppaFilteredSwaps;
 
   // Calculate Metrics
   const totalSwaps = ppaFilteredSwaps.length;
@@ -22965,6 +23071,7 @@ function renderPpaProblemAnalytics() {
 
     return true;
   });
+  window.ppaFilteredProblems = ppaFilteredProblems;
 
   const totalIncidents = ppaFilteredProblems.length;
 
@@ -23294,12 +23401,12 @@ function getChartImageWithWhiteBackground(canvas) {
   if (!canvas) return '';
   try {
     const offscreen = document.createElement('canvas');
-    offscreen.width = Math.max(canvas.width || 600, 400);
-    offscreen.height = Math.max(canvas.height || 260, 200);
+    offscreen.width = canvas.width || 600;
+    offscreen.height = canvas.height || 260;
     const ctx = offscreen.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, offscreen.width, offscreen.height);
-    ctx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
+    ctx.drawImage(canvas, 0, 0);
     return offscreen.toDataURL('image/png');
   } catch (e) {
     try {
@@ -23377,8 +23484,11 @@ function buildVisualKpiPdfReportHtml() {
   const imgProblem = getChartImageWithWhiteBackground(document.getElementById('ppaChartProblemBreakdown'));
 
   // 5. Sample Tables
-  const totalFiltered = (window.ppaFilteredSwaps || []).length;
-  const sampleSwaps = (window.ppaFilteredSwaps || []).slice(0, 14);
+  const sourceSwaps = (typeof ppaFilteredSwaps !== 'undefined' && ppaFilteredSwaps.length > 0)
+    ? ppaFilteredSwaps
+    : (window.ppaFilteredSwaps || window.swapsData || []);
+  const totalFiltered = sourceSwaps.length;
+  const sampleSwaps = sourceSwaps.slice(0, 14);
   let tableRowsHtml = '';
   if (sampleSwaps.length === 0) {
     tableRowsHtml = '<tr><td colspan="8" style="text-align:center; padding: 10px; color:#667085;">Tidak ada transaksi swap sesuai filter yang dipilih</td></tr>';
@@ -23405,7 +23515,10 @@ function buildVisualKpiPdfReportHtml() {
   }
 
   // Sample Problem Incidents
-  const sampleProblems = (window.ppaFilteredProblems || []).slice(0, 5);
+  const sourceProblems = (typeof ppaFilteredProblems !== 'undefined' && ppaFilteredProblems.length > 0)
+    ? ppaFilteredProblems
+    : (window.ppaFilteredProblems || window.problemsData || []);
+  const sampleProblems = sourceProblems.slice(0, 5);
   let problemRowsHtml = '';
   if (sampleProblems.length === 0) {
     problemRowsHtml = '<tr><td colspan="6" style="text-align:center; padding: 8px; color:#168A5B; font-weight: 600;">✓ Tidak ada laporan kendala / gangguan operasional (Zero Incident)</td></tr>';
@@ -23495,7 +23608,7 @@ function buildVisualKpiPdfReportHtml() {
               <span class="kpi-pdf-chart-title">1. Ach Ketepatan Schedule Swap</span>
               <span class="kpi-pdf-chart-tag">SLA KEPATUHAN</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
               <img src="${imgKetepatan}" class="kpi-pdf-chart-img" alt="Chart Ketepatan">
             </div>
           </div>
@@ -23504,7 +23617,7 @@ function buildVisualKpiPdfReportHtml() {
               <span class="kpi-pdf-chart-title">2. Frekuensi Swab Harian</span>
               <span class="kpi-pdf-chart-tag">VOLUME &amp; MOVING AVG</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
               <img src="${imgFreqDaily}" class="kpi-pdf-chart-img" alt="Chart Frekuensi Harian">
             </div>
           </div>
@@ -23513,7 +23626,7 @@ function buildVisualKpiPdfReportHtml() {
               <span class="kpi-pdf-chart-title">3. Target vs Aktual Mingguan</span>
               <span class="kpi-pdf-chart-tag">WEEKLY SPRINT</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
               <img src="${imgFreqWeekly}" class="kpi-pdf-chart-img" alt="Chart Mingguan">
             </div>
           </div>
@@ -23522,7 +23635,7 @@ function buildVisualKpiPdfReportHtml() {
               <span class="kpi-pdf-chart-title">4. 24-Jam Peak Swap Rush Hour</span>
               <span class="kpi-pdf-chart-tag">PIT BOTTLENECK</span>
             </div>
-            <div class="kpi-pdf-chart-img-wrap" style="height: 52mm;">
+            <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
               <img src="${imgFreqMonthly}" class="kpi-pdf-chart-img" alt="Chart 24 Jam">
             </div>
           </div>
@@ -23823,6 +23936,271 @@ window.printVisualKpiReport = function() {
   setTimeout(function() {
     window.print();
   }, 180);
+};
+
+// =============================================================================
+// 10.4.1. FAST SHARING & QUICK EXPORT (CLIPBOARD, PNG HD, WHATSAPP)
+// =============================================================================
+
+// Helper: render Page 1 (Summary Executive Infographic) of KPI to an offscreen Canvas
+async function renderKpiInfographicCanvas() {
+  const reportContainer = document.getElementById('kpiPdfReportWrapper');
+  if (!reportContainer) {
+    throw new Error('Container PDF/Export tidak ditemukan.');
+  }
+
+  // Populate report HTML and show offscreen
+  reportContainer.innerHTML = buildVisualKpiPdfReportHtml();
+  reportContainer.style.display = 'block';
+
+  // Target Page 1 for compact, high-impact executive infographic
+  const page1 = reportContainer.querySelector('.kpi-pdf-page');
+  if (!page1) {
+    throw new Error('Halaman ringkasan tidak ditemukan.');
+  }
+
+  // Small delay for images to load
+  await new Promise(r => setTimeout(r, 250));
+
+  const opt = {
+    margin: [0, 0, 0, 0],
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 1250,
+      backgroundColor: '#ffffff'
+    }
+  };
+
+  if (typeof html2pdf !== 'undefined') {
+    const canvas = await new Promise((resolve, reject) => {
+      html2pdf().set(opt).from(page1).toCanvas().get('canvas').then(resolve).catch(reject);
+    });
+    return canvas;
+  } else if (typeof html2canvas !== 'undefined') {
+    const canvas = await html2canvas(page1, opt.html2canvas);
+    return canvas;
+  } else {
+    throw new Error('Library rendering gambar/PDF belum selesai dimuat.');
+  }
+}
+
+// 1. Copy Image directly to Clipboard
+window.copyVisualKpiImageToClipboard = async function() {
+  const btn = document.getElementById('btnCopyVisualKpiImg');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('is-generating');
+    btn.innerHTML = `
+      <svg class="ppa-spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+      </svg>
+      <span>Menyalin...</span>
+    `;
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('⏳ Sedang menyusun gambar ringkasan Visual KPI...', 'info');
+  }
+
+  try {
+    const canvas = await renderKpiInfographicCanvas();
+
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      // Fallback for browsers without ClipboardItem: download PNG
+      const link = document.createElement('a');
+      link.download = `Ringkasan_Visual_KPI_PPA_${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      if (typeof showToast === 'function') {
+        showToast('ℹ️ Clipboard browser terbatas. Gambar otomatis diunduh sebagai PNG.', 'info');
+      }
+      return;
+    }
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'image/png': blob })
+    ]);
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Gambar ringkasan KPI berhasil disalin ke Clipboard! Tekan Ctrl+V di WhatsApp/Chat untuk menempelkan.', 'success');
+    }
+  } catch (err) {
+    console.error('Gagal menyalin gambar ke clipboard:', err);
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Tidak dapat menyalin langsung. Mengalihkan ke unduh file PNG...', 'warning');
+    }
+    try {
+      await window.downloadVisualKpiImage();
+    } catch (e2) {}
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-generating');
+      btn.innerHTML = originalHtml;
+    }
+    const reportContainer = document.getElementById('kpiPdfReportWrapper');
+    if (reportContainer) reportContainer.style.display = 'none';
+  }
+};
+
+// 2. Download Image PNG HD
+window.downloadVisualKpiImage = async function() {
+  const btn = document.getElementById('btnDownloadVisualKpiImg');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('is-generating');
+    btn.innerHTML = `
+      <svg class="ppa-spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+      </svg>
+      <span>Menyiapkan PNG...</span>
+    `;
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('⏳ Membuat gambar infografis KPI resolusi tinggi...', 'info');
+  }
+
+  try {
+    const canvas = await renderKpiInfographicCanvas();
+    const dateStamp = (new Date()).toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
+    const filename = `Infografis_Visual_KPI_PPA_${dateStamp}_${timeStamp}.png`;
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    if (typeof showToast === 'function') {
+      showToast('✅ Gambar Infografis KPI (PNG HD) berhasil diunduh!', 'success');
+    }
+  } catch (err) {
+    console.error('Gagal mengunduh gambar KPI:', err);
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Gagal memproses gambar: ' + (err.message || err), 'danger');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-generating');
+      btn.innerHTML = originalHtml;
+    }
+    const reportContainer = document.getElementById('kpiPdfReportWrapper');
+    if (reportContainer) reportContainer.style.display = 'none';
+  }
+};
+
+// 3. Share Executive Summary Text + Copy Image to WhatsApp
+window.shareVisualKpiToWhatsApp = async function() {
+  const btn = document.getElementById('btnShareVisualKpiWa');
+  const originalHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('is-generating');
+    btn.innerHTML = `
+      <svg class="ppa-spin" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+      </svg>
+      <span>Menyiapkan WA...</span>
+    `;
+  }
+
+  try {
+    const opMode = window.ppaOperationalMode || 'ALL';
+    const opModeText = (opMode === 'SCHEDULED') ? 'SCHEDULE' : (opMode === 'ON_DEMAND' ? 'NON SCHEDULE' : 'SEMUA OPERASIONAL');
+    const dStart = document.getElementById('ppaFilterDateStart')?.value || '';
+    const dEnd = document.getElementById('ppaFilterDateEnd')?.value || '';
+    let periodeText = 'Semua Periode';
+    if (dStart && dEnd) periodeText = `${dStart} s/d ${dEnd}`;
+    else if (dStart) periodeText = `Mulai ${dStart}`;
+    else if (dEnd) periodeText = `Sampai ${dEnd}`;
+
+    const totalSwaps = (window.ppaFilteredSwaps || []).length;
+    const units = new Set((window.ppaFilteredSwaps || []).map(s => s.unit).filter(Boolean)).size;
+    const totalEnergy = (window.ppaFilteredSwaps || []).reduce((acc, s) => acc + (parseFloat(s.energyKwh) || 0), 0);
+    const avgMins = (window.ppaFilteredSwaps || []).length > 0 
+      ? Math.round((window.ppaFilteredSwaps || []).reduce((acc, s) => acc + (parseFloat(s.durationMins || s.durasi) || 0), 0) / window.ppaFilteredSwaps.length) 
+      : 0;
+
+    const probCount = (window.ppaFilteredProblems || []).length;
+    let probDowntimeMins = 0;
+    (window.ppaFilteredProblems || []).forEach(p => {
+      const dur = String(p.duration || '').trim();
+      const match = dur.match(/^(\d{1,2}):(\d{2})$/);
+      if (match) probDowntimeMins += (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+    });
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = now.toTimeString().slice(0, 5);
+
+    const lines = [
+      `*⚡ LAPORAN RINGKAS VISUAL KPI CHARGING EV & BATTERY SWAP*`,
+      `*PT PUTRA PERKASA ABADI • SITE BIB*`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `📅 *Tanggal:* ${dateStr} • *Pukul:* ${timeStr} WITA`,
+      `⚙️ *Mode:* ${opModeText}`,
+      `🔍 *Periode Data:* ${periodeText}`,
+      ``,
+      `*📊 METRIK UTAMA OPERASIONAL:*`,
+      `• *Total Transaksi Swap:* ${totalSwaps} kali`,
+      `• *Armada EV Aktif:* ${units} unit`,
+      `• *Konsumsi Energi Bersih:* ${(totalEnergy / 1000).toFixed(2)} MWh (${totalEnergy.toLocaleString('id-ID')} kWh)`,
+      `• *Rata-rata Durasi Swap:* ${avgMins} Menit`,
+      ``,
+      `*⚠️ PROBLEM LOG & DOWNTIME:*`,
+      `• *Total Gangguan:* ${probCount} insiden`,
+      `• *Akumulasi Downtime:* ${probDowntimeMins} menit`,
+      ``,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `_Otomatis dari Sistem Telemetri Live Charging EV SCM Site BIB_`
+    ];
+
+    const waText = encodeURIComponent(lines.join('\n'));
+    const waUrl = `https://api.whatsapp.com/send?text=${waText}`;
+
+    try {
+      const canvas = await renderKpiInfographicCanvas();
+      if (navigator.clipboard && window.ClipboardItem) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        if (typeof showToast === 'function') {
+          showToast('✅ Gambar Infografis disalin ke Clipboard! Tinggal Paste (Ctrl+V) di chat WhatsApp.', 'info');
+        }
+      }
+    } catch (eImg) {
+      console.log('Clipboard auto-copy optional note:', eImg);
+    }
+
+    window.open(waUrl, '_blank');
+  } catch (err) {
+    console.error('Gagal membuka WhatsApp:', err);
+    if (typeof showToast === 'function') {
+      showToast('⚠️ Gagal menyiapkan ringkasan WhatsApp: ' + err.message, 'danger');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-generating');
+      btn.innerHTML = originalHtml;
+    }
+    const reportContainer = document.getElementById('kpiPdfReportWrapper');
+    if (reportContainer) reportContainer.style.display = 'none';
+  }
 };
 
 // =============================================================================
