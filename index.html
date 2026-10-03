@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v36';
+      var APP_BUILD_ID = '2026.10.03.v37';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -3017,6 +3017,294 @@ body {
   font-weight: 900;
   font-size: 11px;
   letter-spacing: 0.05em;
+}
+
+/* ===================================================================
+   VISUAL KPI - PROBLEM LOG & DOWNTIME ANALYTICS STYLES
+   =================================================================== */
+.ppa-problem-kpi-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ppa-problem-banner {
+  background: linear-gradient(135deg, #0F2747 0%, #173A63 100%);
+  color: #ffffff;
+  padding: 16px 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(15, 39, 71, 0.12);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ppa-problem-banner h3 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ppa-prob-badge-live {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #38bdf8;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.problem-stat-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .problem-stat-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .problem-stat-ribbon {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prob-kpi-card {
+  background: #ffffff;
+  border: 1px solid #E4E7EC;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.prob-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(16, 24, 40, 0.08);
+}
+
+.prob-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.card-prob-red::before { background: #D64545; }
+.card-prob-amber::before { background: #D99000; }
+.card-prob-blue::before { background: #2563EB; }
+.card-prob-green::before { background: #168A5B; }
+
+.prob-kpi-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.prob-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #667085;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prob-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+
+.tag-prob-red { background: #FDEEEE; color: #D64545; }
+.tag-prob-amber { background: #FFF6E5; color: #D99000; }
+.tag-prob-blue { background: #EDF3FC; color: #2563EB; }
+.tag-prob-green { background: #EAF6F0; color: #168A5B; }
+
+.prob-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.prob-number {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F2747;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.prob-unit {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #667085;
+  text-transform: uppercase;
+}
+
+.prob-subtext {
+  font-size: 11px;
+  color: #667085;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-dot-red {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #D64545;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(214, 69, 69, 0.3);
+  animation: pulseProbRed 1.6s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes pulseProbRed {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+.ppa-prob-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .ppa-prob-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ppa-prob-table-card {
+  background: #ffffff;
+  border: 1px solid #E4E7EC;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+}
+
+.ppa-prob-table-header {
+  padding: 12px 18px;
+  background: #FAFAFC;
+  border-bottom: 1px solid #E4E7EC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ppa-prob-table-header h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F2747;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+table.ppa-prob-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+table.ppa-prob-table th {
+  background: #F8F9FA;
+  color: #667085;
+  font-weight: 700;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 9px 12px;
+  text-align: center;
+  border-bottom: 1px solid #E4E7EC;
+  white-space: nowrap;
+}
+
+table.ppa-prob-table td {
+  padding: 9px 12px;
+  color: #1E293B;
+  border-bottom: 1px solid #F1F5F9;
+  text-align: center;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+table.ppa-prob-table tr:hover td {
+  background: #F8FAFC;
+}
+
+.prob-downtime-badge {
+  font-weight: 700;
+  color: #D64545;
+  background: #FFF1F2;
+  border: 1px solid #FECDD3;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  display: inline-block;
+}
+
+.prob-pill-closed {
+  background: #EAF6F0;
+  color: #168A5B;
+  border: 1px solid rgba(22, 138, 91, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.prob-pill-open {
+  background: #FDEEEE;
+  color: #D64545;
+  border: 1px solid rgba(214, 69, 69, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
 }
 
 /* ==========================================================================
@@ -11368,6 +11656,160 @@ html, body {
                 <canvas id="ppaChartProblemBreakdown"></canvas>
               </div>
             </div>
+          </div>
+
+          <!-- ===============================================================
+               SEKSI INTEGRASI PROBLEM LOG & DOWNTIME ANALYTICS
+               =============================================================== -->
+          <div class="ppa-problem-kpi-container">
+            
+            <!-- Header Banner -->
+            <div class="ppa-problem-banner">
+              <div>
+                <h3>
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#F59E0B;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  INTEGRASI PROBLEM LOG &amp; ANALISIS DOWNTIME
+                </h3>
+                <div style="font-size: 11.5px; color: #94A3B8; margin-top: 3px;">Pemantauan Hambatan Operasional Stasiun &amp; Unit Truk Listrik • Terintegrasi Otomatis</div>
+              </div>
+              <div class="ppa-prob-badge-live">
+                <span class="pulse-dot-red" style="width:6px; height:6px;"></span>
+                LIVE PROBLEM SYNC
+              </div>
+            </div>
+
+            <!-- 1. Executive Problem Stat Ribbon (4 Cards) -->
+            <div class="problem-stat-ribbon">
+              <!-- Stat 1: Total Gangguan -->
+              <div class="prob-kpi-card card-prob-red">
+                <div class="prob-kpi-card-header">
+                  <span class="prob-card-title">Total Gangguan</span>
+                  <span class="prob-tag tag-prob-red">INCIDENTS</span>
+                </div>
+                <div class="prob-val-row">
+                  <span class="prob-number" id="ppaProbKpiTotalIncidents">0</span>
+                  <span class="prob-unit">KEJADIAN</span>
+                </div>
+                <div class="prob-subtext">
+                  <span id="ppaProbKpiRangeText">Rentang Filter Aktif</span>
+                </div>
+              </div>
+
+              <!-- Stat 2: Total Akumulasi Downtime -->
+              <div class="prob-kpi-card card-prob-amber">
+                <div class="prob-kpi-card-header">
+                  <span class="prob-card-title">Akumulasi Downtime</span>
+                  <span class="prob-tag tag-prob-amber">DURATION</span>
+                </div>
+                <div class="prob-val-row">
+                  <span class="prob-number" id="ppaProbKpiTotalDowntime">0 Menit</span>
+                </div>
+                <div class="prob-subtext">
+                  <span>Waktu Stasiun Terhambat</span>
+                </div>
+              </div>
+
+              <!-- Stat 3: Status Penyelesaian -->
+              <div class="prob-kpi-card card-prob-blue">
+                <div class="prob-kpi-card-header">
+                  <span class="prob-card-title">Status Penanganan</span>
+                  <span class="prob-tag tag-prob-blue">RESOLUTION</span>
+                </div>
+                <div class="prob-val-row">
+                  <span class="prob-number" id="ppaProbKpiStatusRes" style="font-size: 19px;">0 Selesai</span>
+                </div>
+                <div class="prob-subtext" id="ppaProbKpiStatusSub">
+                  <span>Semua Kendala Tertangani</span>
+                </div>
+              </div>
+
+              <!-- Stat 4: Top Bottleneck -->
+              <div class="prob-kpi-card card-prob-green">
+                <div class="prob-kpi-card-header">
+                  <span class="prob-card-title">Top Bottleneck</span>
+                  <span class="prob-tag tag-prob-green">HIGHEST DOWNTIME</span>
+                </div>
+                <div class="prob-val-row">
+                  <span class="prob-number" id="ppaProbKpiTopUnit" style="font-size: 19px;">-</span>
+                </div>
+                <div class="prob-subtext" id="ppaProbKpiTopSub">
+                  <span>Tidak ada kendala</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Dual Problem Charts -->
+            <div class="ppa-prob-charts-row">
+              <!-- Chart A: Pareto Frekuensi Kendala -->
+              <div class="ppa-chart-card-box">
+                <div class="ppa-chart-header-row">
+                  <span class="ppa-chart-title-modern">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563EB;"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="6" y1="18" x2="6" y2="8"/><line x1="18" y1="18" x2="18" y2="4"/></svg>
+                    Pareto Frekuensi Kendala per Fasilitas / Unit
+                  </span>
+                  <span class="ppa-chart-badge-tag">FREKUENSI KASUS</span>
+                </div>
+                <div class="ppa-canvas-wrapper">
+                  <canvas id="ppaChartProbFreq"></canvas>
+                </div>
+              </div>
+
+              <!-- Chart B: Distribusi Durasi Downtime -->
+              <div class="ppa-chart-card-box">
+                <div class="ppa-chart-header-row">
+                  <span class="ppa-chart-title-modern">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #D64545;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Distribusi Durasi Downtime (Menit Terbuang)
+                  </span>
+                  <span class="ppa-chart-badge-tag" style="color:#D64545; background:#FDEEEE; border-color:#FECDD3;">TOTAL MENIT</span>
+                </div>
+                <div class="ppa-canvas-wrapper">
+                  <canvas id="ppaChartProbDuration"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Mini Incident Log Table -->
+            <div class="ppa-prob-table-card">
+              <div class="ppa-prob-table-header">
+                <h4>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #0F2747;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Ringkasan Log Insiden &amp; Gangguan Terkini (Problem Log)
+                </h4>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span id="ppaProbFilterNote" style="font-size: 11px; color: #667085;">Tersinkron otomatis dengan filter Tanggal &amp; Shift</span>
+                  <button type="button" onclick="if (typeof window.switchAppView === 'function') window.switchAppView('problem');" class="btn-ppa-action-pdf" style="padding:4px 10px; font-size:10.5px; border-radius:4px; text-decoration:none; cursor:pointer;" title="Buka modul Problem Log selengkapnya">Buka Modul &rarr;</button>
+                </div>
+              </div>
+              <div style="overflow-x: auto;">
+                <table class="ppa-prob-table">
+                  <thead>
+                    <tr>
+                      <th>NO</th>
+                      <th>TANGGAL</th>
+                      <th>SHIFT</th>
+                      <th>FASILITAS / UNIT</th>
+                      <th>DESKRIPSI MASALAH</th>
+                      <th>JAM OPEN</th>
+                      <th>JAM CLOSE</th>
+                      <th>DOWNTIME</th>
+                      <th>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ppaProbTableBody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding: 8px 16px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; font-size: 11px; color: #667085; background: #ffffff; border-top: 1px solid #E4E7EC;">
+                <span id="ppaProbRangeText">0 - 0 / 0</span>
+                <div style="display: flex; gap: 4px;">
+                  <button type="button" class="btn-tbl-action" id="ppaProbTablePrev" onclick="changePpaProbPage(-1)" style="width: 24px; height: 24px; border: 1px solid #E4E7EC; background: #ffffff; border-radius: 4px; cursor: pointer; color: #344054;">&lt;</button>
+                  <button type="button" class="btn-tbl-action" id="ppaProbTableNext" onclick="changePpaProbPage(1)" style="width: 24px; height: 24px; border: 1px solid #E4E7EC; background: #ffffff; border-radius: 4px; cursor: pointer; color: #344054;">&gt;</button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Detailed Table Section (EV Intelligence Style) -->
@@ -21002,10 +21444,15 @@ let chartPpaRoomCompare = null;
 let chartPpaEnergyUnit = null;
 let chartPpaEnergyDaily = null;
 let chartPpaProblemBreakdown = null;
+let chartPpaProbFreq = null;
+let chartPpaProbDuration = null;
 
 let ppaExecPage = 1;
 const ppaExecPerPage = 10;
 let ppaFilteredSwaps = [];
+let ppaFilteredProblems = [];
+let ppaProbPage = 1;
+const ppaProbPerPage = 5;
 let ppaDashboardInitialized = false;
 
 // Custom Chart.js Plugin: Badges on Bars
@@ -21649,6 +22096,9 @@ function updatePpaExecutiveDashboard() {
 
   // Render Table
   renderPpaExecTable();
+
+  // Render Problem Log & Downtime Intelligence
+  renderPpaProblemAnalytics();
 }
 
 // 1. Ach Ketepatan Sch Swab (SLA Speedometer Gauge)
@@ -22226,23 +22676,43 @@ function renderChartProblemBreakdown() {
   if (!canvas) return;
   if (chartPpaProblemBreakdown) chartPpaProblemBreakdown.destroy();
 
-  const probCountMap = {};
-  ppaFilteredSwaps.forEach(s => {
-    const p = (s.problemRemark || '13.NO PROBLEM').trim();
-    probCountMap[p] = (probCountMap[p] || 0) + 1;
-  });
+  // Prefer real Problem Log data from ppaFilteredProblems or problemsData
+  let sourceProblems = (window.ppaFilteredProblems && window.ppaFilteredProblems.length > 0)
+    ? window.ppaFilteredProblems
+    : ((window.problemsData && window.problemsData.length > 0) ? window.problemsData : null);
 
-  const sortedProblems = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]);
-  const labels = sortedProblems.length > 0 ? sortedProblems : ['13.NO PROBLEM'];
-  const values = labels.map(l => probCountMap[l] || 0);
+  let labels = [];
+  let values = [];
+  let bgColors = [];
 
-  const bgColors = labels.map(l => {
-    const u = l.toUpperCase();
-    if (u.includes('NO PROBLEM')) return EV_COLORS.slate;
-    if (u.includes('BATTERY') || u.includes('LOW')) return EV_COLORS.amber;
-    if (u.includes('ERROR') || u.includes('BROKEN')) return EV_COLORS.red;
-    return EV_COLORS.cyan;
-  });
+  if (sourceProblems && sourceProblems.length > 0) {
+    const probCountMap = {};
+    sourceProblems.forEach(p => {
+      const unit = (p.unit || 'Fasilitas Lain').trim();
+      probCountMap[unit] = (probCountMap[unit] || 0) + 1;
+    });
+    const sorted = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]).slice(0, 6);
+    labels = sorted.length > 0 ? sorted : ['TIDAK ADA KENDALA'];
+    values = labels.map(l => probCountMap[l] || 0);
+    const colorPalette = [EV_COLORS.blue, EV_COLORS.cyan, '#5284AC', EV_COLORS.amber, EV_COLORS.red, EV_COLORS.slate];
+    bgColors = labels.map((l, idx) => colorPalette[idx % colorPalette.length]);
+  } else {
+    const probCountMap = {};
+    ppaFilteredSwaps.forEach(s => {
+      const p = (s.problemRemark || '13.NO PROBLEM').trim();
+      probCountMap[p] = (probCountMap[p] || 0) + 1;
+    });
+    const sortedProblems = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]);
+    labels = sortedProblems.length > 0 ? sortedProblems : ['13.NO PROBLEM'];
+    values = labels.map(l => probCountMap[l] || 0);
+    bgColors = labels.map(l => {
+      const u = l.toUpperCase();
+      if (u.includes('NO PROBLEM')) return EV_COLORS.slate;
+      if (u.includes('BATTERY') || u.includes('LOW')) return EV_COLORS.amber;
+      if (u.includes('ERROR') || u.includes('BROKEN')) return EV_COLORS.red;
+      return EV_COLORS.cyan;
+    });
+  }
 
   chartPpaProblemBreakdown = new Chart(canvas.getContext('2d'), {
     type: 'bar',
@@ -22265,8 +22735,8 @@ function renderChartProblemBreakdown() {
       scales: {
         x: {
           grid: { color: '#F2F4F7' },
-          ticks: { font: { size: 8.5 }, color: '#667085' },
-          suggestedMax: Math.max(...values, 5) * 1.25
+          ticks: { font: { size: 8.5 }, color: '#667085', stepSize: 1 },
+          suggestedMax: Math.max(...values, 4) * 1.25
         },
         y: {
           grid: { display: false },
@@ -22277,6 +22747,343 @@ function renderChartProblemBreakdown() {
     plugins: [ppaBadgePlugin]
   });
 }
+
+// =============================================================================
+// SEKSI INTEGRASI PROBLEM LOG & ANALISIS DOWNTIME PADA VISUAL KPI
+// =============================================================================
+function getProblemSeconds(p) {
+  if (!p) return 0;
+  if (!p.timeClose || p.timeClose === '-' || p.timeClose.trim() === '' || p.duration === 'MASIH BERLANGSUNG') {
+    if (p.timeOpen) {
+      const openSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeOpen) : null;
+      if (openSec !== null) {
+        const now = new Date();
+        const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        if (curSec > openSec) return curSec - openSec;
+      }
+    }
+    return 1800; // default 30 min if active
+  }
+  if (p.timeOpen && p.timeClose) {
+    const openSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeOpen) : null;
+    const closeSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeClose) : null;
+    if (openSec !== null && closeSec !== null) {
+      let diff = closeSec - openSec;
+      if (diff < 0) diff += 86400;
+      return diff;
+    }
+  }
+  if (p.duration) {
+    const s = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.duration) : null;
+    if (s !== null) return s;
+    const m = String(p.duration).match(/(\d+)\s*Menit/i);
+    if (m) return parseInt(m[1], 10) * 60;
+  }
+  return 0;
+}
+
+function renderPpaProblemAnalytics() {
+  const startDate = document.getElementById('ppaFilterDateStart')?.value || '';
+  const endDate = document.getElementById('ppaFilterDateEnd')?.value || '';
+  const weekVal = document.getElementById('ppaFilterWeek')?.value || 'ALL';
+  const shiftVal = document.getElementById('ppaFilterShift')?.value || 'ALL';
+  const unitVal = document.getElementById('ppaFilterUnit')?.value || 'ALL';
+
+  const rawList = (window.problemsData && window.problemsData.length > 0) ? window.problemsData : [];
+
+  // Filter problems data by active KPI filters
+  ppaFilteredProblems = rawList.filter(p => {
+    if (!p) return false;
+
+    // Shift filter
+    if (shiftVal !== 'ALL') {
+      const sShift = String(p.shift || '').trim().toLowerCase();
+      if (shiftVal === '1') {
+        if (!sShift.includes('1') && !sShift.includes('siang')) return false;
+      } else if (shiftVal === '2') {
+        if (!sShift.includes('2') && !sShift.includes('malam')) return false;
+      } else if (sShift !== shiftVal.toLowerCase()) {
+        return false;
+      }
+    }
+
+    // Unit filter
+    if (unitVal !== 'ALL') {
+      const u1 = String(p.unit || '').replace(/^DT\s*/i, '').trim().toUpperCase();
+      const u2 = String(unitVal).replace(/^DT\s*/i, '').trim().toUpperCase();
+      if (u1 !== u2 && !String(p.unit || '').toUpperCase().includes(u2)) return false;
+    }
+
+    // Date Range
+    const rowDateStr = p.date || '';
+    let rowDateComparable = '';
+    if (typeof parseDateComparable === 'function') {
+      rowDateComparable = parseDateComparable(rowDateStr);
+    } else {
+      const m = rowDateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (m) rowDateComparable = `${m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
+      else rowDateComparable = rowDateStr;
+    }
+
+    if (startDate && rowDateComparable && rowDateComparable < startDate) return false;
+    if (endDate && rowDateComparable && rowDateComparable > endDate) return false;
+
+    // Week
+    if (weekVal !== 'ALL') {
+      const rowWeek = typeof getIsoWeek === 'function' ? getIsoWeek(p.date) : '';
+      if (rowWeek !== weekVal) return false;
+    }
+
+    return true;
+  });
+
+  const totalIncidents = ppaFilteredProblems.length;
+
+  // 1. Calculate Downtime Duration & Breakdown by Unit
+  let totalDowntimeSec = 0;
+  let closedCount = 0;
+  let openCount = 0;
+  const unitCountMap = {};
+  const unitDurationMap = {};
+
+  ppaFilteredProblems.forEach(p => {
+    const isClosed = p.timeClose && p.timeClose !== '-' && p.timeClose.trim() !== '' && p.duration !== 'MASIH BERLANGSUNG';
+    if (isClosed) closedCount++;
+    else openCount++;
+
+    const sec = getProblemSeconds(p);
+    totalDowntimeSec += sec;
+
+    const unitKey = (p.unit || 'Lainnya').trim();
+    unitCountMap[unitKey] = (unitCountMap[unitKey] || 0) + 1;
+    unitDurationMap[unitKey] = (unitDurationMap[unitKey] || 0) + Math.round(sec / 60);
+  });
+
+  // Top Bottleneck
+  let topUnit = '-';
+  let topUnitMinutes = 0;
+  Object.keys(unitDurationMap).forEach(u => {
+    if (unitDurationMap[u] > topUnitMinutes) {
+      topUnitMinutes = unitDurationMap[u];
+      topUnit = u;
+    }
+  });
+  if (topUnit === '-' && Object.keys(unitCountMap).length > 0) {
+    topUnit = Object.keys(unitCountMap).sort((a, b) => unitCountMap[b] - unitCountMap[a])[0];
+  }
+
+  const totalMinutes = Math.round(totalDowntimeSec / 60);
+  const hoursPart = Math.floor(totalMinutes / 60);
+  const minsPart = totalMinutes % 60;
+  let downtimeFormatted = '0 Menit';
+  if (hoursPart > 0) {
+    downtimeFormatted = `${hoursPart} Jam ${minsPart} Menit`;
+  } else {
+    downtimeFormatted = `${totalMinutes} Menit`;
+  }
+
+  // 2. Update KPI Cards in DOM
+  const elIncidents = document.getElementById('ppaProbKpiTotalIncidents');
+  const elDowntime = document.getElementById('ppaProbKpiTotalDowntime');
+  const elStatusRes = document.getElementById('ppaProbKpiStatusRes');
+  const elStatusSub = document.getElementById('ppaProbKpiStatusSub');
+  const elTopUnit = document.getElementById('ppaProbKpiTopUnit');
+  const elTopSub = document.getElementById('ppaProbKpiTopSub');
+  const elRangeText = document.getElementById('ppaProbKpiRangeText');
+
+  if (elIncidents) elIncidents.textContent = totalIncidents;
+  if (elDowntime) elDowntime.textContent = downtimeFormatted;
+  if (elRangeText) {
+    if (startDate && endDate) {
+      elRangeText.textContent = `${startDate} s/d ${endDate}`;
+    } else if (weekVal !== 'ALL') {
+      elRangeText.textContent = `Periode ${weekVal}`;
+    } else {
+      elRangeText.textContent = 'Rentang Filter Aktif';
+    }
+  }
+
+  if (elStatusRes) {
+    elStatusRes.innerHTML = `${closedCount} <span style="font-size: 15px; color: #168A5B;">Selesai</span> <span style="font-size: 13px; color: #667085; font-weight: 500;">• ${openCount} Berlangsung</span>`;
+  }
+
+  if (elStatusSub) {
+    if (openCount > 0) {
+      elStatusSub.innerHTML = `<span class="pulse-dot-red"></span><span style="color: #D64545; font-weight: 600;">${openCount} Masalah Belum Selesai (Aktif)</span>`;
+    } else {
+      elStatusSub.innerHTML = `<span style="color: #168A5B; font-weight: 600;">✓ Semua Kendala Tertangani</span>`;
+    }
+  }
+
+  if (elTopUnit) elTopUnit.textContent = topUnit;
+  if (elTopSub) {
+    if (totalMinutes > 0 && topUnitMinutes > 0) {
+      const pct = ((topUnitMinutes / totalMinutes) * 100).toFixed(1);
+      elTopSub.innerHTML = `<span style="color: #D99000; font-weight: 600;">${topUnitMinutes} Menit (${pct}% dari total)</span>`;
+    } else if (topUnit !== '-') {
+      elTopSub.innerHTML = `<span style="color: #667085;">Unit/Fasilitas Terdampak</span>`;
+    } else {
+      elTopSub.innerHTML = `<span>Tidak ada kendala</span>`;
+    }
+  }
+
+  // 3. Render Chart A: Pareto Frekuensi Kendala per Fasilitas
+  const canvasFreq = document.getElementById('ppaChartProbFreq');
+  if (canvasFreq) {
+    if (chartPpaProbFreq) chartPpaProbFreq.destroy();
+
+    const sortedUnits = Object.keys(unitCountMap).sort((a, b) => unitCountMap[b] - unitCountMap[a]).slice(0, 6);
+    const labelsFreq = sortedUnits.length > 0 ? sortedUnits : ['TIDAK ADA GANGGUAN'];
+    const valuesFreq = sortedUnits.length > 0 ? labelsFreq.map(u => unitCountMap[u] || 0) : [0];
+    const paletteFreq = ['#2563EB', '#287C8E', '#5284AC', '#D99000', '#D64545', '#94A3B8'];
+
+    chartPpaProbFreq = new Chart(canvasFreq.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labelsFreq,
+        datasets: [{
+          label: 'Jumlah Insiden',
+          data: valuesFreq,
+          backgroundColor: labelsFreq.map((_, i) => paletteFreq[i % paletteFreq.length]),
+          borderRadius: 4,
+          barPercentage: 0.55,
+          badgeColor: '#0F2747'
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { color: '#F2F4F7' },
+            ticks: { font: { size: 9 }, color: '#667085', stepSize: 1 },
+            suggestedMax: Math.max(...valuesFreq, 4) * 1.25
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+          }
+        }
+      },
+      plugins: [ppaBadgePlugin]
+    });
+    window.chartPpaProbFreq = chartPpaProbFreq;
+  }
+
+  // 4. Render Chart B: Distribusi Durasi Downtime (Menit Terbuang)
+  const canvasDuration = document.getElementById('ppaChartProbDuration');
+  if (canvasDuration) {
+    if (chartPpaProbDuration) chartPpaProbDuration.destroy();
+
+    const sortedByDur = Object.keys(unitDurationMap).sort((a, b) => unitDurationMap[b] - unitDurationMap[a]).slice(0, 6);
+    const labelsDur = sortedByDur.length > 0 ? sortedByDur : ['TIDAK ADA DOWNTIME'];
+    const valuesDur = sortedByDur.length > 0 ? labelsDur.map(u => unitDurationMap[u] || 0) : [0];
+    const paletteDur = ['#D64545', '#E05D5D', '#D99000', '#F59E0B', '#3B82F6', '#94A3B8'];
+
+    chartPpaProbDuration = new Chart(canvasDuration.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labelsDur,
+        datasets: [{
+          label: 'Downtime (Menit)',
+          data: valuesDur,
+          backgroundColor: labelsDur.map((_, i) => paletteDur[i % paletteDur.length]),
+          borderRadius: 4,
+          barPercentage: 0.55,
+          badgeColor: '#D64545'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            grid: { color: '#F2F4F7' },
+            ticks: { font: { size: 9 }, color: '#667085' },
+            title: { display: true, text: 'Menit Downtime', font: { size: 9.5, weight: '600' }, color: '#667085' },
+            suggestedMax: Math.max(...valuesDur, 30) * 1.25
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+          }
+        }
+      },
+      plugins: [ppaBadgePlugin]
+    });
+    window.chartPpaProbDuration = chartPpaProbDuration;
+  }
+
+  // 5. Render Incident Log Table
+  ppaProbPage = 1;
+  renderPpaProbTable();
+}
+
+function renderPpaProbTable() {
+  const tbody = document.getElementById('ppaProbTableBody');
+  const rangeText = document.getElementById('ppaProbRangeText');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  const total = ppaFilteredProblems.length;
+
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px; color: #667085; font-size: 12px;">Tidak ada log insiden atau gangguan pada filter yang dipilih.</td></tr>';
+    if (rangeText) rangeText.textContent = '0 - 0 / 0';
+    return;
+  }
+
+  const startIdx = (ppaProbPage - 1) * ppaProbPerPage;
+  const endIdx = Math.min(startIdx + ppaProbPerPage, total);
+  const pageItems = ppaFilteredProblems.slice(startIdx, endIdx);
+
+  pageItems.forEach((p, i) => {
+    const isClosed = p.timeClose && p.timeClose !== '-' && p.timeClose.trim() !== '' && p.duration !== 'MASIH BERLANGSUNG';
+    const statusPill = isClosed
+      ? '<span class="prob-pill-closed">✓ Selesai</span>'
+      : '<span class="prob-pill-open"><span class="pulse-dot-red" style="width:5px; height:5px; margin-right:3px;"></span>Masih Berlangsung</span>';
+
+    const durSec = getProblemSeconds(p);
+    const durMin = Math.round(durSec / 60);
+    const durBadge = isClosed
+      ? `<span class="prob-downtime-badge">${durMin} Menit</span>`
+      : `<span class="prob-downtime-badge" style="background:#FEF2F2; color:#B91C1C; border-color:#FCA5A5;">Sedang Berjalan</span>`;
+
+    const tr = document.createElement('tr');
+    tr.style.background = isClosed ? 'transparent' : '#FFFDF5';
+    tr.innerHTML = `
+      <td style="font-weight: 600; color: #667085;">${startIdx + i + 1}</td>
+      <td style="font-family: monospace;">${p.date || '-'}</td>
+      <td><span style="font-weight: 600;">Shift ${p.shift || '1'}</span></td>
+      <td style="font-weight: 700; color: #0F2747;">${p.unit || '-'}</td>
+      <td style="text-align: left; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(p.problem || '').replace(/"/g, '&quot;')}">${p.problem || '-'}</td>
+      <td style="font-family: monospace; color: #475569;">${p.timeOpen || '-'}</td>
+      <td style="font-family: monospace; color: #475569;">${p.timeClose || '-'}</td>
+      <td>${durBadge}</td>
+      <td>${statusPill}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if (rangeText) {
+    rangeText.textContent = `${startIdx + 1} - ${endIdx} / ${total}`;
+  }
+}
+
+function changePpaProbPage(delta) {
+  const total = ppaFilteredProblems.length;
+  const maxPage = Math.ceil(total / ppaProbPerPage) || 1;
+  const newPage = ppaProbPage + delta;
+  if (newPage >= 1 && newPage <= maxPage) {
+    ppaProbPage = newPage;
+    renderPpaProbTable();
+  }
+}
+window.changePpaProbPage = changePpaProbPage;
+
 
 // Minimal Telemetry Table with EV Intelligence Status Pills
 function renderPpaExecTable() {
@@ -28342,7 +29149,9 @@ if (typeof window.updateDbStorageUI === 'function') {
           window.chartPpaRoomCompare,
           window.chartPpaEnergyUnit,
           window.chartPpaEnergyDaily,
-          window.chartPpaProblemBreakdown
+          window.chartPpaProblemBreakdown,
+          window.chartPpaProbFreq,
+          window.chartPpaProbDuration
         ];
 
         chartInstances.forEach(function(chart) {
