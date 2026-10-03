@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.02.v35';
+      var APP_BUILD_ID = '2026.10.03.v36';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -9540,40 +9540,91 @@ html, body {
 
 /* 8. Universal Responsive Modals (All 24 Dialogs) */
 .modal-overlay {
+  z-index: 5000 !important;
+  background: rgba(15, 23, 42, 0.65) !important;
   padding: clamp(8px, 2vw, 20px) !important;
   box-sizing: border-box !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .modal-dialog {
   max-width: min(94vw, 680px) !important;
   width: 100% !important;
-  max-height: calc(100dvh - 24px) !important;
+  max-height: min(94vh, calc(100dvh - 20px)) !important;
   display: flex !important;
   flex-direction: column !important;
   margin: auto !important;
   box-sizing: border-box !important;
   border-radius: clamp(10px, 2vw, 16px) !important;
   overflow: hidden !important;
+  background: #ffffff !important;
+  position: relative !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Master Form Flexbox Containment inside Modal Dialog */
+.modal-dialog > form,
+.modal-dialog form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .modal-header-ent {
   flex-shrink: 0 !important;
   padding: clamp(10px, 2vw, 16px) !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  z-index: 2 !important;
 }
 
 .modal-body-ent {
   flex: 1 1 auto !important;
+  min-height: 0 !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
-  padding: clamp(12px, 2.5vw, 20px) !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding: clamp(14px, 2.5vw, 20px) clamp(12px, 2vw, 18px) 30px clamp(12px, 2vw, 18px) !important;
   box-sizing: border-box !important;
+  background: #ffffff !important;
+}
+
+.modal-body-ent::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.modal-body-ent::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-radius: 4px !important;
+}
+
+.modal-body-ent::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22) !important;
+  border-radius: 4px !important;
+}
+
+.modal-body-ent::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35) !important;
 }
 
 .modal-footer-ent {
   flex-shrink: 0 !important;
   padding: clamp(10px, 2vw, 16px) !important;
-  background: #ffffff !important;
+  background: #f8fafc !important;
   border-top: 1px solid #e2e8f0 !important;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05) !important;
+  z-index: 2 !important;
 }
 
 /* 9. BREAKPOINT: Tablet & iPad (Portrait & Landscape: 641px - 1024px) */
@@ -12679,7 +12730,7 @@ html, body {
         <button class="btn-close-ent" onclick="closeModal('modalEdit')">&times;</button>
       </div>
       <form id="formEditRecord">
-        <div class="modal-body-ent">
+        <div class="modal-body-ent" style="overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important;">
           <input type="hidden" id="editId">
           <div class="modal-form-grid">
             <div class="form-group-ent">
@@ -28193,7 +28244,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=33')
+      navigator.serviceWorker.register('./sw.js?v=36')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka

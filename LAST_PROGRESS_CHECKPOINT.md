@@ -523,18 +523,50 @@
      - Service Worker Cache: `'charging-ev-v35'` di `sw.js`.
      - Validasi sintaks JS Service Worker dan inline scripts diuji dan lolos 100%.
 
+
+#### 26. 📱🛠️ Resolusi Tuntas Scroll Modal Revisi / Edit Transaksi pada Akses Mobile (HP) (03 Oktober 2026):
+- **Latar Belakang & Gejala:**
+  - Pengguna melaporkan bahwa pada menu **Operation** ➔ sub-menu **Charging Swap**, saat membuka dialog revisi/edit data transaksi (modal `Edit Data Transaksi`), tampilan terpotong pada isian bawah (Bat In / Bat Out) dan **sama sekali tidak bisa di-scroll naik-turun** pada perangkat ponsel (HP).
+  - Akibatnya, operator lapangan tidak dapat melihat isian Status, Remark/Keterangan kendala, serta tidak dapat menekan tombol **[ Simpan Perubahan ]** maupun **[ Batal ]**.
+- **Akar Masalah (Root Cause):**
+  1. *Block Form in Column Flex:* `.modal-dialog` menerapkan `display: flex !important; flex-direction: column !important; overflow: hidden !important; max-height: calc(100dvh - 24px) !important;`. Di dalamnya, elemen `<form id="formEditRecord">` tidak memiliki aturan CSS khusus sehingga berstatus default browser `display: block; height: auto;`.
+  2. *Unconstrained Form Expansion:* Karena `<form>` adalah elemen block tanpa batas tinggi, isian di dalamnya (`.modal-body-ent`) mengembang penuh secara alami (~957px). Karena tingginya tidak dibatasi oleh flexbox container, browser mengabaikan properti `flex: 1 1 auto` pada `.modal-body-ent` dan tidak memicu overflow scrollbar internal (`bodyCanScroll: false`).
+  3. *Overflow Clipping:* Kontainer luar `.modal-dialog` memotong konten pada batas tinggi layar (726px) karena `overflow: hidden !important;`. Akibatnya, bagian bawah form (~230px ke bawah) terpotong dan tersembunyi tanpa konteks scroll apapun (`actualScrollTop: 0, didScroll: false`).
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Universal Modal Form Flexbox Containment (`index.html`):**
+     - Menambahkan aturan universal `.modal-dialog > form, .modal-dialog form`:
+       `display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important; height: 100% !important; max-height: 100% !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; width: 100% !important; box-sizing: border-box !important;`.
+     - Memberikan `min-height: 0 !important;` yang krusial pada level CSS Flexbox agar form diizinkan mengecil sesuai tinggi viewport yang tersedia.
+  2. **Scrollable Modal Body dengan Momentum Touch & Overscroll Contain:**
+     - `.modal-body-ent` kini berfungsi sebagai flex child sejati di dalam form:
+       `flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; -webkit-overflow-scrolling: touch !important; overscroll-behavior-y: contain !important; touch-action: pan-y !important;`.
+     - Ditambahkan padding bawah lapang `padding: 14px 14px 30px 14px !important;` agar isian paling bawah (Remark / Problem) memiliki ruang bernapas yang nyaman di atas footer.
+  3. **Fixed Floating Header & Anchored Action Footer:**
+     - `.modal-header-ent`: Dilengkapi `flex-shrink: 0 !important;` sehingga judul dan tombol silang `[ ✕ ]` tetap terkunci di bagian atas.
+     - `.modal-footer-ent`: Dilengkapi `flex-shrink: 0 !important;` dan bayangan lembut elevasi sehingga tombol aksi **[ Batal ]** dan **[ Simpan Perubahan ]** selalu terpampang jelas di dasar modal dan dapat ditekan kapan saja tanpa perlu mencari-cari.
+  4. **Solid Slate Backdrop & Custom Styled Scrollbar:**
+     - `.modal-overlay` ditingkatkan dengan `z-index: 5000 !important; background: rgba(15, 23, 42, 0.65) !important;` dan scrolling fallback.
+     - Ditambahkan visual scrollbar modern (`::-webkit-scrollbar`) berlebar 6px dengan thumb abu-abu halus agar pengguna mendapatkan isyarat visual yang jelas bahwa konten modal dapat digulirkan.
+  5. **Pengujian Komprehensif Chrome Headless Mobile (CDP 390x750px):**
+     - Sebelum perbaikan: `bodyCanScroll: false`, `attemptedScrollTop: 300`, `actualScrollTop: 0`, `didScroll: false`.
+     - Sesudah perbaikan: `bodyCanScroll: true`, `actualScrollTop: 300`, `didScroll: true`, seluruh 13 field form dan 2 tombol footer terlihat sempurna.
+  6. **Pembaruan Cache & Build PWA:**
+     - `APP_BUILD_ID`: Dinaikkan ke **`2026.10.03.v36`** di `index.html`.
+     - `sw.js`: Cache Service Worker dinaikkan ke **`charging-ev-v36`**.
+     - Query string registrasi Service Worker dinaikkan ke `?v=36`.
+
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@83` (Master Universal Responsive & UI/UX Engine v35)
+   - **Versi Rilis:** `@84` (Universal Modal Scrolling & Mobile Edit Data Fix v36)
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v35`
+   - **Service Worker Cache:** `charging-ev-v36`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 
