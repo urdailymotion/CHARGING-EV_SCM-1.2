@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.03.v44';
+      var APP_BUILD_ID = '2026.10.04.v45';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -13489,6 +13489,81 @@ html, body {
   </div>
 
   <!-- =======================================================================
+       MODAL: PILIHAN JANGKAUAN EXPORT DATA EXCEL (20 KOLOM DATA INPUT)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modalExportDataChoice" style="z-index: 9999;">
+    <div class="modal-dialog" style="max-width: 520px; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.45); border: 1px solid #cbd5e1;">
+      <!-- Header -->
+      <div class="modal-header-ent" style="background: linear-gradient(135deg, #0f2747, #1e3a8a); color: #ffffff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">Export Transaksi ke Excel (.xlsx)</h4>
+            <div style="font-size: 11px; color: #93c5fd; margin-top: 2px;">Format 100% Identik Database Google Sheets (Sheet: DATA INPUT)</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close-ent" onclick="closeModal('modalExportDataChoice')" style="color: #ffffff; background: none; border: none; font-size: 22px; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body-ent" style="padding: 20px; background: #ffffff;">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: flex-start; gap: 9px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #166534;">Standar Presisi 20 Kolom Database</div>
+              <div style="font-size: 11.5px; color: #15803d; margin-top: 2px; line-height: 1.45;">
+                File Excel yang diunduh memiliki susunan <strong>20 kolom lengkap</strong> berurutan (dari <code>TRANSACTION ID</code> hingga <code>SWAP STATION</code>) dengan nama sheet <code>DATA INPUT</code>.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size: 13px; color: #334155; margin: 0 0 14px 0; line-height: 1.45;">
+          Tabel saat ini memiliki filter aktif. Silakan pilih jangkauan baris data yang ingin Anda unduh:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 11px;">
+          <!-- Option 1: Filtered Data -->
+          <button type="button" id="btnExportOptionFiltered" style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #16a34a; background: #f0fdf4; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 34px; height: 34px; border-radius: 6px; background: #16a34a; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 13.5px; color: #14532d;">Export Data Terfilter Saja</div>
+                <div style="font-size: 11px; color: #15803d; margin-top: 2px;" id="txtExportFilteredSummary">Mengunduh transaksi sesuai filter tabel yang sedang aktif</div>
+              </div>
+            </div>
+            <span id="badgeExportFilteredCount" style="background: #16a34a; color: #fff; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 12px; white-space: nowrap;">0 Baris</span>
+          </button>
+
+          <!-- Option 2: Full Database -->
+          <button type="button" id="btnExportOptionFull" style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #2563eb; background: #eff6ff; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 34px; height: 34px; border-radius: 6px; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 13.5px; color: #1e3a8a;">Export Seluruh Master Database</div>
+                <div style="font-size: 11px; color: #1d4ed8; margin-top: 2px;" id="txtExportFullSummary">Mengunduh seluruh riwayat transaksi tanpa terpotong</div>
+              </div>
+            </div>
+            <span id="badgeExportFullCount" style="background: #2563eb; color: #fff; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 12px; white-space: nowrap;">0 Baris</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer-ent" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-show" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer;" onclick="closeModal('modalExportDataChoice')">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
        MODAL 5: LOGIN OPERATOR DENGAN NIK & AUTORISASI AKSES
        ======================================================================= -->
   <div class="modal-overlay" id="modalLocationLogin">
@@ -19286,7 +19361,7 @@ function renderMainTable() {
       return sortTransactionsLatestFirst(a, b);
     });
   }
-
+  window.filteredList = filteredList;
   updateMainTableSortIcons();
 
   const totalRecords = filteredList.length;
@@ -19942,6 +20017,224 @@ window.updateSummaryCard = updateSummaryCard;
 // 8. EXPORT DATA (EXCEL .XLSX)
 // =============================================================================
 
+function mapSwapToDbInputRow(s) {
+  const txId = String(s.id || '').trim();
+  const dateVal = String(s.date || '').trim();
+  const shiftVal = String(s.shift || '1').trim();
+  const catVal = String(s.category || 'CHARGING SWAP').trim();
+  const locVal = String(s.location || 'ROOM A1').trim();
+  const unitVal = String(s.unit || '').replace(/^DT[- ]?/i, '').trim();
+  
+  let hmVal = (s.hm !== undefined && s.hm !== null) ? String(s.hm).trim() : '';
+  if (hmVal && !isNaN(Number(hmVal)) && hmVal !== '-') {
+    hmVal = Number(hmVal);
+  } else if (!hmVal) {
+    hmVal = '-';
+  }
+  
+  const batBeforeVal = (typeof formatBatteryPercentage === 'function')
+    ? formatBatteryPercentage(s.batteryBefore)
+    : String(s.batteryBefore || '-');
+    
+  const jamInVal = String(s.jamIn || '').trim();
+  
+  const batAfterVal = (typeof formatBatteryPercentage === 'function')
+    ? formatBatteryPercentage(s.batteryAfter)
+    : String(s.batteryAfter || '-');
+    
+  const jamOutVal = String(s.jamOut || '').trim();
+  
+  const durVal = (s.durationMin !== undefined && s.durationMin !== null && !isNaN(Number(s.durationMin)))
+    ? Number(s.durationMin)
+    : 6;
+    
+  let energyVal = 0;
+  if (s.energyKwh !== undefined && s.energyKwh !== null && !isNaN(Number(s.energyKwh))) {
+    energyVal = Number(Number(s.energyKwh).toFixed(2));
+  }
+  
+  const statusVal = String(s.statusRemark || 'On Time').trim();
+  const problemVal = String(s.problemRemark || (statusVal === 'On Time' ? '13.NO PROBLEM' : '-')).trim();
+  const operatorVal = String(s.operator || '').trim();
+  const operatorNikVal = String(s.operatorNik || '').trim();
+  const ketVal = String(s.keterangan || (problemVal !== '-' ? problemVal : '13.NO PROBLEM')).trim();
+  const timeSchVal = String(s.timeSch || '-').trim();
+  const stationVal = String(s.swapStation || (locVal.toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim();
+
+  return [
+    txId,           // 1. TRANSACTION ID
+    dateVal,        // 2. DATE
+    shiftVal,       // 3. SHIFT
+    catVal,         // 4. CATEGORY
+    locVal,         // 5. LOCATION
+    unitVal,        // 6. KODE UNIT
+    hmVal,          // 7. HM
+    batBeforeVal,   // 8. BATTERY BEFORE
+    jamInVal,       // 9. JAM IN SWAP
+    batAfterVal,    // 10. BATTERY AFTER
+    jamOutVal,      // 11. JAM OUT SWAP
+    durVal,         // 12. CHARGING TIME (MENIT)
+    energyVal,      // 13. ENERGY (KWH)
+    statusVal,      // 14. STATUS REMARK
+    problemVal,     // 15. PROBLEM REMARK
+    operatorVal,    // 16. MANPOWER
+    operatorNikVal, // 17. NIK
+    ketVal,         // 18. KETERANGAN
+    timeSchVal,     // 19. TIME SCH
+    stationVal      // 20. SWAP STATION
+  ];
+}
+window.mapSwapToDbInputRow = mapSwapToDbInputRow;
+
+const DB_INPUT_HEADERS = [
+  'TRANSACTION ID',
+  'DATE',
+  'SHIFT',
+  'CATEGORY',
+  'LOCATION',
+  'KODE UNIT',
+  'HM',
+  'BATTERY BEFORE',
+  'JAM IN SWAP',
+  'BATTERY AFTER',
+  'JAM OUT SWAP',
+  'CHARGING TIME (MENIT)',
+  'ENERGY (KWH)',
+  'STATUS REMARK',
+  'PROBLEM REMARK',
+  'MANPOWER',
+  'NIK',
+  'KETERANGAN',
+  'TIME SCH',
+  'SWAP STATION'
+];
+window.DB_INPUT_HEADERS = DB_INPUT_HEADERS;
+
+const DB_INPUT_COLS = [
+  { wch: 28 }, // 1. TRANSACTION ID
+  { wch: 14 }, // 2. DATE
+  { wch: 8 },  // 3. SHIFT
+  { wch: 18 }, // 4. CATEGORY
+  { wch: 14 }, // 5. LOCATION
+  { wch: 14 }, // 6. KODE UNIT
+  { wch: 12 }, // 7. HM
+  { wch: 18 }, // 8. BATTERY BEFORE
+  { wch: 14 }, // 9. JAM IN SWAP
+  { wch: 18 }, // 10. BATTERY AFTER
+  { wch: 14 }, // 11. JAM OUT SWAP
+  { wch: 24 }, // 12. CHARGING TIME (MENIT)
+  { wch: 16 }, // 13. ENERGY (KWH)
+  { wch: 18 }, // 14. STATUS REMARK
+  { wch: 22 }, // 15. PROBLEM REMARK
+  { wch: 26 }, // 16. MANPOWER
+  { wch: 14 }, // 17. NIK
+  { wch: 24 }, // 18. KETERANGAN
+  { wch: 12 }, // 19. TIME SCH
+  { wch: 16 }  // 20. SWAP STATION
+];
+window.DB_INPUT_COLS = DB_INPUT_COLS;
+
+function executeExportDataInputExcel(records, customFilename) {
+  if (!records || records.length === 0) {
+    showToast("Tidak ada data transaksi untuk diekspor!", "warning");
+    return;
+  }
+
+  const aoa = [DB_INPUT_HEADERS];
+  records.forEach(s => {
+    aoa.push(mapSwapToDbInputRow(s));
+  });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const finalFilename = customFilename || `DATA_INPUT_Charging_Swap_${todayStr}.xlsx`;
+
+  if (typeof XLSX !== 'undefined') {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = DB_INPUT_COLS;
+    // Auto-filter on Row 1 across all 20 columns
+    ws['!autofilter'] = { ref: `A1:T${aoa.length}` };
+    // Freeze header row
+    ws['!views'] = [{ state: 'frozen', ySplit: 1 }];
+
+    XLSX.utils.book_append_sheet(wb, ws, "DATA INPUT");
+    XLSX.writeFile(wb, finalFilename);
+    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.xlsx) sama persis dengan sheet DATA INPUT!`, "success");
+  } else {
+    const csvContent = aoa.map(row => row.map(v => `"${String(v !== undefined && v !== null ? v : '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const csvFilename = finalFilename.replace(/\.xlsx$/i, '.csv');
+    downloadCSV(csvContent, csvFilename);
+    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.csv) 20 kolom database!`, "success");
+  }
+}
+window.executeExportDataInputExcel = executeExportDataInputExcel;
+
+function showExportDataChoiceModal(filteredList, allSwaps, filterInfo) {
+  const modalEl = document.getElementById('modalExportDataChoice');
+  if (!modalEl) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    executeExportDataInputExcel(filteredList, `DATA_INPUT_Charging_Swap_${todayStr}.xlsx`);
+    return;
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let fileSuffix = todayStr;
+  if (filterInfo.startVal && filterInfo.endVal && filterInfo.startVal === filterInfo.endVal) {
+    fileSuffix = filterInfo.startVal;
+  } else if (filterInfo.startVal || filterInfo.endVal) {
+    fileSuffix = `${filterInfo.startVal || 'Awal'}_sd_${filterInfo.endVal || 'Akhir'}`;
+  }
+
+  window._pendingExportFilteredData = {
+    list: filteredList,
+    filename: `DATA_INPUT_Charging_Swap_${fileSuffix}.xlsx`
+  };
+
+  window._pendingExportFullData = {
+    list: allSwaps,
+    filename: `DATA_INPUT_Charging_Swap_FULL_DATABASE_${todayStr}.xlsx`
+  };
+
+  const badgeFiltered = document.getElementById('badgeExportFilteredCount');
+  if (badgeFiltered) badgeFiltered.textContent = `${filteredList.length.toLocaleString('id-ID')} Baris`;
+
+  const badgeFull = document.getElementById('badgeExportFullCount');
+  if (badgeFull) badgeFull.textContent = `${allSwaps.length.toLocaleString('id-ID')} Baris`;
+
+  const txtFiltered = document.getElementById('txtExportFilteredSummary');
+  if (txtFiltered) {
+    const parts = [];
+    if (filterInfo.startVal || filterInfo.endVal) parts.push(`Tanggal: ${filterInfo.startVal || '...'} s/d ${filterInfo.endVal || '...'}`);
+    if (filterInfo.shiftVal && filterInfo.shiftVal !== 'ALL') parts.push(`Shift: ${filterInfo.shiftVal}`);
+    if (filterInfo.locVal && filterInfo.locVal !== 'ALL') parts.push(`Lokasi: ${filterInfo.locVal}`);
+    if (filterInfo.searchVal) parts.push(`Pencarian: "${filterInfo.searchVal}"`);
+    txtFiltered.textContent = parts.length > 0 ? parts.join(' • ') : `Mengunduh ${filteredList.length} transaksi sesuai filter aktif`;
+  }
+
+  // Bind click handlers to options
+  const btnExpFiltered = document.getElementById('btnExportOptionFiltered');
+  if (btnExpFiltered) {
+    btnExpFiltered.onclick = function() {
+      if (window._pendingExportFilteredData) {
+        executeExportDataInputExcel(window._pendingExportFilteredData.list, window._pendingExportFilteredData.filename);
+      }
+      closeModal('modalExportDataChoice');
+    };
+  }
+
+  const btnExpFull = document.getElementById('btnExportOptionFull');
+  if (btnExpFull) {
+    btnExpFull.onclick = function() {
+      if (window._pendingExportFullData) {
+        executeExportDataInputExcel(window._pendingExportFullData.list, window._pendingExportFullData.filename);
+      }
+      closeModal('modalExportDataChoice');
+    };
+  }
+
+  openModal('modalExportDataChoice');
+}
+
 function exportFullCSV() {
   const allSwaps = (typeof window.swapsData !== 'undefined' && Array.isArray(window.swapsData) && window.swapsData.length > 0)
     ? window.swapsData
@@ -19960,89 +20253,23 @@ function exportFullCSV() {
   const endVal = document.getElementById('filterEndDate')?.value;
   const isFilterActive = !!(searchVal || (shiftVal && shiftVal !== 'ALL') || (locVal && locVal !== 'ALL') || startVal || endVal);
 
-  let listToExport = allSwaps;
-  if (isFilterActive && typeof filteredList !== 'undefined' && Array.isArray(filteredList)) {
-    listToExport = filteredList;
-  } else if (typeof filteredList !== 'undefined' && Array.isArray(filteredList) && filteredList.length > 0) {
-    listToExport = filteredList;
-  }
+  const activeFilteredList = (typeof window.filteredList !== 'undefined' && Array.isArray(window.filteredList) && window.filteredList.length > 0)
+    ? window.filteredList
+    : ((typeof filteredList !== 'undefined' && Array.isArray(filteredList)) ? filteredList : []);
 
-  if (!listToExport || listToExport.length === 0) {
-    showToast("Tidak ada data transaksi yang cocok dengan kriteria filter untuk diekspor!", "warning");
+  const hasFiltered = isFilterActive && activeFilteredList.length > 0 && activeFilteredList.length < allSwaps.length;
+
+  if (hasFiltered) {
+    // Tampilkan modal pilihan cerdas: Ekspor Terfilter vs Ekspor Seluruh Database
+    showExportDataChoiceModal(activeFilteredList, allSwaps, {
+      searchVal, shiftVal, locVal, startVal, endVal
+    });
     return;
   }
 
-  const headers = [
-    'Manpower', 'NIK', 'Transaction ID', 'Category', 'Unit', 'Date', 'Shift', 
-    'Time In', 'Time Out', 'Duration (Min)', 'Energy (kWh)', 'HM', 
-    'Battery Before', 'Battery After', 'Location', 'Status', 'Remark'
-  ];
-  const aoa = [headers];
-
-  listToExport.forEach(s => {
-    const txId = String(s.id || '').includes('DA01') ? s.id : `DA01/CHG/2026/SWAP/${String(s.id || '').replace('SWP-', '')}`;
-    const batBefore = typeof formatBatteryPercentage === 'function' ? formatBatteryPercentage(s.batteryBefore) : `${s.batteryBefore}%`;
-    const batAfter = typeof formatBatteryPercentage === 'function' ? formatBatteryPercentage(s.batteryAfter) : `${s.batteryAfter}%`;
-
-    aoa.push([
-      s.operator || 'ZAKARIYA ABIDIN',
-      s.operatorNik || '81230529',
-      txId,
-      s.category || 'CHARGING SWAP',
-      `DT ${s.unit}`,
-      s.date || '',
-      Number(s.shift) || s.shift || 1,
-      s.jamIn || '',
-      s.jamOut || '',
-      parseFloat(s.durationMin) || 0,
-      parseFloat(s.energyKwh) || 0,
-      s.hm || '',
-      batBefore,
-      batAfter,
-      s.location || '',
-      s.statusRemark || 'On Time',
-      s.problemRemark || '13.NO PROBLEM'
-    ]);
-  });
-
+  // Jika tidak ada filter aktif yang membatasi data, langsung ekspor seluruh database
   const todayStr = new Date().toISOString().slice(0, 10);
-  let fileSuffix = todayStr;
-  if (startVal && endVal && startVal === endVal) {
-    fileSuffix = startVal;
-  } else if (startVal || endVal) {
-    fileSuffix = `${startVal || 'Awal'}_sd_${endVal || 'Akhir'}`;
-  }
-
-  if (typeof XLSX !== 'undefined') {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [
-      { wch: 22 }, // Manpower
-      { wch: 14 }, // NIK
-      { wch: 32 }, // Transaction ID
-      { wch: 18 }, // Category
-      { wch: 12 }, // Unit
-      { wch: 14 }, // Date
-      { wch: 8 },  // Shift
-      { wch: 12 }, // Time In
-      { wch: 12 }, // Time Out
-      { wch: 16 }, // Duration (Min)
-      { wch: 16 }, // Energy (kWh)
-      { wch: 10 }, // HM
-      { wch: 16 }, // Battery Before
-      { wch: 16 }, // Battery After
-      { wch: 14 }, // Location
-      { wch: 18 }, // Status
-      { wch: 24 }  // Remark
-    ];
-    XLSX.utils.book_append_sheet(wb, ws, "Transactions");
-    XLSX.writeFile(wb, `Refueling_Charging_Transaction_${fileSuffix}.xlsx`);
-    showToast(`Berhasil mengekspor ${listToExport.length} data transaksi (.xlsx)!`, "success");
-  } else {
-    const csvContent = aoa.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-    downloadCSV(csvContent, `Refueling_Charging_Transaction_${fileSuffix}.csv`);
-    showToast(`Berhasil mengekspor ${listToExport.length} data transaksi (.csv)!`, "success");
-  }
+  executeExportDataInputExcel(allSwaps, `DATA_INPUT_Charging_Swap_FULL_${allSwaps.length}_DATA_${todayStr}.xlsx`);
 }
 window.exportFullExcel = exportFullCSV;
 
@@ -28686,21 +28913,16 @@ function exportAllToExcelMultiSheet() {
   wsUsers['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 26 }, { wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 24 }];
   XLSX.utils.book_append_sheet(wb, wsUsers, 'USERS');
 
-  // 2. Sheet TRANSAKSI_SWAP
-  const swapRows = [
-    ['NO', 'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION', 'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN', 'BATTERY AFTER', 'JAM OUT', 'DURATION (MIN)', 'ENERGY (KWH)', 'STATUS REMARK', 'PROBLEM REMARK', 'OPERATOR', 'OPERATOR NIK', 'KETERANGAN']
-  ];
-  (swapsData || []).forEach((s, i) => {
-    swapRows.push([
-      i + 1, s.id, s.date, s.shift, s.category || 'CHARGING SWAP', s.location || 'ROOM A1',
-      s.unit, s.hm || '', formatBatteryPercentage(s.batteryBefore), s.jamIn, formatBatteryPercentage(s.batteryAfter), s.jamOut,
-      s.durationMin || 6, s.energyKwh || 0, s.statusRemark || 'On Time',
-      s.problemRemark || '13.NO PROBLEM', s.operator || '', s.operatorNik || '', s.keterangan || '-'
-    ]);
+  // 2. Sheet DATA INPUT (20 Kolom Standar Master Database)
+  const swapRows = [DB_INPUT_HEADERS];
+  (swapsData || []).forEach(s => {
+    swapRows.push(mapSwapToDbInputRow(s));
   });
   const wsSwaps = XLSX.utils.aoa_to_sheet(swapRows);
-  wsSwaps['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 24 }];
-  XLSX.utils.book_append_sheet(wb, wsSwaps, 'TRANSAKSI_SWAP');
+  wsSwaps['!cols'] = DB_INPUT_COLS;
+  wsSwaps['!autofilter'] = { ref: `A1:T${swapRows.length}` };
+  wsSwaps['!views'] = [{ state: 'frozen', ySplit: 1 }];
+  XLSX.utils.book_append_sheet(wb, wsSwaps, 'DATA INPUT');
 
   // 3. Sheet PROBLEM_LOG
   const probRows = [
@@ -28762,21 +28984,9 @@ function exportUsersExcel() {
 
 function exportSwapsExcel() {
   if (typeof XLSX === 'undefined') return exportSwapsCSV();
-  const wb = XLSX.utils.book_new();
-  const rows = [['NO', 'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION', 'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN', 'BATTERY AFTER', 'JAM OUT', 'DURATION (MIN)', 'ENERGY (KWH)', 'STATUS REMARK', 'PROBLEM REMARK', 'OPERATOR', 'OPERATOR NIK', 'KETERANGAN']];
-  (swapsData || []).forEach((s, i) => {
-    rows.push([
-      i + 1, s.id, s.date, s.shift, s.category || 'CHARGING SWAP', s.location || 'ROOM A1',
-      s.unit, s.hm || '', formatBatteryPercentage(s.batteryBefore), s.jamIn, formatBatteryPercentage(s.batteryAfter), s.jamOut,
-      s.durationMin || 6, s.energyKwh || 0, s.statusRemark || 'On Time',
-      s.problemRemark || '13.NO PROBLEM', s.operator || '', s.operatorNik || '', s.keterangan || '-'
-    ]);
-  });
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 24 }];
-  XLSX.utils.book_append_sheet(wb, ws, 'TRANSAKSI');
-  XLSX.writeFile(wb, 'voltswap_transactions.xlsx');
-  showToast('Excel Transaksi (.xlsx) berhasil diunduh!', 'success');
+  const list = swapsData || [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  executeExportDataInputExcel(list, `voltswap_transactions_DATA_INPUT_${todayStr}.xlsx`);
 }
 
 function exportProblemsExcel() {
@@ -28960,12 +29170,12 @@ function exportUsersCSV() {
 function exportSwapsCSV() {
   if (typeof XLSX !== 'undefined') return exportSwapsExcel();
   const list = swapsData || [];
-  let csv = 'No,Transaction ID,Date,Shift,Category,Location,Unit,HM,Battery Before,Jam In,Battery After,Jam Out,Duration Min,Energy KWh,Status Remark,Problem Remark,Operator,Operator NIK,Keterangan\n';
-  list.forEach((s, i) => {
-    csv += `${i + 1},"${s.id}","${s.date}","${s.shift}","${s.category || ''}","${s.location || ''}","${s.unit}","${s.hm || ''}","${formatBatteryPercentage(s.batteryBefore)}","${s.jamIn}","${formatBatteryPercentage(s.batteryAfter)}","${s.jamOut}","${s.durationMin || 6}","${s.energyKwh || 0}","${s.statusRemark || ''}","${s.problemRemark || ''}","${s.operator || ''}","${s.operatorNik || ''}","${s.keterangan || ''}"\n`;
-  });
-  downloadCsvFile(csv, 'voltswap_transactions.csv');
-  showToast('CSV Transaksi berhasil diunduh!', 'success');
+  const aoa = [DB_INPUT_HEADERS];
+  list.forEach(s => aoa.push(mapSwapToDbInputRow(s)));
+  const csv = aoa.map(row => row.map(v => `"${String(v !== undefined && v !== null ? v : '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  downloadCSV(csv, `voltswap_transactions_DATA_INPUT_${todayStr}.csv`);
+  showToast('CSV Transaksi (20 Kolom DATA INPUT) berhasil diunduh!', 'success');
 }
 
 function exportProblemsCSV() {
@@ -29662,7 +29872,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=36')
+      navigator.serviceWorker.register('./sw.js?v=45')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka
