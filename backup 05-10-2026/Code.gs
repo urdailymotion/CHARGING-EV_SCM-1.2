@@ -108,6 +108,27 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (body.action === 'save_user' || body.action === 'add_user' || body.action === 'update_user') {
+      const user = body.user || body.record || body.payload || body.data || body;
+      const result = apiSaveUser(user);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'delete_user') {
+      const nik = body.nik || body.id;
+      const result = apiDeleteUser(nik);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (body.action === 'sync_all_users') {
+      const usersList = body.usersList || body.users || body.data;
+      const result = apiSyncAllUsers(usersList);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (body.action === 'validate_login') {
       const result = apiValidateLogin(body.nik, body.password);
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -978,7 +999,7 @@ function syncAllSheetsToFirestoreGAS() {
     }
 
     // 4. Schedules
-    const schSheet = ss.getSheetByName('SCEDHULE');
+    const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     if (schSheet) {
       const scRows = schSheet.getDataRange().getValues();
       for (let i = 1; i < scRows.length; i++) {
@@ -1051,8 +1072,8 @@ function apiGetAllSheetsData() {
       });
     }
 
-    // ---- 2. Sheet SCEDHULE ----
-    const schSheet = ss.getSheetByName('SCEDHULE');
+    // ---- 2. Sheet SCEDHULE / SCHEDULE ----
+    const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     const schedules = [];
     if (schSheet) {
       const schRows = schSheet.getDataRange().getValues();
@@ -1182,6 +1203,22 @@ function apiGetTransactionData() {
  *  17 KETERANGAN / TIME SCH
  *  18 (reserved)
  */
+/**
+ * Normalisasi nilai energi kWh (mencegah penulisan ribuan tanpa koma, misal 281410 -> 281.41)
+ */
+function cleanEnergyKwh_(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'string') {
+    val = val.trim().replace(',', '.');
+  }
+  var n = parseFloat(val);
+  if (isNaN(n) || n <= 0) return 0;
+  if (n > 1000) {
+    n = n / 1000;
+  }
+  return Math.round(n * 100) / 100;
+}
+
 function apiReadTransactions_(ss) {
   const sheet = ss.getSheetByName('DATA INPUT');
   const swaps = [];
@@ -1206,7 +1243,7 @@ function apiReadTransactions_(ss) {
       batteryAfter:  String(r[9] || '-').trim(),
       jamOut:        formatTimeHHMM(r[10]),
       durationMin:   parseFloat(r[11]) || 6,
-      energyKwh:     parseFloat(r[12]) || 0,
+      energyKwh:     cleanEnergyKwh_(r[12]),
       statusRemark:  String(r[13] || 'On Time').trim(),
       problemRemark: String(r[14] || '13.NO PROBLEM').trim(),
       operator:      String(r[15] || '-').trim(),
@@ -1485,9 +1522,9 @@ function apiMigrateSheetsToFirestore(customConfig, targetCollections) {
       }
     }
 
-    // 3. SCEDHULE -> collection 'schedules'
+    // 3. SCEDHULE / SCHEDULE -> collection 'schedules'
     if (shouldMigrate('schedules')) {
-      const schSheet = ss.getSheetByName('SCEDHULE');
+      const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
       if (schSheet && schSheet.getLastRow() > 1) {
         const scRows = schSheet.getDataRange().getValues();
         const schWrites = [];
@@ -1779,19 +1816,73 @@ function getFirstEmptySwapRow_(sheet) {
 }
 
 function apiSaveSwapTransaction(rec) {
+  const lock = LockService.getScriptLock();
   try {
+    // 1. Antrean lock sampai 25 detik agar tidak ada tabrakan concurrent antar user
+    const hasLock = lock.tryLock(25000);
+    if (!hasLock) {
+      return { 
+        status: 'error', 
+        message: 'Server sedang memproses transaksi lain, silakan klik Simpan kembali dalam beberapa detik.' 
+      };
+    }
+
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName('DATA INPUT');
     if (!sheet) sheet = ss.getSheets()[0];
-
-    const targetRow = getFirstEmptySwapRow_(sheet);
-    const finalId = rec.id || `DA01/CHG/2026/SWAP/${String(targetRow - 1).padStart(4, '0')}`;
 
     // Pastikan header Kolom 20 (Swap Station) terpasang jika belum ada
     if (sheet.getLastColumn() < 20 || !sheet.getRange(1, 20).getValue()) {
       sheet.getRange(1, 20).setValue('SWAP STATION');
     }
 
+    // Ambil data baris terakhir untuk mencari max sequence & mendeteksi duplikasi
+    const lastRow = Math.max(sheet.getLastRow(), 1);
+    let maxNum = 0;
+    const existingIds = new Set();
+
+    if (lastRow > 1) {
+      const colAValues = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      for (let i = 0; i < colAValues.length; i++) {
+        const val = String(colAValues[i][0] || '').trim();
+        if (val) {
+          existingIds.add(val.toUpperCase());
+          // Ekstrak angka urut ID (format DA01/CHG/2026/SWAP/0480 atau SWP-0480 atau numerik biasa)
+          const m = val.match(/SWAP\/0*(\d{1,5})$/i) || val.match(/^SWP-0*(\d{1,5})$/i) || val.match(/(\d{1,5})$/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      }
+    }
+
+    // Alokasi ID Resmi yang Dijamin Unik & Sekuensial
+    const reqId = String((rec && rec.id) || '').trim();
+    let finalId = '';
+    const currentYear = new Date().getFullYear();
+
+    if (reqId) {
+      const mReq = reqId.match(/SWAP\/0*(\d{1,5})$/i) || reqId.match(/^SWP-0*(\d{1,5})$/i);
+      const reqNum = mReq ? parseInt(mReq[1], 10) : 0;
+      const isAlreadyTaken = existingIds.has(reqId.toUpperCase());
+
+      // Jika ID ini BELUM pernah dipakai dan nilainya lebih besar dari maxNum yang ada di sheet:
+      if (!isAlreadyTaken && reqNum > maxNum) {
+        finalId = reqId;
+      } else {
+        // ID ini duplikat ATAU nomor lama yang tertinggal dari HP user -> otomatis naikkan ke nomor urut sah berikutnya!
+        const nextNum = maxNum + 1;
+        finalId = `DA01/CHG/${currentYear}/SWAP/${String(nextNum).padStart(4, '0')}`;
+      }
+    } else {
+      const nextNum = maxNum + 1;
+      finalId = `DA01/CHG/${currentYear}/SWAP/${String(nextNum).padStart(4, '0')}`;
+    }
+
+    const targetRow = getFirstEmptySwapRow_(sheet);
     const finalStation = rec.swapStation || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
 
     const row = [
@@ -1807,7 +1898,7 @@ function apiSaveSwapTransaction(rec) {
       rec.batteryAfter  || '',
       rec.jamOut        || '',
       rec.durationMin   || 6,
-      rec.energyKwh     || 0,
+      cleanEnergyKwh_(rec.energyKwh),
       rec.statusRemark  || 'On Time',
       rec.problemRemark || '13.NO PROBLEM',
       rec.operator      || '',
@@ -1820,12 +1911,30 @@ function apiSaveSwapTransaction(rec) {
     // Tulis langsung ke targetRow secara presisi (20 Kolom lengkap)
     sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
 
-    // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
-    syncToFirestoreFromGas_('swaps', finalId, rec);
+    // Update rec.id agar sync ke Firestore menggunakan ID resmi yang sama
+    rec.id = finalId;
 
-    return { status: 'success', message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', row: targetRow, id: finalId };
+    // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
+    try {
+      syncToFirestoreFromGas_('swaps', finalId, rec);
+    } catch(fbErr) {
+      console.warn('Firestore sync warning:', fbErr);
+    }
+
+    return { 
+      status: 'success', 
+      message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', 
+      row: targetRow, 
+      id: finalId,
+      originalRequestedId: reqId,
+      reconciled: (finalId !== reqId)
+    };
   } catch (err) {
     return { status: 'error', message: err.toString() };
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
   }
 }
 
@@ -1855,7 +1964,7 @@ function apiUpdateTransaction(rec) {
           rec.batteryAfter  || '',
           rec.jamOut        || '',
           rec.durationMin   || 6,
-          rec.energyKwh     || 0,
+          cleanEnergyKwh_(rec.energyKwh),
           rec.statusRemark  || 'On Time',
           rec.problemRemark || '13.NO PROBLEM',
           rec.operator      || '',
@@ -1992,7 +2101,7 @@ function apiDeleteProblem(probId) {
 function apiSaveUploadedSchedules(schedulesList, importMode) {
   try {
     const ss = getSpreadsheet();
-    let sheet = ss.getSheetByName('SCEDHULE');
+    let sheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     if (!sheet) {
       sheet = ss.insertSheet('SCEDHULE');
       sheet.getRange(1, 1, 1, 4).setValues([['TANGGAL', 'SHIFT', 'KODE UNIT', 'TIME SCH']]);
@@ -2181,6 +2290,182 @@ function apiSyncAllUnits(unitCodesList) {
 }
 
 // =============================================================================
+// 6.5 USER MANAGEMENT (CRUD FOR USERS & CREDENTIALS -> Sheet USER)
+// =============================================================================
+function apiSaveUser(user) {
+  try {
+    if (!user) return { status: 'error', message: 'Data user kosong' };
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName('USER');
+    if (!sheet) {
+      ensureDatabaseStructure_(ss, true);
+      sheet = ss.getSheetByName('USER');
+    }
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak dapat dibuat/ditemukan' };
+
+    const cleanNik = String(user.nik || '').trim();
+    if (!cleanNik) return { status: 'error', message: 'NIK wajib diisi' };
+
+    const cleanName = String(user.name || '').trim().toUpperCase();
+    const cleanTitle = String(user.title || 'CHARGING MAN').trim().toUpperCase();
+    const cleanRole = String(user.role || 'OPERATOR').trim().toUpperCase();
+    const cleanPwd = String(user.password || user.nik || '').trim();
+    const cleanDept = String(user.dept || (cleanRole === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')).trim();
+
+    const rows = sheet.getDataRange().getValues();
+    let updated = false;
+    let targetRowIndex = -1;
+
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][1] || '').trim() === cleanNik) {
+        targetRowIndex = i + 1;
+        const no = rows[i][0] || i;
+        sheet.getRange(targetRowIndex, 1, 1, 7).setValues([[
+          no, cleanNik, cleanName, cleanTitle, cleanRole, cleanPwd, cleanDept
+        ]]);
+        updated = true;
+        break;
+      }
+    }
+
+    if (!updated) {
+      targetRowIndex = getLastDataRowInCol(sheet, 2) + 1;
+      const no = Math.max(1, targetRowIndex - 1);
+      sheet.getRange(targetRowIndex, 1, 1, 7).setValues([[
+        no, cleanNik, cleanName, cleanTitle, cleanRole, cleanPwd, cleanDept
+      ]]);
+    }
+
+    // Sync juga ke Firestore dari GAS jika Firebase terhubung
+    syncToFirestoreFromGas_('users', cleanNik, {
+      nik: cleanNik,
+      name: cleanName,
+      title: cleanTitle,
+      role: cleanRole,
+      password: cleanPwd,
+      dept: cleanDept
+    });
+
+    logAuditGAS_(ss, 'ADMIN/USER', updated ? 'UPDATE_USER' : 'ADD_USER', cleanNik, `User ${cleanName} (${cleanRole}) berhasil disimpan`);
+
+    return {
+      status: 'success',
+      message: `User ${cleanName} (${cleanNik}) berhasil disimpan ke Google Sheets`,
+      updated: updated,
+      user: {
+        nik: cleanNik,
+        name: cleanName,
+        title: cleanTitle,
+        role: cleanRole,
+        password: cleanPwd,
+        dept: cleanDept
+      }
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+function apiDeleteUser(nik) {
+  try {
+    const cleanNik = String(nik || '').trim();
+    if (!cleanNik) return { status: 'error', message: 'NIK user kosong' };
+
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName('USER');
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak ditemukan' };
+
+    const rows = sheet.getDataRange().getValues();
+    let deleted = false;
+    let deletedName = '';
+
+    for (let i = rows.length - 1; i >= 1; i--) {
+      if (String(rows[i][1] || '').trim() === cleanNik) {
+        deletedName = String(rows[i][2] || cleanNik);
+        sheet.deleteRow(i + 1);
+        deleted = true;
+      }
+    }
+
+    // Hapus juga dari Firestore
+    deleteFromFirestoreFromGas_('users', cleanNik);
+
+    // Re-index kolom NO agar rapi
+    const remainingRows = sheet.getLastRow();
+    if (remainingRows > 1) {
+      const numRows = remainingRows - 1;
+      const noCol = [];
+      for (let j = 1; j <= numRows; j++) {
+        noCol.push([j]);
+      }
+      sheet.getRange(2, 1, numRows, 1).setValues(noCol);
+    }
+
+    logAuditGAS_(ss, 'ADMIN/USER', 'DELETE_USER', cleanNik, `User ${deletedName} (${cleanNik}) dihapus`);
+
+    if (deleted) {
+      return { status: 'success', message: `Pengguna ${deletedName} (${cleanNik}) berhasil dihapus dari Google Sheets & Firebase`, nik: cleanNik };
+    } else {
+      return { status: 'error', message: `Pengguna dengan NIK ${cleanNik} tidak ditemukan di sheet USER` };
+    }
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+function apiSyncAllUsers(usersList) {
+  try {
+    if (!Array.isArray(usersList)) return { status: 'error', message: 'Data users list harus berupa array' };
+
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName('USER');
+    if (!sheet) {
+      ensureDatabaseStructure_(ss, true);
+      sheet = ss.getSheetByName('USER');
+    }
+    if (!sheet) return { status: 'error', message: 'Sheet USER tidak ditemukan' };
+
+    const lastRow = Math.max(sheet.getLastRow(), 2);
+    if (lastRow > 1) {
+      sheet.getRange(2, 1, lastRow - 1, 7).clearContent();
+    }
+
+    if (usersList.length > 0) {
+      const dataRows = usersList.map((u, idx) => [
+        idx + 1,
+        String(u.nik || '').trim(),
+        String(u.name || '').trim().toUpperCase(),
+        String(u.title || 'CHARGING MAN').trim().toUpperCase(),
+        String(u.role || 'OPERATOR').trim().toUpperCase(),
+        String(u.password || u.nik || '').trim(),
+        String(u.dept || (u.role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')).trim()
+      ]);
+      sheet.getRange(2, 1, dataRows.length, 7).setValues(dataRows);
+
+      usersList.forEach(u => {
+        const cNik = String(u.nik || '').trim();
+        if (cNik) {
+          syncToFirestoreFromGas_('users', cNik, {
+            nik: cNik,
+            name: String(u.name || '').trim().toUpperCase(),
+            title: String(u.title || 'CHARGING MAN').trim().toUpperCase(),
+            role: String(u.role || 'OPERATOR').trim().toUpperCase(),
+            password: String(u.password || u.nik || '').trim(),
+            dept: String(u.dept || '').trim()
+          });
+        }
+      });
+    }
+
+    logAuditGAS_(ss, 'ADMIN/USER', 'SYNC_ALL_USERS', 'USER_SHEET', `${usersList.length} akun user berhasil disinkronkan`);
+
+    return { status: 'success', message: `${usersList.length} akun pengguna berhasil disinkronkan ke Google Sheets`, count: usersList.length };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  }
+}
+
+// =============================================================================
 // 7. VALIDATE USER LOGIN
 // =============================================================================
 function apiValidateLogin(nik, password) {
@@ -2316,7 +2601,7 @@ function apiBackupAllToSheets(payload) {
           rec.batteryAfter  || '',
           rec.jamOut        || '',
           rec.durationMin   || 6,
-          rec.energyKwh     || 0,
+          cleanEnergyKwh_(rec.energyKwh),
           rec.statusRemark  || 'On Time',
           rec.problemRemark || '13.NO PROBLEM',
           rec.operator      || '',
@@ -2354,7 +2639,7 @@ function apiBackupAllToSheets(payload) {
               rec.batteryAfter  || '',
               rec.jamOut        || '',
               rec.durationMin   || 6,
-              rec.energyKwh     || 0,
+              cleanEnergyKwh_(rec.energyKwh),
               rec.statusRemark  || 'On Time',
               rec.problemRemark || '13.NO PROBLEM',
               rec.operator      || '',
@@ -2435,7 +2720,7 @@ function apiBackupAllToSheets(payload) {
 
     // 3. BACKUP SCEDHULE (Jadwal Swap Unit)
     if (payload && Array.isArray(payload.schedules) && payload.schedules.length > 0) {
-      const schSheet = ss.getSheetByName('SCEDHULE');
+      const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
       if (schSheet) {
         if (mode === 'full') {
           const lR = Math.max(schSheet.getLastRow(), 2);
@@ -2680,7 +2965,7 @@ function apiGetEvIntelligenceData(sheetName, limit) {
               r[9] || 0,   // BATTERY AFTER
               r[10] instanceof Date ? Utilities.formatDate(r[10], 'Asia/Makassar', 'HH:mm') : (r[10] || '-'),
               r[11] || 0,  // CHARGING TIME
-              r[12] || 0,  // ENERGY (KWH)
+              cleanEnergyKwh_(r[12]),  // ENERGY (KWH)
               r[13] || r[14] || '-', // REMARK
               r[17] || ''  // KETERANGAN
             ];
