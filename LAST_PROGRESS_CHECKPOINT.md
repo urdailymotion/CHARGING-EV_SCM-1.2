@@ -1,6 +1,6 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 20:08 WITA  
-**Status Sesi:** Pembersihan Toolbar Visual KPI (Hapus Salin Gambar, Download Gambar, Kirim WA, Print A4) (Status: Sukses & Teruji 100%, GAS @96, Git 8325645, Build v48)
+**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 20:35 WITA  
+**Status Sesi:** Penyempurnaan Mesin Cetak PDF Visual KPI (2 Halaman Landscape Utuh, Rapi, Bebas Terpotong) (Status: Sukses & Teruji 100%, GAS @97, Git b79646e, Build v49)
 
 ---
 
@@ -40,11 +40,26 @@
   - Menghapus elemen tombol `#btnCopyVisualKpiImg` (Salin Gambar), `#btnDownloadVisualKpiImg` (Download Gambar), `#btnShareVisualKpiWa` (Kirim WA), dan `#btnPrintVisualKpi` (Print A4) dari toolbar header di `index.html`.
   - Tetap mempertahankan badge `Live Synced` dan tombol utama `[ Download PDF ]` (`#btnDownloadVisualKpiPdf`).
 
-#### 5. 🚀 Rilis Versi & Deployment:
-- **Build Version:** `2026.10.04.v48` di `index.html`.
-- **Service Worker Cache:** `charging-ev-v48` di `sw.js`.
-- **Google Apps Script Deployment:** **`@96`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
-- **Git Commit & Push:** `8325645` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
+#### 5. 📄 Perbaikan Ekspor PDF Visual KPI (2 Halaman Landscape Utuh & Rapi):
+- **Masalah Sebelumnya:**
+  - Halaman 1 terpotong secara horizontal di tengah-tengah baris ke-2 grafik.
+  - Halaman 2 menyisakan potongan tipis sumbu grafik setinggi 50px dengan sisa halaman kosong putih.
+  - Halaman 3 terpotong margin kirinya sebesar ~260px (efek offset sidebar), sehingga Card Total Gangguan dan tabel sebelah kiri terpotong.
+- **Penyebab:** Pemanggilan bawaan `html2pdf.from().toPdf()` memaksakan pembagian halaman DOM berdasarkan tinggi piksel tanpa penskalaan proporsional, serta kontainer internal default menggunakan ukuran A4 Portrait (210mm) yang menyempitkan dan menggeser layout desktop 1400px.
+- **Solusi:**
+  - Mengintegrasikan library `html2canvas.min.js` (v1.4.1) dan `jspdf.umd.min.js` (v2.5.1) secara lokal di folder `assets/` dan cache PWA.
+  - Menempatkan Header resmi EV Intelligence langsung di dalam `#ppaKpiPage1` agar tercetak utuh di Halaman 1.
+  - Menggunakan isolasi capture `scale: 2` (HD Retina) dengan callback `onclone` yang menstabilkan layout desktop 1400px, menonaktifkan pergeseran sidebar, dan menyembunyikan tombol aksi ekspor.
+  - Menerapkan penskalaan aspek rasio proporsional presisi (`fit: contain` dengan margin 5mm) langsung di jsPDF:
+    - **Halaman 1:** Header EV Intelligence + Ringkasan Filter + 5 Card KPI + 8 Grafik Telemetry BI tampil utuh 100% tanpa terpotong satu piksel pun.
+    - **Halaman 2:** Banner Integrasi Problem Log + 4 Card KPI Gangguan + 2 Grafik Downtime + Tabel Log Insiden + Tabel Jadwal Swap + Footer Resmi PPA tampil utuh 100% tanpa margin terpotong.
+  - Hasil dokumen PDF kini menjadi **tepat 2 halaman landscape**, rapi, dan beresolusi tinggi.
+
+#### 6. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.04.v49` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v49` di `sw.js`.
+- **Google Apps Script Deployment:** **`@97`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+- **Git Commit & Push:** `b79646e` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
 
 ---
 
