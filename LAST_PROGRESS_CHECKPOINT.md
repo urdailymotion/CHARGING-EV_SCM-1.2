@@ -1,6 +1,44 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 03 Oktober 2026, Pukul 19:00 WITA  
-**Status Sesi:** Integrasi Problem Log & Analisis Downtime ke Dashboard Visual KPI (Status: Sukses & Teruji 100%, GAS @85, Git 3c44030, Build v37)
+**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 19:55 WITA  
+**Status Sesi:** Ekspor Excel 20-Kolom Sinkron Penuh Database & Sinkronisasi Tabel Jadwal Swap Bersih dari Dummy Fallback (Status: Sukses & Teruji 100%, GAS @95, Git 91aa27e, Build v47)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (04 Oktober 2026):
+
+#### 1. 📊 Standardisasi Ekspor Excel Transaksi Charging Swap Sama Persis 100% Database Google Sheets:
+- **Kebutuhan User:** Format file Excel (.xlsx) yang diunduh dari tombol Ekspor Transaksi harus memiliki struktur 20 kolom yang identik persis dengan sheet database `DATA INPUT` Google Sheets (dari urutan kolom, nama header, format nilai, freeze header baris 1, nama sheet `DATA INPUT`, hingga auto-filter).
+- **Implementasi:**
+  - Standardisasi urutan 20 kolom:
+    1. `TRANSACTION ID`, 2. `DATE`, 3. `SHIFT`, 4. `CATEGORY`, 5. `LOCATION`, 6. `KODE UNIT`, 7. `HM`, 8. `BATTERY BEFORE`, 9. `JAM IN SWAP`, 10. `BATTERY AFTER`, 11. `JAM OUT SWAP`, 12. `CHARGING TIME (MENIT)`, 13. `ENERGY (KWH)`, 14. `STATUS REMARK`, 15. `PROBLEM REMARK`, 16. `MANPOWER`, 17. `NIK`, 18. `KETERANGAN`, 19. `TIME SCH`, 20. `SWAP STATION`.
+  - Mengubah nama sheet default menjadi `DATA INPUT`.
+  - Membekukan baris header (`freeze: { xSplit: 0, ySplit: 1 }`) dan mengaktifkan auto-filter pada seluruh 20 kolom.
+  - Penyelarasan format pada seluruh fungsi ekspor: `executeExportDataInputExcel()`, `exportSwapsExcel()`, `exportAllToExcelMultiSheet()`, dan `exportSwapsCSV()`.
+
+#### 2. ⚡ Alur Ekspor Cerdas (1-Klik Langsung Download saat Ada Filter, Modal Pengingat saat Tanpa Filter):
+- **User Request:** Popup pilihan ekspor dihilangkan saat user sudah memasang filter agar ekspor langsung berjalan dalam 1 klik. Jika filter belum aktif, tampilkan popup pengingat ramah agar user teringat untuk memfilter data.
+- **Implementasi:**
+  - **Saat Filter Aktif:** Langsung unduh file Excel dalam 1 klik tanpa modal pengganggu.
+  - **Saat Tanpa Filter:** Menampilkan modal pengingat `#modalExportNoFilterAlert` (Amber Theme) dengan 2 opsi jelas:
+    1. `[ 🔍 Pasang Filter Dahulu (Disarankan) ]` &rarr; Menutup modal dan memfokuskan layar ke bar filter tanggal.
+    2. `[ 🌐 Tetap Ekspor Seluruh Database (8.400+ Baris) ]` &rarr; Melanjutkan ekspor seluruh riwayat database tanpa hambatan.
+    3. `[ Batal ]`.
+
+#### 3. 🗓️ Sinkronisasi Bersih Tabel Jadwal Swap (Penghapusan Dummy Fallback & Empty State Interaktif):
+- **Masalah:** Data jadwal swap yang tampil di tabel operasi tidak sesuai dengan data riil di Google Sheets, melainkan menampilkan jadwal tiruan otomatis (`buildDefaultSchedules()`).
+- **Penyebab:** Kode frontend memiliki fallback otomatis ke dummy schedule jika database awal kosong, serta `Code.gs` sebelumnya hanya memeriksa sheet bernama `SCEDHULE` (typo lama) tanpa fallback ke `SCHEDULE`.
+- **Solusi:**
+  - Menghapus pembuatan dummy fallback di `gasSync._processResult`, `initDataState`, `initScheduleModule`, dan `renderScheduleTable`.
+  - Menyelaraskan pembacaan sheet di `Code.gs` agar mendukung nama sheet `SCEDHULE`, `SCHEDULE`, maupun `Schedule`.
+  - Menambahkan *Empty State* interaktif dengan ikon kalender, pesan status informatif, serta 2 tombol CTA langsung:
+    - `[ Upload File Jadwal ]` (membuka modal import Excel jadwal swap).
+    - `[ + Tambah Jadwal ]` (membuka form input jadwal baru).
+
+#### 4. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.04.v47` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v47` di `sw.js`.
+- **Google Apps Script Deployment:** **`@95`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+- **Git Commit & Push:** `91aa27e` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
 
 ---
 
