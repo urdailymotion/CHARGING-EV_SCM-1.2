@@ -1,6 +1,6 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 19:55 WITA  
-**Status Sesi:** Ekspor Excel 20-Kolom Sinkron Penuh Database & Sinkronisasi Tabel Jadwal Swap Bersih dari Dummy Fallback (Status: Sukses & Teruji 100%, GAS @95, Git 91aa27e, Build v47)
+**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 20:08 WITA  
+**Status Sesi:** Pembersihan Toolbar Visual KPI (Hapus Salin Gambar, Download Gambar, Kirim WA, Print A4) (Status: Sukses & Teruji 100%, GAS @96, Git 8325645, Build v48)
 
 ---
 
@@ -34,11 +34,17 @@
     - `[ Upload File Jadwal ]` (membuka modal import Excel jadwal swap).
     - `[ + Tambah Jadwal ]` (membuka form input jadwal baru).
 
-#### 4. 🚀 Rilis Versi & Deployment:
-- **Build Version:** `2026.10.04.v47` di `index.html`.
-- **Service Worker Cache:** `charging-ev-v47` di `sw.js`.
-- **Google Apps Script Deployment:** **`@95`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
-- **Git Commit & Push:** `91aa27e` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
+#### 4. 🧹 Pembersihan Toolbar Header Visual KPI:
+- **Kebutuhan User:** Menghilangkan tombol aksi ekspor cepat (Salin Gambar, Download Gambar, Kirim WA) dan tombol Print A4 dari toolbar Visual KPI, sehingga tampilan header lebih bersih dan fokus.
+- **Implementasi:**
+  - Menghapus elemen tombol `#btnCopyVisualKpiImg` (Salin Gambar), `#btnDownloadVisualKpiImg` (Download Gambar), `#btnShareVisualKpiWa` (Kirim WA), dan `#btnPrintVisualKpi` (Print A4) dari toolbar header di `index.html`.
+  - Tetap mempertahankan badge `Live Synced` dan tombol utama `[ Download PDF ]` (`#btnDownloadVisualKpiPdf`).
+
+#### 5. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.04.v48` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v48` di `sw.js`.
+- **Google Apps Script Deployment:** **`@96`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+- **Git Commit & Push:** `8325645` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
 
 ---
 
