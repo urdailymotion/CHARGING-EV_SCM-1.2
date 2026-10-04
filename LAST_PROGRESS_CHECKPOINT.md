@@ -588,19 +588,74 @@
      - `APP_BUILD_ID`: Dinaikkan ke **`2026.10.03.v36`** di `index.html`.
      - `sw.js`: Cache Service Worker dinaikkan ke **`charging-ev-v36`**.
      - Query string registrasi Service Worker dinaikkan ke `?v=36`.
+ 
+---
+
+#### 27. 📊 Standarisasi Penuh Export Excel Transaksi (100% Identik Master Database Google Sheets DATA INPUT) (04 Oktober 2026):
+- **Latar Belakang & Permintaan Pengguna:**
+  - Pengguna meminta agar hasil unduhan tombol **`[ Export Data (.xlsx) ]`** pada menu **Operation** ➔ sub-menu **Charging Swap Transaction** dibuat **sama persis dengan databasenya**.
+- **Analisis & Masalah pada Format Export Terdahulu:**
+  1. *Susunan Kolom Berantakan:* File ekspor lama hanya memiliki 17 kolom dengan urutan sembarangan (`Manpower`, `NIK`, `Transaction ID`, `Category`, `Unit`, `Date`, ...), sedangkan database master Google Sheets (`DATA INPUT`) memiliki 20 kolom terstruktur dimulai dari `TRANSACTION ID`.
+  2. *Kolom Hilang:* Sebanyak 3 kolom penting di database tidak ter-ekspor (`KETERANGAN`, `TIME SCH`, dan `SWAP STATION`).
+  3. *Nama Kolom Tidak Seragam:* Header lama menggunakan bahasa Inggris informal (`Duration (Min)`, `Unit`, `Remark`, dll.) yang berbeda dengan header database resmi.
+  4. *Nama Sheet Berbeda:* Sheet Excel lama dinamai `"Transactions"` alih-alih `"DATA INPUT"`.
+  5. *Inkompatibilitas Re-Import:* File ekspor tidak bisa di-*copy-paste* langsung ke Google Sheets karena posisi kolom tidak sejajar.
+- **Pembaruan Sistem yang Diterapkan:**
+  1. **Susunan 20 Kolom Master Database (1-to-1 Identik Presisi):**
+     - **Kolom 1 (A):** `TRANSACTION ID`
+     - **Kolom 2 (B):** `DATE`
+     - **Kolom 3 (C):** `SHIFT`
+     - **Kolom 4 (D):** `CATEGORY`
+     - **Kolom 5 (E):** `LOCATION`
+     - **Kolom 6 (F):** `KODE UNIT` (kode murni armada seperti di Google Sheets misal `1614`, tanpa prefix `DT`)
+     - **Kolom 7 (G):** `HM` (Hour meter)
+     - **Kolom 8 (H):** `BATTERY BEFORE` (Persentase baterai masuk rapi misal `25%`)
+     - **Kolom 9 (I):** `JAM IN SWAP` (Waktu masuk swap)
+     - **Kolom 10 (J):** `BATTERY AFTER` (Persentase baterai keluar rapi misal `100%`)
+     - **Kolom 11 (K):** `JAM OUT SWAP` (Waktu keluar swap)
+     - **Kolom 12 (L):** `CHARGING TIME (MENIT)` (Durasi menit numerik)
+     - **Kolom 13 (M):** `ENERGY (KWH)` (Energi kWh numerik desimal 2 angka)
+     - **Kolom 14 (N):** `STATUS REMARK` (`Non-Schedule`, `On Time`, `Out Off Time`)
+     - **Kolom 15 (O):** `PROBLEM REMARK` (Kategori kendala / `13.NO PROBLEM`)
+     - **Kolom 16 (P):** `MANPOWER` (Nama operator)
+     - **Kolom 17 (Q):** `NIK` (NIK operator)
+     - **Kolom 18 (R):** `KETERANGAN` (Catatan detail lapangan)
+     - **Kolom 19 (S):** `TIME SCH` (Target waktu jadwal swap)
+     - **Kolom 20 (T):** `SWAP STATION` (Identitas mesin swap: `SWAP 01`, `SWAP 02`, `SWAP 03`)
+  2. **Nama Sheet & Standar Workbook Excel:**
+     - Nama lembar kerja (*worksheet*): **`DATA INPUT`**.
+     - Auto-filter dropdown Excel aktif di baris header 1 (`A1:T...`).
+     - Freeze pane baris 1 aktif (header terkunci diam saat digulirkan ke bawah).
+     - Lebar kolom proporsional (*custom column widths*) untuk semua 20 kolom sehingga tidak ada teks terpotong atau cell `###`.
+  3. **Modal Dialog Pilihan Jangkauan Export Pintar (`#modalExportDataChoice`):**
+     - Jika tabel sedang memfilter data (misal pencarian, shift, tanggal, atau lokasi):
+       - Muncul pop-up modal modern elegan:
+         - **Opsi 1:** `[ 📄 Export Data Terfilter Saja ({N} Baris) ]`
+         - **Opsi 2:** `[ 🌐 Export Seluruh Master Database ({Total} Baris) ]`
+     - Jika tabel tidak memfilter data:
+       - Mengklik tombol langsung mengunduh seluruh database secara instan (1 klik tanpa jeda).
+  4. **Penyelarasan Ekspor Cadangan (Tab Backup & Migrasi):**
+     - Fungsi `exportSwapsExcel()`, `exportAllToExcelMultiSheet()`, dan `exportSwapsCSV()` diselaraskan menggunakan standar 20 kolom `DATA INPUT` yang sama.
+  5. **Pengujian Nyata End-to-End Headless Chrome (CDP):**
+     - Teruji sukses 100% membuka modal pilihan jangkauan, mengekspor 20 kolom lengkap, format persis sama dengan database Google Sheets.
+  6. **Pembaruan Build, Cache & Deployment:**
+     - Build ID: `2026.10.04.v45` di `index.html`.
+     - Service Worker Cache: `charging-ev-v45` di `sw.js`.
+     - Google Apps Script Production: **`@93`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+     - Git Commit & Push: `61f2588` pada branch `main` GitHub repo [urdailymotion/CHARGING-EV_SCM-1.2](https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git).
 
 ---
 
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@84` (Universal Modal Scrolling & Mobile Edit Data Fix v36)
+   - **Versi Rilis:** `@93` (Export Excel 20-Kolom Persis Database DATA INPUT v45)
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v36`
+   - **Service Worker Cache:** `charging-ev-v45`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
 
 
