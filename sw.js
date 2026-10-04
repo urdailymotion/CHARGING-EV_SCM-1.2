@@ -1,11 +1,13 @@
-// CHARGING EV SCM - Service Worker v48.0
-const CACHE_NAME = 'charging-ev-v48';
+// CHARGING EV SCM - Service Worker v49.0
+const CACHE_NAME = 'charging-ev-v49';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './html2pdf.bundle.min.js',
+  './assets/html2canvas.min.js',
+  './assets/jspdf.umd.min.js',
   './assets/html2pdf.bundle.min.js',
+  './html2pdf.bundle.min.js',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',

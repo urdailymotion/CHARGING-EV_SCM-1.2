@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v48';
+      var APP_BUILD_ID = '2026.10.04.v49';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -10218,9 +10218,18 @@ html, body {
   <!-- Firebase SDK v10 (Cloud Firestore & Realtime Engine) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <!-- High-fidelity HTML2Canvas & jsPDF for crisp Executive PDF Generation -->
+  <script src="assets/html2canvas.min.js"></script>
+  <script src="assets/jspdf.umd.min.js"></script>
   <!-- html2pdf.js for Client-side Executive PDF Generation -->
   <script src="assets/html2pdf.bundle.min.js"></script>
   <script>
+    if (typeof html2canvas === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>');
+    }
+    if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+    }
     if (typeof html2pdf === 'undefined') {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
     }
@@ -11512,6 +11521,9 @@ html, body {
         <!-- PPA EXECUTIVE DASHBOARD WRAPPER -->
         <div class="ppa-dashboard-wrapper" style="padding: 10px 0;">
           
+          <!-- PAGE 1 (PICTURE 3): CONTROLS, 5 KPI CARDS & 8 BI TELEMETRY CHARTS -->
+          <div id="ppaKpiPage1" class="ppa-kpi-landscape-page" style="background: #F8F9FA; width: 100%; box-sizing: border-box;">
+
           <!-- Top Header Section (EV Intelligence Style) -->
           <div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 1px solid #E4E7EC; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -11539,9 +11551,6 @@ html, body {
               </button>
             </div>
           </div>
-
-          <!-- PAGE 1 (PICTURE 3): CONTROLS, 5 KPI CARDS & 8 BI TELEMETRY CHARTS -->
-          <div id="ppaKpiPage1" class="ppa-kpi-landscape-page" style="background: #F8F9FA; width: 100%; box-sizing: border-box;">
 
           <!-- Controls Wrapper: Segmented Switcher & Quick Presets -->
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;">
@@ -24088,7 +24097,7 @@ function buildVisualKpiPdfReportHtml() {
 // without ANY truncation or missing sections (Charts, Cards, Problems, Tables)
 // =============================================================================
 
-// Helper: captures both Page 1 (Picture 3) and Page 2 (Picture 4) as crisp canvases
+// Helper: captures both Page 1 (Picture 3) and Page 2 (Picture 4) as crisp, unclipped HD canvases
 async function renderVisualKpiCanvases() {
   const p1 = document.getElementById('ppaKpiPage1');
   const p2 = document.getElementById('ppaKpiPage2');
@@ -24096,26 +24105,81 @@ async function renderVisualKpiCanvases() {
     throw new Error('Elemen Visual KPI Halaman 1 & 2 tidak ditemukan.');
   }
 
-  const opt = {
-    margin: [0, 0, 0, 0],
-    html2canvas: {
-      scale: 1.6,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#F8F9FA',
-      windowWidth: 1400,
-      scrollX: 0,
-      scrollY: 0
+  // Ensure charts and animations are settled
+  await new Promise(r => setTimeout(r, 120));
+
+  const captureElem = async (element) => {
+    // If window.html2canvas is available directly:
+    if (typeof html2canvas === 'function') {
+      return await html2canvas(element, {
+        scale: 2, // High resolution (crisp vectors & sharp fonts)
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#F8F9FA',
+        windowWidth: 1400,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          // Hide download button & any floating interactive buttons
+          const btnPdf = clonedDoc.getElementById('btnDownloadVisualKpiPdf');
+          if (btnPdf) btnPdf.style.display = 'none';
+
+          const btnModul = clonedDoc.querySelector('.ppa-prob-table-header button');
+          if (btnModul) btnModul.style.display = 'none';
+
+          // Lock desktop layout at 1400px width so it never wraps or stacks vertically
+          const target = clonedDoc.getElementById(element.id);
+          if (target) {
+            target.style.width = '1400px';
+            target.style.minWidth = '1400px';
+            target.style.maxWidth = '1400px';
+            target.style.margin = '0 auto';
+            target.style.boxSizing = 'border-box';
+            target.style.overflow = 'visible';
+          }
+
+          const wrapper = clonedDoc.querySelector('.ppa-dashboard-wrapper');
+          if (wrapper) {
+            wrapper.style.width = '1400px';
+            wrapper.style.maxWidth = '1400px';
+            wrapper.style.margin = '0 auto';
+            wrapper.style.padding = '10px 14px';
+          }
+
+          // Neutralize sidebar offset so canvas is never clipped on the left
+          const sidebar = clonedDoc.querySelector('.sidebar') || clonedDoc.querySelector('.app-sidebar');
+          if (sidebar) sidebar.style.display = 'none';
+          const mainContent = clonedDoc.querySelector('.main-content') || clonedDoc.querySelector('.content-body');
+          if (mainContent) {
+            mainContent.style.marginLeft = '0';
+            mainContent.style.padding = '0';
+            mainContent.style.width = '1400px';
+          }
+        }
+      });
     }
+
+    // Fallback: html2pdf with explicit wide landscape container
+    const opt = {
+      margin: [0, 0, 0, 0],
+      jsPDF: { unit: 'px', format: [1400, 1000], orientation: 'landscape' },
+      html2canvas: {
+        scale: 1.8,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#F8F9FA',
+        windowWidth: 1400,
+        scrollX: 0,
+        scrollY: 0
+      }
+    };
+    return await new Promise((resolve, reject) => {
+      html2pdf().set(opt).from(element).toCanvas().get('canvas').then(resolve).catch(reject);
+    });
   };
 
-  const canvas1 = await new Promise((resolve, reject) => {
-    html2pdf().set(opt).from(p1).toCanvas().get('canvas').then(resolve).catch(reject);
-  });
-
-  const canvas2 = await new Promise((resolve, reject) => {
-    html2pdf().set(opt).from(p2).toCanvas().get('canvas').then(resolve).catch(reject);
-  });
+  const canvas1 = await captureElem(p1);
+  const canvas2 = await captureElem(p2);
 
   return { canvas1, canvas2 };
 }
@@ -24133,7 +24197,7 @@ function stitchVisualKpiMasterCanvas(canvas1, canvas2) {
   return masterCanvas;
 }
 
-// 1. Download PDF: 2-Page Landscape PDF (Persis Gambar 3 dan Gambar 4, Plek Ketiplek)
+// 1. Download PDF: 2-Page Landscape PDF (Persis Gambar 3 dan Gambar 4, Rapi & Penuh)
 window.downloadVisualKpiPdf = async function() {
   const btn = document.getElementById('btnDownloadVisualKpiPdf');
   const originalHtml = btn ? btn.innerHTML : '';
@@ -24160,44 +24224,85 @@ window.downloadVisualKpiPdf = async function() {
     const timeStamp = (new Date()).toTimeString().slice(0, 5).replace(/:/g, '');
     const filename = `Laporan_Visual_KPI_PPA_${dateStamp}_${timeStamp}.pdf`;
 
-    const pdfOpt = {
-      margin: [4, 4, 4, 4],
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 1.6, useCORS: true, backgroundColor: '#F8F9FA', windowWidth: 1400 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
+    // Access jsPDF constructor
+    let jsPdfConstructor = null;
+    if (window.jspdf && window.jspdf.jsPDF) {
+      jsPdfConstructor = window.jspdf.jsPDF;
+    } else if (typeof jsPDF === 'function') {
+      jsPdfConstructor = jsPDF;
+    }
 
-    const p1 = document.getElementById('ppaKpiPage1');
+    const pageWidth = 297;
+    const pageHeight = 210;
+    const margin = 5; // 5mm elegant margin
+    const maxW = pageWidth - (margin * 2);  // 287mm
+    const maxH = pageHeight - (margin * 2); // 200mm
 
-    await new Promise((resolve, reject) => {
-      html2pdf().set(pdfOpt).from(p1).toPdf().get('pdf').then(pdfInstance => {
-        // Page 2: Add landscape page and place canvas 2 (Picture 4)
-        pdfInstance.addPage('a4', 'landscape');
-        const pageWidth = 297;
-        const pageHeight = 210;
-        const margin = 4;
-        const targetW = pageWidth - (margin * 2);
-        const targetH = pageHeight - (margin * 2);
+    if (jsPdfConstructor) {
+      const pdf = new jsPdfConstructor({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
 
-        const r2 = canvas2.height / canvas2.width;
-        let w2 = targetW;
-        let h2 = targetW * r2;
-        if (h2 > targetH) {
-          h2 = targetH;
-          w2 = h2 / r2;
-        }
-        const x2 = margin + (targetW - w2) / 2;
-        const y2 = margin + (targetH - h2) / 2;
+      // --- PAGE 1: Telemetry Intelligence & KPI Charts ---
+      const r1 = canvas1.height / canvas1.width;
+      let w1 = maxW;
+      let h1 = maxW * r1;
+      if (h1 > maxH) {
+        h1 = maxH;
+        w1 = h1 / r1;
+      }
+      const x1 = margin + (maxW - w1) / 2;
+      const y1 = margin + (maxH - h1) / 2;
+      pdf.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', x1, y1, w1, h1, undefined, 'FAST');
 
-        pdfInstance.addImage(canvas2.toDataURL('image/jpeg', 0.98), 'JPEG', x2, y2, w2, h2);
-        pdfInstance.save(filename);
-        resolve(pdfInstance);
-      }).catch(reject);
-    });
+      // --- PAGE 2: Problem Log Analytics & Schedule Compliance Table ---
+      pdf.addPage('a4', 'landscape');
+      const r2 = canvas2.height / canvas2.width;
+      let w2 = maxW;
+      let h2 = maxW * r2;
+      if (h2 > maxH) {
+        h2 = maxH;
+        w2 = h2 / r2;
+      }
+      const x2 = margin + (maxW - w2) / 2;
+      const y2 = margin + (maxH - h2) / 2;
+      pdf.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', x2, y2, w2, h2, undefined, 'FAST');
+
+      pdf.save(filename);
+    } else {
+      // Fallback via html2pdf instance
+      const pdfOpt = {
+        margin: [4, 4, 4, 4],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.95 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+      await new Promise((resolve, reject) => {
+        html2pdf().set(pdfOpt).from(document.createElement('div')).toPdf().get('pdf').then(pdfInstance => {
+          // Page 1
+          const r1 = canvas1.height / canvas1.width;
+          let w1 = maxW, h1 = maxW * r1;
+          if (h1 > maxH) { h1 = maxH; w1 = h1 / r1; }
+          pdfInstance.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', margin + (maxW - w1) / 2, margin + (maxH - h1) / 2, w1, h1);
+
+          // Page 2
+          pdfInstance.addPage('a4', 'landscape');
+          const r2 = canvas2.height / canvas2.width;
+          let w2 = maxW, h2 = maxW * r2;
+          if (h2 > maxH) { h2 = maxH; w2 = h2 / r2; }
+          pdfInstance.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', margin + (maxW - w2) / 2, margin + (maxH - h2) / 2, w2, h2);
+
+          pdfInstance.save(filename);
+          resolve(pdfInstance);
+        }).catch(reject);
+      });
+    }
 
     if (typeof showToast === 'function') {
-      showToast('✅ Laporan PDF 2 Halaman Landscape berhasil diunduh persis seperti tampilan Visual KPI!', 'success');
+      showToast('✅ Laporan PDF Visual KPI (2 Halaman Rapi & Lengkap) berhasil diunduh!', 'success');
     }
   } catch (err) {
     console.error('Error saat membuat PDF:', err);
@@ -29871,7 +29976,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=48')
+      navigator.serviceWorker.register('./sw.js?v=49')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka
