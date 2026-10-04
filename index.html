@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v49';
+      var APP_BUILD_ID = '2026.10.04.v50';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -24101,85 +24101,172 @@ function buildVisualKpiPdfReportHtml() {
 async function renderVisualKpiCanvases() {
   const p1 = document.getElementById('ppaKpiPage1');
   const p2 = document.getElementById('ppaKpiPage2');
-  if (!p1 || !p2) {
+  const wrapper = document.querySelector('.ppa-dashboard-wrapper');
+  if (!p1 || !p2 || !wrapper) {
     throw new Error('Elemen Visual KPI Halaman 1 & 2 tidak ditemukan.');
   }
 
-  // Ensure charts and animations are settled
-  await new Promise(r => setTimeout(r, 120));
+  // 1. Temporarily apply strict desktop export styles to ensure 100% clean layout
+  const styleEl = document.createElement('style');
+  styleEl.id = 'ppaExportDesktopStyles';
+  styleEl.textContent = `
+    .ppa-export-active-mode {
+      width: 1400px !important;
+      min-width: 1400px !important;
+      max-width: 1400px !important;
+      box-sizing: border-box !important;
+      padding: 16px 20px !important;
+      margin: 0 auto !important;
+      background: #F8F9FA !important;
+    }
+    .ppa-export-active-mode #ppaKpiPage1,
+    .ppa-export-active-mode #ppaKpiPage2 {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      background: #F8F9FA !important;
+      padding: 0 !important;
+    }
+    .ppa-export-active-mode .header-bar {
+      margin-bottom: 16px !important;
+      padding-bottom: 14px !important;
+    }
+    .ppa-export-active-mode .ppa-kpi-cards-grid {
+      display: grid !important;
+      grid-template-columns: repeat(5, 1fr) !important;
+      gap: 12px !important;
+      margin-bottom: 16px !important;
+    }
+    .ppa-export-active-mode .ppa-charts-quad-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 14px !important;
+      margin-bottom: 16px !important;
+    }
+    .ppa-export-active-mode .ppa-chart-card-box {
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 12px 14px !important;
+    }
+    .ppa-export-active-mode .ppa-canvas-wrapper {
+      height: 185px !important;
+      max-height: 185px !important;
+      min-height: 185px !important;
+      overflow: hidden !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+    }
+    .ppa-export-active-mode .ppa-canvas-wrapper canvas {
+      max-height: 185px !important;
+      height: 185px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .ppa-export-active-mode .ppa-problem-kpi-container {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+      margin-bottom: 20px !important;
+    }
+    .ppa-export-active-mode .problem-stat-ribbon {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 12px !important;
+      margin-bottom: 16px !important;
+    }
+    .ppa-export-active-mode .ppa-prob-charts-row {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 14px !important;
+      margin-bottom: 16px !important;
+    }
+    .ppa-export-active-mode .ppa-prob-table-card {
+      margin-bottom: 16px !important;
+      clear: both !important;
+      box-sizing: border-box !important;
+    }
+    .ppa-export-active-mode .ppa-exec-table-box {
+      margin-bottom: 16px !important;
+      clear: both !important;
+      box-sizing: border-box !important;
+    }
+    .ppa-export-active-mode #btnDownloadVisualKpiPdf,
+    .ppa-export-active-mode .btn-ppa-action-pdf {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(styleEl);
+  wrapper.classList.add('ppa-export-active-mode');
 
-  const captureElem = async (element) => {
-    // If window.html2canvas is available directly:
+  // Neutralize container offsets temporarily
+  const contentBody = document.querySelector('.content-body') || document.querySelector('.main-content');
+  const origContentStyle = contentBody ? contentBody.getAttribute('style') : null;
+  if (contentBody) {
+    contentBody.style.marginLeft = '0';
+    contentBody.style.padding = '0';
+    contentBody.style.width = '1400px';
+    contentBody.style.maxWidth = '1400px';
+    contentBody.style.overflow = 'visible';
+  }
+
+  // 2. Trigger Chart.js resize & redraw on all active chart instances
+  if (typeof Chart !== 'undefined' && Chart.instances) {
+    Object.values(Chart.instances).forEach(inst => {
+      try {
+        inst.resize();
+        inst.update('none');
+      } catch (e) {}
+    });
+  }
+
+  // Allow DOM & Chart.js redraw to settle
+  await new Promise(r => setTimeout(r, 220));
+
+  let canvas1 = null;
+  let canvas2 = null;
+
+  try {
+    const captureOpt = {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#F8F9FA',
+      windowWidth: 1400,
+      scrollX: 0,
+      scrollY: 0
+    };
+
     if (typeof html2canvas === 'function') {
-      return await html2canvas(element, {
-        scale: 2, // High resolution (crisp vectors & sharp fonts)
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#F8F9FA',
-        windowWidth: 1400,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc) => {
-          // Hide download button & any floating interactive buttons
-          const btnPdf = clonedDoc.getElementById('btnDownloadVisualKpiPdf');
-          if (btnPdf) btnPdf.style.display = 'none';
+      canvas1 = await html2canvas(p1, captureOpt);
+      canvas2 = await html2canvas(p2, captureOpt);
+    } else {
+      // Fallback html2pdf
+      const pdfOpt = {
+        margin: [0, 0, 0, 0],
+        jsPDF: { unit: 'px', format: [1400, 1000], orientation: 'landscape' },
+        html2canvas: captureOpt
+      };
+      canvas1 = await new Promise((res, rej) => html2pdf().set(pdfOpt).from(p1).toCanvas().get('canvas').then(res).catch(rej));
+      canvas2 = await new Promise((res, rej) => html2pdf().set(pdfOpt).from(p2).toCanvas().get('canvas').then(res).catch(rej));
+    }
+  } finally {
+    // 3. Immediately restore live DOM to user viewport
+    wrapper.classList.remove('ppa-export-active-mode');
+    if (contentBody) {
+      if (origContentStyle !== null) contentBody.setAttribute('style', origContentStyle);
+      else contentBody.removeAttribute('style');
+    }
+    styleEl.remove();
 
-          const btnModul = clonedDoc.querySelector('.ppa-prob-table-header button');
-          if (btnModul) btnModul.style.display = 'none';
-
-          // Lock desktop layout at 1400px width so it never wraps or stacks vertically
-          const target = clonedDoc.getElementById(element.id);
-          if (target) {
-            target.style.width = '1400px';
-            target.style.minWidth = '1400px';
-            target.style.maxWidth = '1400px';
-            target.style.margin = '0 auto';
-            target.style.boxSizing = 'border-box';
-            target.style.overflow = 'visible';
-          }
-
-          const wrapper = clonedDoc.querySelector('.ppa-dashboard-wrapper');
-          if (wrapper) {
-            wrapper.style.width = '1400px';
-            wrapper.style.maxWidth = '1400px';
-            wrapper.style.margin = '0 auto';
-            wrapper.style.padding = '10px 14px';
-          }
-
-          // Neutralize sidebar offset so canvas is never clipped on the left
-          const sidebar = clonedDoc.querySelector('.sidebar') || clonedDoc.querySelector('.app-sidebar');
-          if (sidebar) sidebar.style.display = 'none';
-          const mainContent = clonedDoc.querySelector('.main-content') || clonedDoc.querySelector('.content-body');
-          if (mainContent) {
-            mainContent.style.marginLeft = '0';
-            mainContent.style.padding = '0';
-            mainContent.style.width = '1400px';
-          }
-        }
+    if (typeof Chart !== 'undefined' && Chart.instances) {
+      Object.values(Chart.instances).forEach(inst => {
+        try {
+          inst.resize();
+          inst.update('none');
+        } catch (e) {}
       });
     }
-
-    // Fallback: html2pdf with explicit wide landscape container
-    const opt = {
-      margin: [0, 0, 0, 0],
-      jsPDF: { unit: 'px', format: [1400, 1000], orientation: 'landscape' },
-      html2canvas: {
-        scale: 1.8,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#F8F9FA',
-        windowWidth: 1400,
-        scrollX: 0,
-        scrollY: 0
-      }
-    };
-    return await new Promise((resolve, reject) => {
-      html2pdf().set(opt).from(element).toCanvas().get('canvas').then(resolve).catch(reject);
-    });
-  };
-
-  const canvas1 = await captureElem(p1);
-  const canvas2 = await captureElem(p2);
+  }
 
   return { canvas1, canvas2 };
 }
@@ -24209,7 +24296,7 @@ window.downloadVisualKpiPdf = async function() {
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" stroke="currentColor"></circle>
         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
       </svg>
-      <span>Menyiapkan PDF 2 Halaman Landscape...</span>
+      <span>Menyusun PDF Rapi...</span>
     `;
   }
 
@@ -24234,9 +24321,9 @@ window.downloadVisualKpiPdf = async function() {
 
     const pageWidth = 297;
     const pageHeight = 210;
-    const margin = 5; // 5mm elegant margin
-    const maxW = pageWidth - (margin * 2);  // 287mm
-    const maxH = pageHeight - (margin * 2); // 200mm
+    const margin = 6; // 6mm margin
+    const maxW = pageWidth - (margin * 2);  // 285mm
+    const maxH = pageHeight - (margin * 2); // 198mm
 
     if (jsPdfConstructor) {
       const pdf = new jsPdfConstructor({
@@ -24275,7 +24362,7 @@ window.downloadVisualKpiPdf = async function() {
     } else {
       // Fallback via html2pdf instance
       const pdfOpt = {
-        margin: [4, 4, 4, 4],
+        margin: [6, 6, 6, 6],
         filename: filename,
         image: { type: 'jpeg', quality: 0.95 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
@@ -29976,7 +30063,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=49')
+      navigator.serviceWorker.register('./sw.js?v=50')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka
