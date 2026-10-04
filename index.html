@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v47';
+      var APP_BUILD_ID = '2026.10.04.v48';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -11527,33 +11527,6 @@ html, body {
                 Live Synced
               </span>
 
-              <!-- Quick Export: Salin Gambar ke Clipboard -->
-              <button type="button" class="btn-ppa-action-copy" id="btnCopyVisualKpiImg" onclick="window.copyVisualKpiImageToClipboard()" title="Salin Seluruh Tampilan Visual KPI ke Clipboard (Bisa langsung Ctrl+V di WhatsApp / Chat)">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                <span>Salin Gambar</span>
-              </button>
-
-              <!-- Quick Export: Download Gambar PNG HD -->
-              <button type="button" class="btn-ppa-action-img" id="btnDownloadVisualKpiImg" onclick="window.downloadVisualKpiImage()" title="Download Gambar Seluruh Tampilan Visual KPI (PNG HD Panjang Tanpa Terpotong)">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                <span>Download Gambar</span>
-              </button>
-
-              <!-- Quick Export: Kirim ke WhatsApp -->
-              <button type="button" class="btn-ppa-action-wa" id="btnShareVisualKpiWa" onclick="window.shareVisualKpiToWhatsApp()" title="Kirim Ringkasan Laporan Operasional ke WhatsApp">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:-2px; margin-right: 5px;">
-                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19.01L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
-                </svg>
-                <span>Kirim WA</span>
-              </button>
-
               <!-- Official PDF Document Export -->
               <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download PDF Seluruh Tampilan Visual KPI (Semua Grafik & Data Utuh)">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
@@ -11563,16 +11536,6 @@ html, body {
                   <polyline points="9 15 12 18 15 15"></polyline>
                 </svg>
                 <span>Download PDF</span>
-              </button>
-
-              <!-- Print A4 -->
-              <button type="button" class="btn-ppa-action-print" id="btnPrintVisualKpi" onclick="window.printVisualKpiReport()" title="Cetak Seluruh Tampilan Visual KPI">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
-                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                  <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                <span>Print A4</span>
               </button>
             </div>
           </div>
@@ -29908,7 +29871,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=47')
+      navigator.serviceWorker.register('./sw.js?v=48')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka
