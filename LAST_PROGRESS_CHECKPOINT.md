@@ -649,14 +649,57 @@
 ### 🌐 Status Deployment & Versi:
 1. **Google Apps Script (GAS Production):**
    - **Deployment ID:** `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`
-   - **Versi Rilis:** `@93` (Export Excel 20-Kolom Persis Database DATA INPUT v45)
+   - **Versi Rilis:** `@94` (Export Excel Direct 1-Click Filtered & Reminder Unfiltered v46)
    - **Tautan Live GAS:** https://script.google.com/macros/s/AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q/exec
 
 2. **GitHub Repository & Netlify:**
    - **Remote URL:** https://github.com/urdailymotion/CHARGING-EV_SCM-1.2.git
    - **Branch:** `main`
-   - **Service Worker Cache:** `charging-ev-v45`
+   - **Service Worker Cache:** `charging-ev-v46`
    - **Anti-Cache Headers:** Aktif via `_headers` & `netlify.toml`
+
+---
+
+## 📌 PEMBARUAN TERAKHIR: 04 OKTOBER 2026 (BUILD v46 - EXPORT 1-KLIK LANGSUNG & REMINDER FILTER)
+
+### 🎯 Sasaran Permintaan User:
+1. Menghilangkan pop-up pilihan export jika pengguna sudah memasang filter (Tanggal, Shift, Lokasi, atau Pencarian). Ekspor langsung terunduh secara instan dalam 1 kali klik sesuai data yang tampil di layar.
+2. Jika filter belum diaktifkan (seluruh data riwayat 8.400+ baris tampil), tampilkan pop-up notifikasi peringatan (*reminder modal*) yang menyarankan pengguna untuk mengaktifkan filter terlebih dahulu atau tetap mengekspor seluruh master database.
+
+### 🛠️ Rincian Perubahan yang Diterapkan:
+1. **Penerapan Alur Pintar di `exportFullCSV()` / `exportFullExcel()` ([index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html)):**
+   - **Kondisi A (Filter Aktif):**
+     - Mendeteksi apakah salah satu filter sedang aktif: `#filterStartDate`, `#filterEndDate`, `#filterShiftSelect !== 'ALL'`, `#filterLocationSelect !== 'ALL'`, atau `#inputTableSearch` terisi.
+     - **0 MODAL / POPUP!** Data yang sedang difilter (`activeFilteredList`) langsung diekspor seketika ke file Excel (.xlsx).
+     - Nama file otomatis memuat tag filter aktif (misal: `DATA_INPUT_Charging_Swap_FILTERED_Shift1_ROOMA1_2026-10-04.xlsx`).
+     - Menampilkan toast informatif: `Mengunduh {N} data transaksi sesuai filter...`.
+   - **Kondisi B (Filter Belum Aktif):**
+     - Membuka modal peringatan cerdas `#modalExportNoFilterAlert`.
+2. **Desain Pop-Up Pengingat Modern & Elegan (`#modalExportNoFilterAlert`):**
+   - **Header Premium:** Dark slate navy (`#0f172a`) dengan aksen garis emas/amber (`#f59e0b`) dan badge peringatan visual segitiga bercahaya.
+   - **Kotak Peringatan:** Menjelaskan bahwa tabel belum difilter dan sistem akan mengekspor seluruh master database transaksi sebanyak `{N}` baris (ke sheet `DATA INPUT` dengan susunan 20 kolom presisi).
+   - **Tombol Rekomendasi Utama:**
+     - `[ 🔍 Pasang Filter Dahulu (Disarankan) ]` (`#btnFocusTableFilters`)
+     - Mengklik tombol ini otomatis menutup modal, melakukan *smooth-scroll* ke baris form filter (`.search-form-row`), memfokuskan kursor ke input tanggal awal (`#filterStartDate`), dan memberikan efek animasi denyut lembut (*pulse highlight*) selama 2,5 detik agar operator langsung melihat posisi pengisian filter.
+   - **Tombol Aksi Alternatif:**
+     - `[ 🌐 Tetap Ekspor Seluruh Database ({Total} Baris) ]` (`#btnConfirmExportAll`)
+     - Mengklik tombol ini mengekspor seluruh master database tanpa batasan (misal untuk backup berkala).
+   - **Tombol Batal:**
+     - Menutup modal dengan aman.
+3. **Standar File Excel (.xlsx) Tetap 100% Identik Database Google Sheets:**
+   - 20 kolom berurutan: `TRANSACTION ID` s/d `SWAP STATION`.
+   - Nama sheet: `DATA INPUT`.
+   - Auto-filter di baris 1 (`A1:T...`).
+   - Freeze row 1 aktif.
+4. **Verifikasi End-to-End Headless Chrome (CDP Testing):**
+   - Uji 1: Klik export saat tanpa filter -> Modal peringatan `#modalExportNoFilterAlert` tampil sempurna dengan penghitung baris akurat (`isVisible: true`).
+   - Uji 2: Klik "Pasang Filter Dahulu" -> Modal menutup (`isClosed: true`), fokus beralih ke form filter.
+   - Uji 3: Klik export saat filter aktif (Shift 1) -> Modal tidak muncul sama sekali (`modalShown: false`), file `DATA_INPUT_Charging_Swap_FILTERED_Shift1_2026-10-04.xlsx` (Sheet: `DATA INPUT`, 20 kolom) terunduh langsung dalam 1 klik.
+5. **Build & Deployment:**
+   - Build ID: `2026.10.04.v46` di `index.html`.
+   - Cache Name: `charging-ev-v46` di `sw.js`.
+   - Service Worker query: `sw.js?v=46`.
+   - Google Apps Script: Versi **`@94`** aktif di Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`.
 
 
 

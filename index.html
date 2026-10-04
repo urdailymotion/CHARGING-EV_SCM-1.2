@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v45';
+      var APP_BUILD_ID = '2026.10.04.v46';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -13489,76 +13489,77 @@ html, body {
   </div>
 
   <!-- =======================================================================
-       MODAL: PILIHAN JANGKAUAN EXPORT DATA EXCEL (20 KOLOM DATA INPUT)
+       MODAL: PENGINGAT FILTER BELUM DIAKTIFKAN SEBELUM EXPORT EXCEL
        ======================================================================= -->
-  <div class="modal-overlay" id="modalExportDataChoice" style="z-index: 9999;">
-    <div class="modal-dialog" style="max-width: 520px; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.45); border: 1px solid #cbd5e1;">
+  <div class="modal-overlay" id="modalExportNoFilterAlert" style="z-index: 9999;">
+    <div class="modal-dialog" style="max-width: 520px; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45); border: 1px solid #cbd5e1; background: #ffffff;">
       <!-- Header -->
-      <div class="modal-header-ent" style="background: linear-gradient(135deg, #0f2747, #1e3a8a); color: #ffffff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <div class="modal-header-ent" style="background: linear-gradient(135deg, #0f172a, #1e293b) !important; color: #ffffff !important; padding: 15px 20px !important; display: flex !important; align-items: center !important; justify-content: space-between !important; border-bottom: 3px solid #f59e0b !important;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 38px; height: 38px; background: rgba(245, 158, 11, 0.2); border: 1.5px solid #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
           </div>
           <div>
-            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #ffffff;">Export Transaksi ke Excel (.xlsx)</h4>
-            <div style="font-size: 11px; color: #93c5fd; margin-top: 2px;">Format 100% Identik Database Google Sheets (Sheet: DATA INPUT)</div>
+            <h4 style="margin: 0; font-size: 15.5px; font-weight: 700; color: #ffffff !important; letter-spacing: -0.2px;">Pengingat: Filter Belum Diaktifkan</h4>
+            <div style="font-size: 11.5px; color: #94a3b8 !important; margin-top: 2px;">Export Transaksi ke Excel (.xlsx)</div>
           </div>
         </div>
-        <button type="button" class="btn-close-ent" onclick="closeModal('modalExportDataChoice')" style="color: #ffffff; background: none; border: none; font-size: 22px; cursor: pointer; line-height: 1;">&times;</button>
+        <button type="button" class="btn-close-ent" onclick="closeModal('modalExportNoFilterAlert')" style="color: #cbd5e1 !important; background: none; border: none; font-size: 24px; cursor: pointer; line-height: 1; padding: 4px;" title="Tutup">&times;</button>
       </div>
 
       <!-- Body -->
-      <div class="modal-body-ent" style="padding: 20px; background: #ffffff;">
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
-          <div style="display: flex; align-items: flex-start; gap: 9px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div class="modal-body-ent" style="padding: 22px; background: #ffffff;">
+        <!-- Amber notice box -->
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 9px; padding: 14px 16px; margin-bottom: 18px;">
+          <div style="display: flex; align-items: flex-start; gap: 11px;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             <div>
-              <div style="font-size: 12.5px; font-weight: 700; color: #166534;">Standar Presisi 20 Kolom Database</div>
-              <div style="font-size: 11.5px; color: #15803d; margin-top: 2px; line-height: 1.45;">
-                File Excel yang diunduh memiliki susunan <strong>20 kolom lengkap</strong> berurutan (dari <code>TRANSACTION ID</code> hingga <code>SWAP STATION</code>) dengan nama sheet <code>DATA INPUT</code>.
+              <div style="font-size: 13px; font-weight: 700; color: #92400e;">Tabel Saat Ini Tanpa Filter</div>
+              <div style="font-size: 12px; color: #78350f; margin-top: 4px; line-height: 1.5;">
+                Anda saat ini belum mengaktifkan filter tabel (Tanggal, Shift, Lokasi, atau Pencarian). Jika dilanjutkan, sistem akan mengekspor <strong>seluruh database master</strong> sebanyak <strong id="txtNoFilterTotalCount" style="color: #b45309; text-decoration: underline;">0</strong> baris transaksi ke format standar <code>DATA INPUT</code>.
               </div>
             </div>
           </div>
         </div>
 
-        <p style="font-size: 13px; color: #334155; margin: 0 0 14px 0; line-height: 1.45;">
-          Tabel saat ini memiliki filter aktif. Silakan pilih jangkauan baris data yang ingin Anda unduh:
+        <p style="font-size: 12.5px; color: #475569; margin: 0 0 16px 0; line-height: 1.5;">
+          💡 <strong>Rekomendasi:</strong> Pasang filter terlebih dahulu untuk mendapatkan data transaksi yang lebih ringkas dan sesuai dengan kebutuhan operasional Anda.
         </p>
 
-        <div style="display: flex; flex-direction: column; gap: 11px;">
-          <!-- Option 1: Filtered Data -->
-          <button type="button" id="btnExportOptionFiltered" style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #16a34a; background: #f0fdf4; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 34px; height: 34px; border-radius: 6px; background: #16a34a; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 13.5px; color: #14532d;">Export Data Terfilter Saja</div>
-                <div style="font-size: 11px; color: #15803d; margin-top: 2px;" id="txtExportFilteredSummary">Mengunduh transaksi sesuai filter tabel yang sedang aktif</div>
-              </div>
-            </div>
-            <span id="badgeExportFilteredCount" style="background: #16a34a; color: #fff; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 12px; white-space: nowrap;">0 Baris</span>
+        <!-- Action Choices -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Primary Action: Pasang Filter Dahulu -->
+          <button type="button" id="btnFocusTableFilters" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 13px 18px; border: none; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 700; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28); transition: transform 0.15s, box-shadow 0.15s;">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span>Pasang Filter Dahulu (Disarankan)</span>
           </button>
 
-          <!-- Option 2: Full Database -->
-          <button type="button" id="btnExportOptionFull" style="display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #2563eb; background: #eff6ff; border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 34px; height: 34px; border-radius: 6px; background: #2563eb; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 13.5px; color: #1e3a8a;">Export Seluruh Master Database</div>
-                <div style="font-size: 11px; color: #1d4ed8; margin-top: 2px;" id="txtExportFullSummary">Mengunduh seluruh riwayat transaksi tanpa terpotong</div>
-              </div>
-            </div>
-            <span id="badgeExportFullCount" style="background: #2563eb; color: #fff; font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 12px; white-space: nowrap;">0 Baris</span>
+          <!-- Secondary Action: Tetap Ekspor Seluruh Data -->
+          <button type="button" id="btnConfirmExportAll" style="display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; padding: 11px 18px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; transition: background 0.15s, border-color 0.15s;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Tetap Ekspor Seluruh Database (<span id="txtNoFilterBtnCount">0</span> Baris)</span>
           </button>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer-ent" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end;">
-        <button type="button" class="btn-show" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer;" onclick="closeModal('modalExportDataChoice')">Batal</button>
+      <div class="modal-footer-ent" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 11px 20px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-show" style="background: #ffffff; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 16px; border-radius: 6px; cursor: pointer;" onclick="closeModal('modalExportNoFilterAlert')">Batal</button>
       </div>
     </div>
   </div>
@@ -20169,70 +20170,60 @@ function executeExportDataInputExcel(records, customFilename) {
 }
 window.executeExportDataInputExcel = executeExportDataInputExcel;
 
-function showExportDataChoiceModal(filteredList, allSwaps, filterInfo) {
-  const modalEl = document.getElementById('modalExportDataChoice');
+function showExportNoFilterReminderModal(allSwaps) {
+  const modalEl = document.getElementById('modalExportNoFilterAlert');
+  const todayStr = new Date().toISOString().slice(0, 10);
   if (!modalEl) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    executeExportDataInputExcel(filteredList, `DATA_INPUT_Charging_Swap_${todayStr}.xlsx`);
+    executeExportDataInputExcel(allSwaps, `DATA_INPUT_Charging_Swap_FULL_DATABASE_${todayStr}.xlsx`);
     return;
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  let fileSuffix = todayStr;
-  if (filterInfo.startVal && filterInfo.endVal && filterInfo.startVal === filterInfo.endVal) {
-    fileSuffix = filterInfo.startVal;
-  } else if (filterInfo.startVal || filterInfo.endVal) {
-    fileSuffix = `${filterInfo.startVal || 'Awal'}_sd_${filterInfo.endVal || 'Akhir'}`;
-  }
+  const countStr = (allSwaps && allSwaps.length ? allSwaps.length : 0).toLocaleString('id-ID');
+  const txtTotal = document.getElementById('txtNoFilterTotalCount');
+  if (txtTotal) txtTotal.textContent = countStr;
 
-  window._pendingExportFilteredData = {
-    list: filteredList,
-    filename: `DATA_INPUT_Charging_Swap_${fileSuffix}.xlsx`
-  };
+  const txtBtn = document.getElementById('txtNoFilterBtnCount');
+  if (txtBtn) txtBtn.textContent = countStr;
 
-  window._pendingExportFullData = {
-    list: allSwaps,
-    filename: `DATA_INPUT_Charging_Swap_FULL_DATABASE_${todayStr}.xlsx`
-  };
-
-  const badgeFiltered = document.getElementById('badgeExportFilteredCount');
-  if (badgeFiltered) badgeFiltered.textContent = `${filteredList.length.toLocaleString('id-ID')} Baris`;
-
-  const badgeFull = document.getElementById('badgeExportFullCount');
-  if (badgeFull) badgeFull.textContent = `${allSwaps.length.toLocaleString('id-ID')} Baris`;
-
-  const txtFiltered = document.getElementById('txtExportFilteredSummary');
-  if (txtFiltered) {
-    const parts = [];
-    if (filterInfo.startVal || filterInfo.endVal) parts.push(`Tanggal: ${filterInfo.startVal || '...'} s/d ${filterInfo.endVal || '...'}`);
-    if (filterInfo.shiftVal && filterInfo.shiftVal !== 'ALL') parts.push(`Shift: ${filterInfo.shiftVal}`);
-    if (filterInfo.locVal && filterInfo.locVal !== 'ALL') parts.push(`Lokasi: ${filterInfo.locVal}`);
-    if (filterInfo.searchVal) parts.push(`Pencarian: "${filterInfo.searchVal}"`);
-    txtFiltered.textContent = parts.length > 0 ? parts.join(' • ') : `Mengunduh ${filteredList.length} transaksi sesuai filter aktif`;
-  }
-
-  // Bind click handlers to options
-  const btnExpFiltered = document.getElementById('btnExportOptionFiltered');
-  if (btnExpFiltered) {
-    btnExpFiltered.onclick = function() {
-      if (window._pendingExportFilteredData) {
-        executeExportDataInputExcel(window._pendingExportFilteredData.list, window._pendingExportFilteredData.filename);
+  // Bind Tombol 1: Pasang Filter Dahulu (Disarankan)
+  const btnFocus = document.getElementById('btnFocusTableFilters');
+  if (btnFocus) {
+    btnFocus.onclick = function() {
+      closeModal('modalExportNoFilterAlert');
+      const searchRow = document.querySelector('.search-form-row') || document.getElementById('filterStartDate');
+      if (searchRow) {
+        searchRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      closeModal('modalExportDataChoice');
+      const startInput = document.getElementById('filterStartDate');
+      if (startInput) {
+        setTimeout(() => {
+          startInput.focus();
+          const row = document.querySelector('.search-form-row');
+          if (row) {
+            row.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+            row.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.45)';
+            row.style.borderRadius = '8px';
+            setTimeout(() => {
+              row.style.boxShadow = '';
+            }, 2500);
+          }
+        }, 350);
+      }
+      showToast("Silakan tentukan filter tanggal, shift, atau lokasi, lalu klik Export kembali.", "info");
     };
   }
 
-  const btnExpFull = document.getElementById('btnExportOptionFull');
-  if (btnExpFull) {
-    btnExpFull.onclick = function() {
-      if (window._pendingExportFullData) {
-        executeExportDataInputExcel(window._pendingExportFullData.list, window._pendingExportFullData.filename);
-      }
-      closeModal('modalExportDataChoice');
+  // Bind Tombol 2: Tetap Ekspor Seluruh Data
+  const btnConfirm = document.getElementById('btnConfirmExportAll');
+  if (btnConfirm) {
+    btnConfirm.onclick = function() {
+      closeModal('modalExportNoFilterAlert');
+      showToast(`Mengunduh seluruh database (${countStr} transaksi)...`, "info");
+      executeExportDataInputExcel(allSwaps, `DATA_INPUT_Charging_Swap_FULL_DATABASE_${todayStr}.xlsx`);
     };
   }
 
-  openModal('modalExportDataChoice');
+  openModal('modalExportNoFilterAlert');
 }
 
 function exportFullCSV() {
@@ -20246,30 +20237,47 @@ function exportFullCSV() {
   }
 
   // Tentukan apakah ada filter pencarian/tanggal/shift/lokasi yang aktif di tabel
-  const searchVal = document.getElementById('inputTableSearch')?.value?.trim();
-  const shiftVal = document.getElementById('filterShiftSelect')?.value;
-  const locVal = document.getElementById('filterLocationSelect')?.value;
-  const startVal = document.getElementById('filterStartDate')?.value;
-  const endVal = document.getElementById('filterEndDate')?.value;
-  const isFilterActive = !!(searchVal || (shiftVal && shiftVal !== 'ALL') || (locVal && locVal !== 'ALL') || startVal || endVal);
+  const searchVal = document.getElementById('inputTableSearch')?.value?.trim() || '';
+  const shiftVal = document.getElementById('filterShiftSelect')?.value || 'ALL';
+  const locVal = document.getElementById('filterLocationSelect')?.value || 'ALL';
+  const startVal = document.getElementById('filterStartDate')?.value || '';
+  const endVal = document.getElementById('filterEndDate')?.value || '';
+  const isFilterActive = !!(searchVal || (shiftVal !== 'ALL') || (locVal !== 'ALL') || startVal || endVal);
 
-  const activeFilteredList = (typeof window.filteredList !== 'undefined' && Array.isArray(window.filteredList) && window.filteredList.length > 0)
+  const activeFilteredList = (typeof window.filteredList !== 'undefined' && Array.isArray(window.filteredList))
     ? window.filteredList
     : ((typeof filteredList !== 'undefined' && Array.isArray(filteredList)) ? filteredList : []);
 
-  const hasFiltered = isFilterActive && activeFilteredList.length > 0 && activeFilteredList.length < allSwaps.length;
+  // 1. KASUS JIKA FILTER SEDANG DIAKTIFKAN:
+  //    LANGSUNG EKSPOR DATA HASIL FILTER DALAM 1 KLIK (TANPA POPUP/MODAL SAMA SEKALI!)
+  if (isFilterActive) {
+    if (activeFilteredList.length === 0) {
+      showToast("Tidak ada data transaksi yang cocok dengan kriteria filter saat ini!", "warning");
+      return;
+    }
 
-  if (hasFiltered) {
-    // Tampilkan modal pilihan cerdas: Ekspor Terfilter vs Ekspor Seluruh Database
-    showExportDataChoiceModal(activeFilteredList, allSwaps, {
-      searchVal, shiftVal, locVal, startVal, endVal
-    });
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const filterTags = [];
+    if (startVal && endVal && startVal === endVal) {
+      filterTags.push(startVal);
+    } else if (startVal || endVal) {
+      filterTags.push(`${startVal || 'Awal'}_sd_${endVal || 'Akhir'}`);
+    }
+    if (shiftVal && shiftVal !== 'ALL') filterTags.push(`Shift${shiftVal}`);
+    if (locVal && locVal !== 'ALL') filterTags.push(locVal.replace(/\s+/g, ''));
+    if (searchVal) filterTags.push(`Cari_${searchVal.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}`);
+
+    const tagStr = filterTags.length > 0 ? `_${filterTags.join('_')}` : '';
+    const filename = `DATA_INPUT_Charging_Swap_FILTERED${tagStr}_${todayStr}.xlsx`;
+
+    showToast(`Mengunduh ${activeFilteredList.length.toLocaleString('id-ID')} data transaksi sesuai filter...`, "info");
+    executeExportDataInputExcel(activeFilteredList, filename);
     return;
   }
 
-  // Jika tidak ada filter aktif yang membatasi data, langsung ekspor seluruh database
-  const todayStr = new Date().toISOString().slice(0, 10);
-  executeExportDataInputExcel(allSwaps, `DATA_INPUT_Charging_Swap_FULL_${allSwaps.length}_DATA_${todayStr}.xlsx`);
+  // 2. KASUS JIKA FILTER BELUM DIAKTIFKAN:
+  //    MUNCULKAN POPUP PENGINGAT UNTUK MEMASANG FILTER SESUAI DATA YANG INGIN DIEKSPOR
+  showExportNoFilterReminderModal(allSwaps);
 }
 window.exportFullExcel = exportFullCSV;
 
@@ -29872,7 +29880,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=45')
+      navigator.serviceWorker.register('./sw.js?v=46')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka
