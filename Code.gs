@@ -1816,19 +1816,73 @@ function getFirstEmptySwapRow_(sheet) {
 }
 
 function apiSaveSwapTransaction(rec) {
+  const lock = LockService.getScriptLock();
   try {
+    // 1. Antrean lock sampai 25 detik agar tidak ada tabrakan concurrent antar user
+    const hasLock = lock.tryLock(25000);
+    if (!hasLock) {
+      return { 
+        status: 'error', 
+        message: 'Server sedang memproses transaksi lain, silakan klik Simpan kembali dalam beberapa detik.' 
+      };
+    }
+
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName('DATA INPUT');
     if (!sheet) sheet = ss.getSheets()[0];
-
-    const targetRow = getFirstEmptySwapRow_(sheet);
-    const finalId = rec.id || `DA01/CHG/2026/SWAP/${String(targetRow - 1).padStart(4, '0')}`;
 
     // Pastikan header Kolom 20 (Swap Station) terpasang jika belum ada
     if (sheet.getLastColumn() < 20 || !sheet.getRange(1, 20).getValue()) {
       sheet.getRange(1, 20).setValue('SWAP STATION');
     }
 
+    // Ambil data baris terakhir untuk mencari max sequence & mendeteksi duplikasi
+    const lastRow = Math.max(sheet.getLastRow(), 1);
+    let maxNum = 0;
+    const existingIds = new Set();
+
+    if (lastRow > 1) {
+      const colAValues = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      for (let i = 0; i < colAValues.length; i++) {
+        const val = String(colAValues[i][0] || '').trim();
+        if (val) {
+          existingIds.add(val.toUpperCase());
+          // Ekstrak angka urut ID (format DA01/CHG/2026/SWAP/0480 atau SWP-0480 atau numerik biasa)
+          const m = val.match(/SWAP\/0*(\d{1,5})$/i) || val.match(/^SWP-0*(\d{1,5})$/i) || val.match(/(\d{1,5})$/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      }
+    }
+
+    // Alokasi ID Resmi yang Dijamin Unik & Sekuensial
+    const reqId = String((rec && rec.id) || '').trim();
+    let finalId = '';
+    const currentYear = new Date().getFullYear();
+
+    if (reqId) {
+      const mReq = reqId.match(/SWAP\/0*(\d{1,5})$/i) || reqId.match(/^SWP-0*(\d{1,5})$/i);
+      const reqNum = mReq ? parseInt(mReq[1], 10) : 0;
+      const isAlreadyTaken = existingIds.has(reqId.toUpperCase());
+
+      // Jika ID ini BELUM pernah dipakai dan nilainya lebih besar dari maxNum yang ada di sheet:
+      if (!isAlreadyTaken && reqNum > maxNum) {
+        finalId = reqId;
+      } else {
+        // ID ini duplikat ATAU nomor lama yang tertinggal dari HP user -> otomatis naikkan ke nomor urut sah berikutnya!
+        const nextNum = maxNum + 1;
+        finalId = `DA01/CHG/${currentYear}/SWAP/${String(nextNum).padStart(4, '0')}`;
+      }
+    } else {
+      const nextNum = maxNum + 1;
+      finalId = `DA01/CHG/${currentYear}/SWAP/${String(nextNum).padStart(4, '0')}`;
+    }
+
+    const targetRow = getFirstEmptySwapRow_(sheet);
     const finalStation = rec.swapStation || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
 
     const row = [
@@ -1857,12 +1911,30 @@ function apiSaveSwapTransaction(rec) {
     // Tulis langsung ke targetRow secara presisi (20 Kolom lengkap)
     sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
 
-    // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
-    syncToFirestoreFromGas_('swaps', finalId, rec);
+    // Update rec.id agar sync ke Firestore menggunakan ID resmi yang sama
+    rec.id = finalId;
 
-    return { status: 'success', message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', row: targetRow, id: finalId };
+    // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
+    try {
+      syncToFirestoreFromGas_('swaps', finalId, rec);
+    } catch(fbErr) {
+      console.warn('Firestore sync warning:', fbErr);
+    }
+
+    return { 
+      status: 'success', 
+      message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', 
+      row: targetRow, 
+      id: finalId,
+      originalRequestedId: reqId,
+      reconciled: (finalId !== reqId)
+    };
   } catch (err) {
     return { status: 'error', message: err.toString() };
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
   }
 }
 

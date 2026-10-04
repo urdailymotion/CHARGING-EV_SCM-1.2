@@ -1,6 +1,35 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 04 Oktober 2026, Pukul 20:53 WITA  
-**Status Sesi:** Eliminasi Tumpang Tindih Grafik & Tabel PDF Melalui Live Desktop Reflow & Chart.js Dynamic Resize (Status: Sukses & Teruji 100%, GAS @98, Git c78a526, Build v50)
+**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 03:48 WITA  
+**Status Sesi:** Resolusi Tuntas ID Transaksi Kembar / Duplikat Multi-User Melalui Server LockService Mutex & Smart ID Reconciliation (Status: Sukses & Teruji 100%, GAS @99, Build v51)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (05 Oktober 2026):
+
+#### 1. 🔒 Pengamanan Server-Side LockService Mutex & Deteksi Duplikat di Backend (`Code.gs`):
+- **Masalah:** Transaksi yang diinput bersamaan oleh beberapa operator di lapangan menghasilkan Transaction ID kembar (contoh: Abi Setiawan dan Virnanda Agus Setiawan sama-sama mendapatkan ID `0478`, `0479`, `0480`) karena ID di-generate secara independen oleh memori lokal HP masing-masing tanpa koordinasi server terpusat.
+- **Implementasi:**
+  - Menambahkan antrean atomic mutex `LockService.getScriptLock()` dengan timeout 25 detik pada `apiSaveSwapTransaction(rec)`.
+  - Backend kini membaca seluruh ID yang sudah ada di kolom A sheet `DATA INPUT` dan mencari nomor sekuensial tertinggi (`maxNum`).
+  - Jika ID dari HP operator sudah terpakai oleh transaksi lain (duplikat), backend secara otomatis menaikkan nomornya ke urutan berikutnya (`maxNum + 1`).
+  - Mengembalikan ID resmi dari server ke client: `{ status: 'success', id: finalId, reconciled: (finalId !== reqId) }`.
+  - Sinkronisasi Firestore juga dipastikan menggunakan `finalId` resmi yang sama persis.
+
+#### 2. 🔄 Sinkronisasi & Rekonsiliasi ID Otomatis di Sisi Klien (`index.html`):
+- **Implementasi:**
+  - Mengintegrasikan callback penerimaan ID resmi server pada `gasSync.pushTransaction(newRec, callback)` di `formNewSwap` maupun `formDedicatedSwap`.
+  - Jika ID yang disetujui server berbeda dengan estimasi awal di HP, memori lokal klien seketika memperbarui `newRec.id` dengan ID resmi server, menyelaraskan Firestore, me-render ulang tabel lokal, dan menampilkan notifikasi ramah: *"ID diselaraskan server: DA01/.../XXXX"*.
+  - Pembaruan regex `generateNextSwapId()` hingga 5 digit (`\d{1,5}`) untuk mendukung pertumbuhan database jangka panjang.
+
+#### 3. 🚫 Proteksi Anti Double-Click pada Tombol Simpan Transaksi:
+- **Implementasi:**
+  - Tombol simpan (`#btnSubmitNewSwap` dan `#btnSubmitDedSwap`) dinonaktifkan (*disabled*) seketika saat form di-submit dan menampilkan status animasi *"⏳ Mengamankan nomor transaksi..."*.
+  - Tombol otomatis di-restore dan diaktifkan kembali saat modal ditutup atau saat modal dibuka kembali, mencegah operator mengklik dobel saat sinyal melambat.
+
+#### 4. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.05.v51` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v51` di `sw.js`.
+- **Google Apps Script Deployment:** **`@99`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
 
 ---
 

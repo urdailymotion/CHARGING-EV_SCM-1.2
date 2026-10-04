@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v50';
+      var APP_BUILD_ID = '2026.10.05.v51';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -17354,10 +17354,10 @@ function generateNextSwapId() {
   // Hanya periksa ID yang valid sequential (SWAP/0001, SWAP/0002, dll), abaikan ID acak/timestamp
   (swapsData || []).forEach(s => {
     if (s && s.id) {
-      const m = String(s.id).match(/SWAP\/0*(\d{1,4})$/i) || String(s.id).match(/^SWP-0*(\d{1,4})$/i);
+      const m = String(s.id).match(/SWAP\/0*(\d{1,5})$/i) || String(s.id).match(/^SWP-0*(\d{1,5})$/i) || String(s.id).match(/(\d{1,5})$/);
       if (m) {
         const n = parseInt(m[1], 10);
-        if (!isNaN(n) && n < 10000 && n > maxNum) maxNum = n;
+        if (!isNaN(n) && n < 100000 && n > maxNum) maxNum = n;
       }
     }
   });
@@ -17365,7 +17365,8 @@ function generateNextSwapId() {
   // Hitung jumlah transaksi valid yang memiliki unit dan tanggal
   const validSwaps = (swapsData || []).filter(s => s && s.unit && s.unit !== '-' && s.date);
   const nextNum = Math.max(validSwaps.length + 1, maxNum + 1);
-  return `DA01/CHG/2026/SWAP/${String(nextNum).padStart(4, '0')}`;
+  const currentYear = new Date().getFullYear();
+  return `DA01/CHG/${currentYear}/SWAP/${String(nextNum).padStart(4, '0')}`;
 }
 
 function persistData() {
@@ -18955,6 +18956,11 @@ function initTableControls() {
   const btnAdd = document.getElementById('btnOpenAddSwapModal');
   if (btnAdd) {
     btnAdd.addEventListener('click', () => {
+      const btnSubmit = document.getElementById('btnSubmitNewSwap');
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Simpan Transaksi Swap';
+      }
       populateUnitSelects();
       if (typeof window.initModalAddSwapForm === 'function') {
         window.initModalAddSwapForm();
@@ -19007,6 +19013,12 @@ function initTableControls() {
       // Hitung Durasi Charging (Charging Time)
       const calcDur = parseFloat(document.getElementById('newSwapDurationMin')?.value) || 0;
       const durationMinVal = calcDur > 0 ? calcDur : 6;
+
+      // Proteksi Anti Double-Click: nonaktifkan tombol simpan selama proses berlangsung
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '⏳ Mengamankan nomor transaksi...';
+      }
 
       const newId = generateNextSwapId();
       const activeCategoryVal = document.getElementById('newSwapCategory')?.value || currentAuthUser?.category || 'CHARGING SWAP';
@@ -19095,9 +19107,30 @@ function initTableControls() {
         });
       }
       if (storageCfg.saveToSheets && typeof gasSync !== 'undefined' && typeof gasSync.pushTransaction === 'function') {
-        gasSync.pushTransaction(newRec);
+        gasSync.pushTransaction(newRec, function(res) {
+          if (res && res.status === 'success' && res.id && res.id !== newRec.id) {
+            const oldId = newRec.id;
+            const officialId = res.id;
+            console.log(`[ID Reconciled] Server assigned authoritative ID: ${officialId} (was ${oldId})`);
+            newRec.id = officialId;
+            if (storageCfg.saveToFirebase && typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+              try {
+                if (typeof VoltFirebase.deleteSwap === 'function') VoltFirebase.deleteSwap(oldId);
+                VoltFirebase.addSwap(newRec);
+              } catch(e) {}
+            }
+            persistData();
+            showToast(`ID diselaraskan server: ${officialId}`, 'info');
+          }
+        });
       }
       closeModal('modalAddSwap');
+      if (btnSubmit) {
+        setTimeout(() => {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalBtnText;
+        }, 600);
+      }
       renderMainTable();
       updateSummaryCard();
       if (typeof window.showSaveSuccessCelebration === 'function') {
@@ -20816,6 +20849,12 @@ function initDedicatedInputForm() {
       const calcDur = parseFloat(document.getElementById('dedSwapDurationMin')?.value) || 0;
       const durationMinVal = calcDur > 0 ? calcDur : 6;
 
+      // Proteksi Anti Double-Click: nonaktifkan tombol simpan selama proses berlangsung
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '⏳ Mengamankan nomor transaksi...';
+      }
+
       const newId = generateNextSwapId();
       const activeCategoryVal = document.getElementById('dedSwapCategory')?.value || currentAuthUser?.category || 'CHARGING SWAP';
       const newRec = {
@@ -20936,7 +20975,28 @@ function initDedicatedInputForm() {
 
       // 7. Sinkronkan ke Google Sheets (jika dipilih di Database Manager)
       if (storageCfg.saveToSheets && typeof gasSync !== 'undefined' && typeof gasSync.pushTransaction === 'function') {
-        gasSync.pushTransaction(newRec);
+        gasSync.pushTransaction(newRec, function(res) {
+          if (res && res.status === 'success' && res.id && res.id !== newRec.id) {
+            const oldId = newRec.id;
+            const officialId = res.id;
+            console.log(`[ID Reconciled] Server assigned authoritative ID: ${officialId} (was ${oldId})`);
+            newRec.id = officialId;
+            if (storageCfg.saveToFirebase && typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+              try {
+                if (typeof VoltFirebase.deleteSwap === 'function') VoltFirebase.deleteSwap(oldId);
+                VoltFirebase.addSwap(newRec);
+              } catch(e) {}
+            }
+            persistData();
+            showToast(`ID diselaraskan server: ${officialId}`, 'info');
+          }
+        });
+      }
+      if (btnSubmit) {
+        setTimeout(() => {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalBtnText;
+        }, 600);
       }
     });
   }
