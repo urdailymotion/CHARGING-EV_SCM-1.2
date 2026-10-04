@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.04.v46';
+      var APP_BUILD_ID = '2026.10.04.v47';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -15220,12 +15220,14 @@ window.INITIAL_DATA = {
     try {
       if (unsubSchedules) unsubSchedules();
       unsubSchedules = db.collection('schedules').onSnapshot((snapshot) => {
-        if (snapshot && !snapshot.empty) {
+        if (snapshot) {
           const list = [];
-          snapshot.forEach((doc) => {
-            const d = doc.data();
-            list.push({ ...d, id: d.id || doc.id });
-          });
+          if (!snapshot.empty) {
+            snapshot.forEach((doc) => {
+              const d = doc.data();
+              list.push({ ...d, id: d.id || doc.id });
+            });
+          }
           if (window.handleFirestoreSchedulesUpdate) {
             window.handleFirestoreSchedulesUpdate(list);
           }
@@ -16516,11 +16518,8 @@ const gasSync = {
       fleetUnits = (typeof buildDefaultFleet === 'function') ? buildDefaultFleet() : [];
       window.fleetUnits = fleetUnits;
     }
-    if (Array.isArray(result.schedules) && result.schedules.length > 0) {
+    if (Array.isArray(result.schedules)) {
       schedulesData = result.schedules;
-      window.schedulesData = schedulesData;
-    } else if (!schedulesData || schedulesData.length === 0) {
-      schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
       window.schedulesData = schedulesData;
     }
     if (result.users && result.users.length > 0) {
@@ -17215,12 +17214,12 @@ function initDataState() {
     fleetUnits = buildDefaultFleet();
   }
 
-  if (window._pendingFirestoreData && Array.isArray(window._pendingFirestoreData.schedules) && window._pendingFirestoreData.schedules.length > 0) {
+  if (window._pendingFirestoreData && Array.isArray(window._pendingFirestoreData.schedules)) {
     schedulesData = [...window._pendingFirestoreData.schedules];
-  } else if (window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.schedules) && window.INITIAL_DATA.schedules.length > 0) {
+  } else if (window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.schedules)) {
     schedulesData = [...window.INITIAL_DATA.schedules];
   } else {
-    schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
+    schedulesData = [];
   }
   window.schedulesData = schedulesData;
 }
@@ -25296,8 +25295,8 @@ function updateScheduleSummaryMetrics() {
 }
 
 function initScheduleModule() {
-  if (!schedulesData || schedulesData.length === 0) {
-    schedulesData = (typeof buildDefaultSchedules === 'function') ? buildDefaultSchedules() : [];
+  if (!schedulesData) {
+    schedulesData = [];
     window.schedulesData = schedulesData;
   }
   const selectPerPage = document.getElementById('selectSchedulePerPage');
@@ -25710,11 +25709,9 @@ function renderScheduleTable() {
     console.warn('Notice updateScheduleSummaryMetrics:', eMetrics);
   }
 
-  if (!schedulesData || schedulesData.length === 0) {
-    if (typeof buildDefaultSchedules === 'function') {
-      schedulesData = buildDefaultSchedules();
-      window.schedulesData = schedulesData;
-    }
+  if (!schedulesData) {
+    schedulesData = [];
+    window.schedulesData = schedulesData;
   }
 
   try {
@@ -25754,7 +25751,38 @@ function renderScheduleTable() {
     const currentClockStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     if (pageItems.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 25px; color: #64748b;">Tidak ada data jadwal yang sesuai.</td></tr>';
+      if (!schedulesData || schedulesData.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 45px 20px; background: #ffffff;">
+              <div style="width: 54px; height: 54px; border-radius: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; color: #64748b; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+              <div style="font-weight: 700; font-size: 15px; color: #0f172a; margin-bottom: 5px;">Belum Ada Rencana Jadwal Swap di Database</div>
+              <div style="font-size: 12.5px; color: #64748b; max-width: 460px; margin: 0 auto 18px auto; line-height: 1.55;">
+                Database jadwal swap saat ini masih kosong. Silakan upload berkas Excel jadwal atau gunakan tombol <strong>Tambah Jadwal</strong> untuk mulai menjadwalkan armada DT EV.
+              </div>
+              <div style="display: inline-flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn-show" onclick="document.getElementById('btnUploadScheduleExcel')?.click()" style="background: #0284c7; color: #fff; border: 1px solid #0369a1; font-size: 12.5px; font-weight: 700; padding: 8px 18px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload File Jadwal
+                </button>
+                <button type="button" class="btn-show" onclick="window.openSingleScheduleEdit(-1)" style="background: #10b981; color: #fff; border: 1px solid #059669; font-size: 12.5px; font-weight: 700; padding: 8px 18px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Tambah Jadwal
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #64748b;">Tidak ada data jadwal yang sesuai dengan kriteria pencarian / filter shift.</td></tr>';
+      }
     } else {
       tbody.innerHTML = pageItems.map((item, idx) => {
         const globalNo = startIdx + idx + 1;
@@ -29750,7 +29778,7 @@ window.handleFirestoreProblemsUpdate = function(remoteProblems) {
 };
 
 window.handleFirestoreSchedulesUpdate = function(remoteSchedules) {
-  if (!Array.isArray(remoteSchedules) || remoteSchedules.length === 0) return;
+  if (!Array.isArray(remoteSchedules)) return;
   schedulesData = remoteSchedules.filter(Boolean);
   window.schedulesData = schedulesData;
 
@@ -29880,7 +29908,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=46')
+      navigator.serviceWorker.register('./sw.js?v=47')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka

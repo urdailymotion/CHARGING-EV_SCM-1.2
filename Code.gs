@@ -999,7 +999,7 @@ function syncAllSheetsToFirestoreGAS() {
     }
 
     // 4. Schedules
-    const schSheet = ss.getSheetByName('SCEDHULE');
+    const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     if (schSheet) {
       const scRows = schSheet.getDataRange().getValues();
       for (let i = 1; i < scRows.length; i++) {
@@ -1072,8 +1072,8 @@ function apiGetAllSheetsData() {
       });
     }
 
-    // ---- 2. Sheet SCEDHULE ----
-    const schSheet = ss.getSheetByName('SCEDHULE');
+    // ---- 2. Sheet SCEDHULE / SCHEDULE ----
+    const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     const schedules = [];
     if (schSheet) {
       const schRows = schSheet.getDataRange().getValues();
@@ -1522,9 +1522,9 @@ function apiMigrateSheetsToFirestore(customConfig, targetCollections) {
       }
     }
 
-    // 3. SCEDHULE -> collection 'schedules'
+    // 3. SCEDHULE / SCHEDULE -> collection 'schedules'
     if (shouldMigrate('schedules')) {
-      const schSheet = ss.getSheetByName('SCEDHULE');
+      const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
       if (schSheet && schSheet.getLastRow() > 1) {
         const scRows = schSheet.getDataRange().getValues();
         const schWrites = [];
@@ -2029,7 +2029,7 @@ function apiDeleteProblem(probId) {
 function apiSaveUploadedSchedules(schedulesList, importMode) {
   try {
     const ss = getSpreadsheet();
-    let sheet = ss.getSheetByName('SCEDHULE');
+    let sheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
     if (!sheet) {
       sheet = ss.insertSheet('SCEDHULE');
       sheet.getRange(1, 1, 1, 4).setValues([['TANGGAL', 'SHIFT', 'KODE UNIT', 'TIME SCH']]);
@@ -2648,7 +2648,7 @@ function apiBackupAllToSheets(payload) {
 
     // 3. BACKUP SCEDHULE (Jadwal Swap Unit)
     if (payload && Array.isArray(payload.schedules) && payload.schedules.length > 0) {
-      const schSheet = ss.getSheetByName('SCEDHULE');
+      const schSheet = ss.getSheetByName('SCEDHULE') || ss.getSheetByName('SCHEDULE') || ss.getSheetByName('Schedule');
       if (schSheet) {
         if (mode === 'full') {
           const lR = Math.max(schSheet.getLastRow(), 2);
