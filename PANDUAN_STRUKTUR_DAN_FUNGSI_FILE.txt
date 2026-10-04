@@ -1,0 +1,283 @@
+========================================================================================
+   PANDUAN STRUKTUR, KEGUNAAN, DAN FUNGSI FILE & FOLDER PROYEK CHARGING EV
+========================================================================================
+Proyek: PPA SAFE & STRONG - CHARGING EV SCM
+Platform: Web App PWA (Netlify) + Backend Google Apps Script (Google Sheets & Firebase)
+Tanggal Pembuatan Panduan: 05 Oktober 2026
+========================================================================================
+
+Dokumen ini disusun untuk memudahkan Anda mempelajari kembali seluruh struktur file
+dan folder yang ada di dalam proyek aplikasi CHARGING EV. Semua komponen dikelompokkan
+berdasarkan perannya dalam arsitektur sistem.
+
+----------------------------------------------------------------------------------------
+DAFTAR ISI:
+1. RINGKASAN CARA KERJA ARSITEKTUR SISTEM
+2. FOLDER / DIREKTORI UTAMA
+3. FILE INTI BACKEND (GOOGLE APPS SCRIPT)
+4. FILE INTI FRONTEND & TAMPILAN PWA (CLIENT-SIDE)
+5. FILE KONFIGURASI HOSTING, DEPLOYMENT & GIT
+6. FILE OTOMASI & SCRIPT BATCH (.BAT / .JS)
+7. FILE ASET & GAMBAR (PWA ICONS / FAVICON)
+8. FILE DOKUMENTASI & PANDUAN ARSITEKTUR
+9. TIPS PEMELIHARAAN: FILE YANG BOLEH & JANGAN SEMBARANGAN DIUBAH
+----------------------------------------------------------------------------------------
+
+
+========================================================================================
+1. RINGKASAN CARA KERJA ARSITEKTUR SISTEM
+========================================================================================
+Aplikasi ini menggunakan model arsitektur "Hybrid Dual-Platform":
+- Sisi Tampilan (Frontend): 
+  Berupa Progressive Web App (PWA) berbasis HTML, CSS Vanilla murni, dan JavaScript.
+  Aplikasi dihosting di Netlify agar aksesnya sangat cepat di HP/laptop pengguna, 
+  serta bisa diinstal ke layar utama layaknya aplikasi Android/iOS asli.
+- Sisi Database & Server (Backend): 
+  Menggunakan Google Apps Script (GAS) yang terhubung langsung ke Google Sheets 
+  sebagai database utama (sheet DATA INPUT, DATA PROBLEM, SCHEDULE, dll.) serta 
+  tersinkronisasi ke Google Cloud Firestore (Firebase).
+- Sinkronisasi Data (gasSync): 
+  Ketika diakses dari luar (Netlify), frontend mengirim request HTTP POST ke Web App URL 
+  Google Apps Script. Jika dibuka langsung di dalam Google Workspace, ia menggunakan 
+  native google.script.run.
+
+
+========================================================================================
+2. FOLDER / DIREKTORI UTAMA
+========================================================================================
+
+1. [ assets/ ]
+   - Kegunaan: Tempat penyimpanan file-file aset statis pendukung aplikasi.
+   - Isi & Fungsi:
+     * Menyimpan logo resmi perusahaan (logo_ppa.png, logo_ppa_circle.png, logo_ppa_hd.png).
+     * Menyimpan pustaka JavaScript pihak ketiga versi lokal/offline (seperti html2canvas.min.js 
+       dan jspdf.umd.min.js) agar fitur ekspor PDF tetap bisa berjalan meski tanpa koneksi internet luar.
+     * Menyimpan ikon-ikon resolusi khusus.
+
+2. [ backup 21-09-2026/ ]
+   - Kegunaan: Folder arsip cadangan (snapshot) kode proyek.
+   - Fungsi: Dibuat pada tanggal 21 September 2026 sebagai titik aman (restore point) sebelum 
+     dilakukan perombakan besar pada sistem sinkronisasi dan antarmuka. Jika terjadi masalah 
+     fatal di masa mendatang, kode lama bisa dibandingkan atau dipulihkan dari folder ini.
+
+3. [ scratch/ ]
+   - Kegunaan: Ruang kerja uji coba, eksperimen, dan pengujian script mandiri.
+   - Fungsi: Berisi script-script NodeJS kecil (misal tes ekspor Excel, tes render PDF 
+     landscape, pengujian Chrome DevTools Protocol / CDP, dan simulasi multi-user). 
+     Folder ini tidak diunggah ke Google Apps Script dan hanya digunakan oleh pengembang 
+     untuk validasi fitur sebelum dipasang ke aplikasi utama.
+
+
+========================================================================================
+3. FILE INTI BACKEND (GOOGLE APPS SCRIPT)
+========================================================================================
+
+1. [ Code.gs ]
+   - Peran: Otak utama server backend Google Apps Script.
+   - Fungsi Utama:
+     * Menangani fungsi web doGet(e) dan doPost(e) untuk melayani permintaan data dari frontend.
+     * Mengelola operasi CRUD (Create, Read, Update, Delete) ke database Google Sheets:
+       - Transaksi swap charging (sheet DATA INPUT).
+       - Log gangguan operasional (sheet DATA PROBLEM).
+       - Pengaturan armada unit (sheet FLEET UNIT).
+       - Jadwal penukaran baterai (sheet SCHEDULE / SCEDHULE).
+     * Memiliki sistem antrean keamanan (LockService.getScriptLock) untuk mencegah tabrakan 
+       data (race condition) dan duplikasi nomor ID saat banyak operator menginput bersamaan.
+     * Menjembatani sinkronisasi otomatis ke Google Cloud Firestore (Firebase).
+
+2. [ EvIntelligenceBackend.gs ]
+   - Peran: Backend khusus modul kecerdasan buatan & analitik tingkat lanjut (EV Intelligence).
+   - Fungsi Utama:
+     * Menyediakan API analitik data konsumsi energi baterai (kWh), tren penggantian swap harian,
+       perhitungan durasi charging rata-rata, Pareto kendala unit, hingga matriks performa armada.
+     * Menghitung kalkulasi berat di sisi server agar beban kerja di HP operator tetap ringan.
+
+3. [ appsscript.json ]
+   - Peran: Manifest konfigurasi proyek Google Apps Script.
+   - Fungsi:
+     * Menentukan runtime environment (V8 engine).
+     * Mengatur hak akses / scope OAuth Google (seperti akses Spreadsheet, URL fetch, logging).
+     * Menentukan setelan akses Web App (dieksekusi sebagai pemilik skrip dan bisa diakses oleh siapa saja).
+
+
+========================================================================================
+4. FILE INTI FRONTEND & TAMPILAN PWA (CLIENT-SIDE)
+========================================================================================
+
+1. [ index.html ]
+   - Peran: File aplikasi utama yang dilihat dan digunakan oleh pengguna/operator.
+   - Karakteristik: Single-Page Application (SPA) mandiri yang sangat lengkap.
+   - Isi & Fitur:
+     * Struktur Antarmuka (HTML): Form input transaksi swap, tabel data real-time, modal revisi data,
+       dashboard Visual KPI eksekutif, filter shift/tanggal/unit, dan modal impor/ekspor data.
+     * Desain & Tampilan (CSS): Desain modern berbasis glassmorphism, palet warna korporat PPA,
+       responsif untuk layar ponsel, tablet, maupun layar monitor desktop/ruang kontrol.
+     * Logika Klien (JavaScript): Penanganan input form, validasi aturan bisnis, kalkulasi otomatis
+       waktu swap & energi kWh, visualisasi grafik interaktif (Chart.js), dan modul sinkronisasi gasSync.
+     * Mekanisme Ekspor: Ekspor Excel 20 kolom (persis Google Sheets), ekspor CSV, dan ekspor 
+       Visual KPI ke PDF 2 halaman landscape dengan sistem Live Desktop Reflow.
+
+2. [ intelligence.html ]
+   - Peran: Halaman dashboard khusus untuk analitik mendalam armada EV (Intelligence Dashboard).
+   - Fungsi: Menyajikan visualisasi KPI performa tinggi, prediksi jadwal pergantian baterai, 
+     analisis tren downtime, dan laporan performa menyeluruh bagi manajemen/pengawas operasional.
+
+3. [ sw.js ] (Service Worker)
+   - Peran: Pengatur cache dan perilaku offline aplikasi PWA.
+   - Fungsi Utama:
+     * Menyimpan file-file statis ke dalam memori cache HP (CACHE_NAME: charging-ev-v51).
+     * Membuat aplikasi tetap bisa terbuka seketika bahkan saat koneksi internet lemah atau terputus.
+     * Mengatur pembaruan otomatis: jika versi cache dinaikkan (misal v50 -> v51), Service Worker 
+       otomatis membersihkan cache lama dan memuat versi terbaru tanpa error.
+
+4. [ manifest.json ]
+   - Peran: Identitas instalasi PWA (Progressive Web App).
+   - Fungsi:
+     * Memberitahu browser Android/iOS/Windows bahwa website ini bisa "Diinstal" sebagai aplikasi.
+     * Menentukan nama aplikasi ("Charging EV SCM"), tema warna status bar (#0f172a), warna layar 
+       pembuka (splash screen), ikon aplikasi, orientasi layar, dan URL awal peluncuran.
+
+5. [ html2pdf.bundle.min.js ]
+   - Peran: Pustaka ekspor dokumen PDF sisi klien.
+   - Fungsi: Menggabungkan library html2canvas (pengambil gambar tampilan HTML) dan jsPDF (pencetak 
+     dokumen PDF) ke dalam satu berkas terkompresi untuk menghasilkan laporan PDF yang rapi.
+
+
+========================================================================================
+5. FILE KONFIGURASI HOSTING, DEPLOYMENT & GIT
+========================================================================================
+
+1. [ _headers ]
+   - Peran: Konfigurasi HTTP Response Headers pada server Netlify.
+   - Fungsi: Mengatur kebijakan keamanan web, izin CORS (Cross-Origin Resource Sharing), 
+     serta aturan penyimpanan cache browser agar browser operator tidak menimbun file basi.
+
+2. [ _redirects ]
+   - Peran: Aturan pengalihan URL (Routing Rules) pada Netlify.
+   - Fungsi: Memastikan aplikasi Single Page Application (SPA) berfungsi normal. Jika pengguna 
+     me-refresh halaman pada sub-jalur tertentu, server Netlify akan tetap mengarahkannya ke index.html 
+     dengan kode status 200 OK.
+
+3. [ netlify.toml ]
+   - Peran: File konfigurasi utama proyek pada platform Netlify.
+   - Fungsi: Menentukan folder publikasi (publish = "."), perintah build otomatis, setelan 
+     lingkungan (environment), serta aturan optimasi aset secara menyeluruh.
+
+4. [ .clasp.json ]
+   - Peran: Pengenal proyek Google Apps Script untuk alat baris perintah (Clasp CLI).
+   - Isi: Menyimpan Script ID (1tUo8EHKFnFhKD25J-0HKSHAbw5dfudvByQ-brT9bG86EMEqJeLyffaTH) 
+     dan root direktori lokal agar komputer Anda terhubung langsung ke proyek Google Apps Script di awan.
+
+5. [ .claspignore ]
+   - Peran: Daftar pengecualian unggah Clasp.
+   - Fungsi: Menentukan file apa saja yang TIDAK boleh diunggah ke Google Apps Script (misal file 
+     gambar lokal, dokumentasi .md, file .git, netlify.toml, dan folder scratch) sehingga server GAS 
+     hanya menerima file script murni (.gs dan .html).
+
+6. [ .gitignore ]
+   - Peran: Daftar pengecualian pelacakan Git (GitHub).
+   - Fungsi: Mencegah file-file sampah, node_modules, atau log sementara masuk ke dalam riwayat 
+     versi Git repository GitHub.
+
+
+========================================================================================
+6. FILE OTOMASI & SCRIPT BATCH (.BAT / .JS)
+========================================================================================
+
+1. [ auto-deploy.js ]
+   - Peran: Skrip otomatisasi deployment berbasis Node.js.
+   - Fungsi:
+     * Menjalankan perintah 'clasp push -f' untuk mengunggah file terbaru ke Google Apps Script.
+     * Melakukan 'clasp deploy' secara otomatis ke ID deployment yang sudah ditentukan.
+     * Menyediakan mode pantau otomatis ('--watch') yang mendeteksi setiap kali Anda menekan Ctrl+S.
+
+2. [ deploy.bat ]
+   - Peran: Pintasan (shortcut) Windows sekali-klik untuk deployment.
+   - Fungsi: Cukup klik ganda (double-click) file ini di Windows Explorer, maka skrip akan 
+     menjalankan 'node auto-deploy.js' dan mempublikasikan versi baru ke Google Apps Script tanpa 
+     perlu mengetik perintah panjang di command prompt.
+
+3. [ watch.bat ]
+   - Peran: Pintasan Windows untuk mengaktifkan Watch Mode (Pengawasan Otomatis).
+   - Fungsi: Saat file ini dijalankan, sistem akan terus memantau file Code.gs dan index.html. 
+     Setiap kali ada perubahan file yang disimpan, sistem langsung mengunggah dan men-deploy 
+     otomatis ke Google Apps Script.
+
+4. [ apply_fixes.js ]
+   - Peran: Skrip Node.js pembantu pemeliharaan kode.
+   - Fungsi: Digunakan saat perlu melakukan penggantian string kode berukuran besar secara 
+     programatik dan aman pada file index.html atau Code.gs.
+
+5. [ inspect_cdp.js ]
+   - Peran: Skrip diagnostik browser berbasis Chrome DevTools Protocol.
+   - Fungsi: Digunakan oleh pengembang untuk menginspeksi ukuran elemen secara presisi di dalam 
+     mesin browser headless, menguji layout PDF, dan memeriksa variabel global JavaScript.
+
+
+========================================================================================
+7. FILE ASET & GAMBAR (PWA ICONS / FAVICON)
+========================================================================================
+
+1. [ favicon.ico ] & [ favicon.png ]
+   - Fungsi: Ikon kecil yang muncul di tab browser (di samping judul halaman web).
+
+2. [ apple-touch-icon.png ]
+   - Fungsi: Ikon beresolusi tinggi khusus untuk perangkat Apple (iPhone, iPad, Safari) saat 
+     operator menyimpan web app ini ke Layar Utama (Add to Home Screen).
+
+3. [ icon-192.png ]
+   - Fungsi: Ikon PWA standar ukuran 192x192 piksel yang digunakan oleh perangkat Android dan 
+     layar beresolusi standar saat aplikasi diinstal.
+
+4. [ icon-512.png ]
+   - Fungsi: Ikon PWA resolusi tinggi ukuran 512x512 piksel yang digunakan untuk layar pembuka 
+     (splash screen) saat aplikasi baru dibuka, serta sebagai ikon di toko aplikasi/daftar aplikasi.
+
+
+========================================================================================
+8. FILE DOKUMENTASI & PANDUAN ARSITEKTUR
+========================================================================================
+
+1. [ LAST_PROGRESS_CHECKPOINT.md ]
+   - Peran: "Buku Harian Perkembangan & Checkpoint Resmi Proyek".
+   - Fungsi Sangat Penting:
+     * Mencatat riwayat setiap sesi pengerjaan secara kronologis (dari awal hingga rilis terbaru v51).
+     * Merekam versi build aplikasi, versi cache Service Worker, nomor deployment Google Apps Script (@99),
+       serta kode commit Git GitHub.
+     * Mendokumentasikan solusi masalah teknis yang pernah diselesaikan (misal: solusi duplikasi ID,
+       perbaikan layout PDF 2 halaman, standardisasi 20 kolom Excel, dll.).
+     * Menjadi acuan utama agar tim pengembang berikutnya tahu persis status terakhir aplikasi.
+
+2. [ ARSITECK.MD ]
+   - Peran: Dokumen cetak biru (blueprint) arsitektur sistem.
+   - Fungsi: Menjelaskan arsitektur teknis data flow, model database Google Sheets, integrasi 
+     Firebase Firestore, serta diagram alur komunikasi antar komponen aplikasi.
+
+3. [ README.md ]
+   - Peran: Dokumen pengantar proyek standar pada repository GitHub.
+   - Fungsi: Menjelaskan gambaran umum aplikasi CHARGING EV SCM, fitur-fitur kunci, prasyarat sistem, 
+     dan cara instalasi/penggunaan dasar bagi pengguna baru.
+
+
+========================================================================================
+9. TIPS PEMELIHARAAN: FILE YANG BOLEH & JANGAN SEMBARANGAN DIUBAH
+========================================================================================
+
+🟢 FILE YANG PALING SERING DIKERJAKAN / DIMODIFIKASI (Rutin):
+- [ index.html ] : Jika ingin mengubah tampilan, menambah field input, atau memperbarui layout.
+- [ Code.gs ]    : Jika ingin mengubah aturan penyimpanan database, menambah sheet, atau logika backend.
+- [ sw.js ]      : Cukup naikkan nomor cache (misal v51 -> v52) setiap kali merilis update besar frontend.
+- [ LAST_PROGRESS_CHECKPOINT.md ] : Selalu catat setiap selesai melakukan perubahan agar riwayat aman.
+
+🟡 FILE ALAT BANTU (Gunakan saat deploy):
+- [ deploy.bat ] / [ auto-deploy.js ] : Gunakan untuk men-deploy perubahan ke Google Apps Script.
+
+🔴 FILE YANG SEBAIKNYA JANGAN DIUBAH SEMBARANGAN (Konfigurasi Inti):
+- [ .clasp.json ]   : Berisi Script ID unik Google. Jika berubah/rusak, koneksi deploy akan putus.
+- [ appsscript.json]: Mengatur izin sistem Google Apps Script.
+- [ _headers ] & [ _redirects ] : Mengatur keamanan dan routing Netlify.
+- [ manifest.json ] : Mengatur konfigurasi PWA. Jika salah format, fitur 'Install App' bisa gagal.
+
+========================================================================================
+                      SELESAI - PANDUAN STRUKTUR PROYEK CHARGING EV
+========================================================================================
