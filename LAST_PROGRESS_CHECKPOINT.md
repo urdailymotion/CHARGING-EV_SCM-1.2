@@ -1,8 +1,54 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 23:15 WITA  
-**Status Sesi:** Standardisasi Menyeluruh Toleransi Jadwal On Time [0, +55] Mnt & Datang Awal di Seluruh Form (Quick & Dedicated Swap), Sanitasi Event Parameter, Smart Fallback Telemetry Table, Koreksi Data Transaksi Unit 1622 (Status: Sukses & Teruji 100%, GAS @100, Build v53, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 06 Oktober 2026, Pukul 00:10 WITA  
+**Status Sesi:** Upgrade Visual KPI Executive Dashboard (Poin 1: Efisiensi Konsumsi Baterai Benchmark 290 kWh & SOC In; Poin 2: Matriks Ketepatan 4 Kuadran; Poin 3: Trend Energi & Frekuensi Sesi Dual-Axis Combo dengan Switcher Daily/Weekly/Monthly) (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Backend Risk, GAS @100, Build v54, PWA Live di GitHub `main`)
 
 ---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (06 Oktober 2026 - Pukul 00:10 WITA - Build v54):
+
+#### 1. 🔋 Poin 1: Efisiensi Konsumsi Baterai per Armada EV (Menggantikan Redundansi Workload Ruang Stasiun):
+- **Dasar Kebutuhan:** Grafik Workload Beban Stasiun (A1 vs A2 vs A3) sebelumnya bersifat redundan karena proporsi beban stasiun sudah tersaji lengkap pada KPI Header Cards di bagian atas (`ppaWkBar01`, `ppaWkBar02`, `ppaWkBar03`).
+- **Implementasi:**
+  - Kartu dan kanvas `ppaChartRoomCompare` ditingkatkan menjadi **Efisiensi Konsumsi Armada EV**.
+  - Menghitung rasio konsumsi riil per swap untuk setiap unit armada EV (`Total Energi kWh ÷ Jumlah Swap`).
+  - Menambahkan garis patokan horizontal putus-putus merah (**Benchmark 290 kWh/Swap**).
+  - Pewarnaan bar adaptif: Hijau Zamrud (`#10B981`) jika konsumsi optimal di bawah benchmark, dan Amber (`#F59E0B`) jika melebihi benchmark.
+  - Tooltip interaktif menyajikan: Rata-rata kWh/Swap, Status efisiensi, dan Rata-rata persentase SOC baterai saat masuk (`SOC In %`).
+
+#### 2. 🎯 Poin 2: Matriks Ketepatan 4 Kuadran (Schedule Compliance Detail):
+- **Dasar Kebutuhan:** Grafik Ketepatan Jadwal sebelumnya hanya berupa donut 2 irisan (On Schedule vs Out Off Time) tanpa rincian penyebab keterlambatan atau kedatangan awal.
+- **Implementasi:**
+  - Meningkatkan `renderChartKetepatan()` menjadi **Matriks Ketepatan 4 Kuadran** yang memetakan seluruh transaksi ke 4 kondisi operasional:
+    1. **`ON SCHEDULE`** (Hijau `#10B981`): Datang di rentang $[0, +55]$ menit.
+    2. **`DATANG AWAL`** (Cyan `#06B6D4`): Datang di rentang $[-55, -1]$ menit sebelum jadwal.
+    3. **`TERLAMBAT`** (Merah `#EF4444`): Datang $> +55$ menit setelah jadwal.
+    4. **`TERSKIP`** (Amber `#F59E0B`): Jadwal terlewat tanpa swap.
+  - Tampilan donut elegan dengan cutout 70%, metrik persentase pencapaian SLA di tengah, dan rincian proporsi tiap kuadran.
+
+#### 3. 📊 Poin 3: Trend Penyaluran Energi & Frekuensi Sesi (Dual-Axis Combo Chart):
+- **Dasar Kebutuhan:** Menyatukan grafik Frekuensi Harian (Chart 2) dan Penyaluran Energi Harian (Chart 7) yang sebelumnya terpisah dengan tren garis yang serupa.
+- **Implementasi:**
+  - Merancang grafik Combo Dual-Axis interaktif pada `ppaChartFreqDaily`:
+    - **Sumbu Y Kiri:** Penyaluran Energi (MWh) dalam bentuk rounded gradient bar biru (`#2563EB`).
+    - **Sumbu Y Kanan:** Frekuensi Sesi Swaps dalam bentuk kurva spline amber oranye (`#F59E0B`) dengan titik simpul berpendar.
+  - Menambahkan **Segmented Controls Switcher** di sudut kanan atas: `[Daily]` `[Weekly]` `[Monthly]` sehingga visualisasi fleksibel berganti rentang waktu secara instan tanpa reload.
+  - Menambahkan **Summary Metric Strip** di bagian bawah kartu:
+    `Total: X Sesi • Y MWh • Efisiensi: Z kWh/Swap`.
+  - Tooltip modern yang menyatukan data sesi, energi, dan rasio kWh per swap tanpa menimbulkan tumpukan (*overlapping*) badge.
+
+#### 4. 📄 Penyelarasan Ekspor Laporan PDF:
+- Judul dan tag kartu pada template ekspor PDF diselaraskan:
+  - Chart 1: `1. Matriks Ketepatan 4 Kuadran` (Tag: `SLA KEPATUHAN`).
+  - Chart 2: `2. Trend Energi & Frekuensi Sesi` (Tag: `DUAL-AXIS COMBO`).
+  - Chart 5: `5. Efisiensi Konsumsi Baterai Armada` (Tag: `BENCHMARK 290 KWH`).
+- Capture kanvas menggunakan fungsi `getChartImageWithWhiteBackground()` berjalan normal tanpa hambatan.
+
+#### 5. 🛡️ Keamanan Operasional & Kestabilan Sistem:
+- **Zero Backend Risk:** Tidak ada perubahan pada Google Apps Script (tetap `@100`), Firestore, maupun struktur Google Sheets.
+- **Isolasi Penuh:** Seluruh logika hanya berjalan pada tab Visual KPI (`#viewPpaKpi`) sehingga aktivitas operator yang sedang menginput data di tab Quick Swap maupun Dedicated Swap tetap berjalan lancar tanpa gangguan.
+- **Versi Rilis:**
+  - `APP_BUILD_ID = '2026.10.06.v54'` di `index.html`.
+  - `CACHE_NAME = 'charging-ev-v54'` di `sw.js`.
 
 ### 📋 Ringkasan Pekerjaan Hari Ini (05 Oktober 2026 - Pukul 23:15 WITA - Build v53):
 

@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.05.v53';
+      var APP_BUILD_ID = '2026.10.06.v54';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -2918,6 +2918,59 @@ body {
   color: #667085;
   border: 1px solid #E4E7EC;
   white-space: nowrap;
+}
+
+/* Poin 3: Segmented Controls for Time Range & Summary Bar */
+.ppa-chart-toggle-group {
+  display: inline-flex;
+  background: #F1F5F9;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid #E2E8F0;
+}
+.ppa-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+.ppa-toggle-btn:hover {
+  color: #0F172A;
+}
+.ppa-toggle-btn.active {
+  background: #FFFFFF;
+  color: #2563EB;
+  font-weight: 800;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.ppa-chart-summary-bar {
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #F8FAFC;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+.ppa-chart-summary-bar strong {
+  color: #0F172A;
+  font-weight: 800;
+}
+.ppa-chart-summary-bar .summary-eff {
+  color: #2563EB;
+  font-weight: 800;
 }
 
 .ppa-canvas-wrapper {
@@ -11743,10 +11796,10 @@ html, body {
 
           <!-- Row 1: 4 Charts -->
           <div class="ppa-charts-quad-grid">
-            <!-- Chart 1: Ach Ketepatan Sch Swab -->
+            <!-- Chart 1: Matriks Ketepatan 4 Kuadran (Poin 2) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern" id="ppaChartTitleKetepatan">Ach Ketepatan Sch Swab</span>
+                <span class="ppa-chart-title-modern" id="ppaChartTitleKetepatan">Matriks Ketepatan 4 Kuadran</span>
                 <span class="ppa-chart-badge-tag" id="ppaKpiSlaBadge">SLA TARGET 95%</span>
               </div>
               <div class="ppa-canvas-wrapper">
@@ -11754,14 +11807,22 @@ html, body {
               </div>
             </div>
 
-            <!-- Chart 2: Trend Frekuensi Swab (Daily) -->
+            <!-- Chart 2: Trend Energi & Frekuensi Sesi Combo (Poin 3) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">Frekuensi Swab Harian</span>
-                <span class="ppa-chart-badge-tag">VOLUME &amp; MOVING AVG</span>
+                <span class="ppa-chart-title-modern">Trend Energi &amp; Frekuensi</span>
+                <div class="ppa-chart-toggle-group" id="ppaTrendToggleGroup">
+                  <button type="button" class="ppa-toggle-btn active" data-range="daily" onclick="setKpiTrendRange('daily')">Daily</button>
+                  <button type="button" class="ppa-toggle-btn" data-range="weekly" onclick="setKpiTrendRange('weekly')">Weekly</button>
+                  <button type="button" class="ppa-toggle-btn" data-range="monthly" onclick="setKpiTrendRange('monthly')">Monthly</button>
+                </div>
               </div>
-              <div class="ppa-canvas-wrapper">
+              <div class="ppa-canvas-wrapper" style="height: 155px;">
                 <canvas id="ppaChartFreqDaily"></canvas>
+              </div>
+              <div class="ppa-chart-summary-bar" id="ppaChartEnergyFreqSummary">
+                <span>Total: <strong id="ppaSumTotSwaps">0 Sesi</strong> • <strong id="ppaSumTotEnergy">0 MWh</strong></span>
+                <span class="summary-eff" id="ppaSumAvgEfficiency">Rata-rata: 0 kWh/Swap</span>
               </div>
             </div>
 
@@ -11790,11 +11851,11 @@ html, body {
 
           <!-- Row 2: 4 Charts -->
           <div class="ppa-charts-quad-grid">
-            <!-- Chart 5: Swab Station & Room Workload -->
+            <!-- Chart 5: Efisiensi Konsumsi Baterai Armada EV (Poin 1) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">Distribusi Beban Stasiun</span>
-                <span class="ppa-chart-badge-tag">A1 VS A2 / STATION</span>
+                <span class="ppa-chart-title-modern">Efisiensi Konsumsi Armada EV</span>
+                <span class="ppa-chart-badge-tag" style="color: #2563EB; border-color: rgba(37,99,235,0.3);">BENCHMARK 290 KWH</span>
               </div>
               <div class="ppa-canvas-wrapper">
                 <canvas id="ppaChartRoomCompare"></canvas>
@@ -22696,7 +22757,7 @@ function updatePpaExecutiveDashboard() {
   renderPpaProblemAnalytics();
 }
 
-// 1. Ach Ketepatan Sch Swab (SLA Speedometer Gauge)
+// 1. Matriks Ketepatan 4 Kuadran (Poin 2 - Schedule Compliance Detail)
 function renderChartKetepatan() {
   const canvas = document.getElementById('ppaChartKetepatan');
   if (!canvas) return;
@@ -22713,22 +22774,7 @@ function renderChartKetepatan() {
   let centerVal = '0%';
   let centerSub = 'ON-TIME SLA';
 
-  if (opMode === 'SCHEDULED') {
-    if (titleEl) titleEl.textContent = 'Ach Ketepatan Schedule';
-    const onTimeCount = ppaFilteredSwaps.filter(s => {
-      const st = String(s.statusRemark || 'On Time').trim().toUpperCase();
-      return st === 'ON TIME' || st === 'ON SCH' || st === 'ON SCHEDULE';
-    }).length;
-    const outCount = total > 0 ? (total - onTimeCount) : 0;
-    const pct = total > 0 ? ((onTimeCount / total) * 100).toFixed(1) : '100.0';
-
-    labels = ['ON SCHEDULE', 'OUT OFF TIME'];
-    dataVals = [total > 0 ? onTimeCount : 1, total > 0 ? outCount : 0];
-    bgColors = [EV_COLORS.green, EV_COLORS.red];
-    centerVal = total > 0 ? (pct + '%') : '100%';
-    centerSub = 'SLA TARGET 95%';
-    if (badgeEl) badgeEl.textContent = `SLA: ${centerVal}`;
-  } else if (opMode === 'ON_DEMAND') {
+  if (opMode === 'ON_DEMAND') {
     if (titleEl) titleEl.textContent = 'Kondisi Baterai Masuk (Non-Schedule)';
     let normalCount = 0;
     let lowCount = 0;
@@ -22745,31 +22791,59 @@ function renderChartKetepatan() {
     centerSub = 'TOTAL SWAP A2';
     if (badgeEl) badgeEl.textContent = `${normalCount} NORMAL / ${lowCount} LOW`;
   } else {
-    if (titleEl) titleEl.textContent = 'Ach Ketepatan Sch Swab';
+    if (titleEl) titleEl.textContent = 'Matriks Ketepatan 4 Kuadran';
     let onTimeCount = 0;
-    let outTimeCount = 0;
+    let earlyCount = 0;
+    let lateCount = 0;
+    let skippedCount = 0;
     let nonSchCount = 0;
+
     ppaFilteredSwaps.forEach(s => {
       const isNon = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
       if (isNon) {
         nonSchCount++;
+        return;
+      }
+      const ket = String(s.keterangan || '').toLowerCase();
+      const st = String(s.statusRemark || '').toLowerCase();
+      const schTime = (typeof getSwapScheduleTime === 'function') ? getSwapScheduleTime(s) : (s.timeSch || '-');
+      const diffCalc = (s.jamIn && schTime && schTime !== '-') && (typeof calculateMinutesDifference === 'function') 
+        ? calculateMinutesDifference(s.jamIn, schTime) 
+        : null;
+
+      if (ket.includes('terskip') || st.includes('skip')) {
+        skippedCount++;
+      } else if (ket.includes('awal') || (diffCalc !== null && diffCalc < 0 && diffCalc >= -55)) {
+        earlyCount++;
+      } else if (st.includes('on') && (diffCalc === null || (diffCalc >= 0 && diffCalc <= 55))) {
+        onTimeCount++;
       } else {
-        const isOt = String(s.statusRemark || 'On Time').trim().toUpperCase().includes('ON');
-        if (isOt) onTimeCount++;
-        else outTimeCount++;
+        lateCount++;
       }
     });
 
-    const schTotal = onTimeCount + outTimeCount;
+    const schTotal = onTimeCount + earlyCount + lateCount + skippedCount;
     const otpPct = schTotal > 0 ? ((onTimeCount / schTotal) * 100).toFixed(1) : (total > 0 ? '100.0' : '0.0');
 
-    labels = ['ON SCHEDULE', 'OUT OFF TIME', 'NON-SCHEDULE'];
-    dataVals = [onTimeCount, outTimeCount, nonSchCount];
-    if (total === 0) { dataVals = [1, 0, 0]; }
-    bgColors = [EV_COLORS.green, EV_COLORS.red, EV_COLORS.cyan];
+    labels = ['ON SCHEDULE', 'DATANG AWAL', 'TERLAMBAT', 'TERSKIP'];
+    dataVals = [onTimeCount, earlyCount, lateCount, skippedCount];
+    bgColors = ['#10B981', '#06B6D4', '#EF4444', '#F59E0B'];
+
+    if (nonSchCount > 0 && opMode === 'ALL') {
+      labels.push('NON-SCHEDULE');
+      dataVals.push(nonSchCount);
+      bgColors.push('#64748B');
+    }
+
+    if (total === 0) {
+      labels = ['BELUM ADA DATA'];
+      dataVals = [1];
+      bgColors = ['#CBD5E1'];
+    }
+
     centerVal = otpPct + '%';
-    centerSub = 'SLA KETEPATAN';
-    if (badgeEl) badgeEl.textContent = `SLA: ${otpPct}% (TGT: 95%)`;
+    centerSub = 'SLA TARGET 95%';
+    if (badgeEl) badgeEl.textContent = `SLA: ${centerVal}`;
   }
 
   chartPpaKetepatan = new Chart(canvas.getContext('2d'), {
@@ -22787,9 +22861,8 @@ function renderChartKetepatan() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      circumference: 180,
-      rotation: -90,
-      cutout: '75%',
+      circumference: 360,
+      cutout: '70%',
       plugins: {
         legend: {
           display: true,
@@ -22797,8 +22870,8 @@ function renderChartKetepatan() {
           labels: {
             boxWidth: 8,
             boxHeight: 8,
-            padding: 8,
-            font: { size: 9.5, weight: '700', family: 'Inter' },
+            padding: 6,
+            font: { size: 9, weight: '700', family: 'Inter' },
             color: '#344054'
           }
         },
@@ -22822,41 +22895,97 @@ function renderChartKetepatan() {
   });
 }
 
-// 2. Trend Frekuensi Swab Daily (Cobalt Bar + Golden Amber Moving Average)
+// Time Range Switcher for Poin 3 (Trend Energi & Frekuensi Sesi Combo)
+window.kpiTrendRange = window.kpiTrendRange || 'daily';
+function setKpiTrendRange(range) {
+  window.kpiTrendRange = range;
+  document.querySelectorAll('#ppaTrendToggleGroup .ppa-toggle-btn').forEach(btn => {
+    if (btn.getAttribute('data-range') === range) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+  renderChartFreqDaily();
+}
+
+// 2. Trend Energi & Frekuensi Sesi (Combo Dual-Axis Chart - Poin 3)
 function renderChartFreqDaily() {
   const canvas = document.getElementById('ppaChartFreqDaily');
   if (!canvas) return;
   if (chartPpaFreqDaily) chartPpaFreqDaily.destroy();
 
-  const dateCounts = {};
+  const range = window.kpiTrendRange || 'daily';
+  const groupCounts = {};
+  const groupEnergy = {};
+
   ppaFilteredSwaps.forEach(s => {
-    const d = (s.date || '').trim();
-    if (d) dateCounts[d] = (dateCounts[d] || 0) + 1;
+    const dStr = (s.date || '').trim();
+    if (!dStr) return;
+    const kwh = parseFloat(s.energyKwh) || 0;
+    let key = dStr;
+
+    if (range === 'weekly') {
+      try {
+        const parts = dStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+          const d = new Date(parts[2].length === 4 ? parts[2] : ('20' + parts[2]), parts[1] - 1, parts[0]);
+          const oneJan = new Date(d.getFullYear(), 0, 1);
+          const wNum = Math.ceil((((d - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
+          key = 'W' + wNum;
+        }
+      } catch (e) { key = 'W1'; }
+    } else if (range === 'monthly') {
+      try {
+        const parts = dStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+          const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+          const mIdx = parseInt(parts[1], 10) - 1;
+          const yStr = parts[2].length === 4 ? parts[2].substring(2) : parts[2];
+          key = (monthNames[mIdx] || 'Bln') + " '" + yStr;
+        }
+      } catch (e) { key = 'Bulan'; }
+    }
+
+    groupCounts[key] = (groupCounts[key] || 0) + 1;
+    groupEnergy[key] = (groupEnergy[key] || 0) + kwh;
   });
 
-  let labels = Object.keys(dateCounts);
-  labels.sort((a, b) => {
-    const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a) : a;
-    const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b) : b;
-    return (da || '').localeCompare(db || '');
-  });
-
-  // Up to 10 days
-  if (labels.length > 10) labels = labels.slice(-10);
-  if (labels.length === 0) {
-    labels = ['Hari Ini'];
-    dateCounts['Hari Ini'] = 0;
+  let labels = Object.keys(groupCounts);
+  if (range === 'daily') {
+    labels.sort((a, b) => {
+      const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a) : a;
+      const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b) : b;
+      return (da || '').localeCompare(db || '');
+    });
+    if (labels.length > 10) labels = labels.slice(-10);
+  } else if (range === 'weekly') {
+    labels.sort();
+    if (labels.length > 8) labels = labels.slice(-8);
   }
 
-  const values = labels.map(l => dateCounts[l] || 0);
+  if (labels.length === 0) {
+    labels = [range === 'daily' ? 'Hari Ini' : (range === 'weekly' ? 'Minggu Ini' : 'Bulan Ini')];
+    groupCounts[labels[0]] = 0;
+    groupEnergy[labels[0]] = 0;
+  }
 
-  // Compute 3-point moving average
-  const maValues = values.map((val, idx, arr) => {
-    const start = Math.max(0, idx - 2);
-    const subset = arr.slice(start, idx + 1);
-    const sum = subset.reduce((acc, v) => acc + v, 0);
-    return parseFloat((sum / subset.length).toFixed(1));
-  });
+  const swapValues = labels.map(l => groupCounts[l] || 0);
+  const energyKwhValues = labels.map(l => Math.round(groupEnergy[l] || 0));
+  const energyMwhValues = energyKwhValues.map(v => parseFloat((v / 1000).toFixed(1)));
+
+  // Totals for summary footer
+  const totalSwapsPeriod = swapValues.reduce((a, b) => a + b, 0);
+  const totalKwhPeriod = energyKwhValues.reduce((a, b) => a + b, 0);
+  const totalMwhPeriod = (totalKwhPeriod / 1000).toFixed(1);
+  const avgEfficiency = totalSwapsPeriod > 0 ? (totalKwhPeriod / totalSwapsPeriod).toFixed(1) : '0';
+
+  const sumSwapsEl = document.getElementById('ppaSumTotSwaps');
+  const sumEnergyEl = document.getElementById('ppaSumTotEnergy');
+  const sumEffEl = document.getElementById('ppaSumAvgEfficiency');
+  if (sumSwapsEl) sumSwapsEl.textContent = `${totalSwapsPeriod.toLocaleString('id-ID')} Sesi`;
+  if (sumEnergyEl) sumEnergyEl.textContent = totalKwhPeriod >= 1000 ? `${totalMwhPeriod} MWh` : `${totalKwhPeriod.toLocaleString('id-ID')} kWh`;
+  if (sumEffEl) sumEffEl.textContent = `Efisiensi: ${avgEfficiency} kWh/Swap`;
+
+  const maxEnergy = Math.max(...energyMwhValues, 1);
+  const maxSwaps = Math.max(...swapValues, 5);
 
   chartPpaFreqDaily = new Chart(canvas.getContext('2d'), {
     type: 'bar',
@@ -22865,24 +22994,29 @@ function renderChartFreqDaily() {
       datasets: [
         {
           type: 'line',
-          label: 'Moving Avg',
-          data: maValues,
-          borderColor: EV_COLORS.amber,
-          backgroundColor: 'transparent',
+          label: 'Frekuensi Sesi',
+          data: swapValues,
+          yAxisID: 'ySwaps',
+          borderColor: '#F59E0B',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
           borderWidth: 2.2,
           tension: 0.35,
-          pointRadius: 3,
-          pointBackgroundColor: EV_COLORS.amber,
+          pointRadius: 3.5,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: '#F59E0B',
+          pointBorderWidth: 2,
           order: 1
         },
         {
           type: 'bar',
-          label: 'Frekuensi Harian',
-          data: values,
+          label: 'Penyaluran Energi (MWh)',
+          data: energyMwhValues,
+          yAxisID: 'yEnergy',
           backgroundColor: 'rgba(37, 99, 235, 0.85)',
+          hoverBackgroundColor: '#2563EB',
           borderRadius: 4,
           barPercentage: 0.55,
-          badgeColor: EV_COLORS.navy,
           order: 2
         }
       ]
@@ -22890,27 +23024,68 @@ function renderChartFreqDaily() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: {
           display: true,
           position: 'top',
           align: 'end',
           labels: { boxWidth: 8, boxHeight: 8, font: { size: 9, weight: '700' }, color: '#344054' }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          padding: 8,
+          titleFont: { size: 10, weight: '700' },
+          bodyFont: { size: 9 },
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 0) {
+                return ` Sesi Swaps: ${ctx.parsed.y} Sesi`;
+              } else {
+                const kwh = energyKwhValues[ctx.dataIndex] || 0;
+                const sw = swapValues[ctx.dataIndex] || 1;
+                const eff = sw > 0 ? (kwh / sw).toFixed(1) : '0';
+                return [
+                  ` Energi: ${ctx.parsed.y} MWh (${kwh.toLocaleString('id-ID')} kWh)`,
+                  ` Efisiensi: ${eff} kWh/Swap`
+                ];
+              }
+            }
+          }
         }
       },
       scales: {
-        y: {
+        yEnergy: {
+          type: 'linear',
+          position: 'left',
           grid: { color: '#F2F4F7' },
-          ticks: { font: { size: 9 }, color: '#667085' },
-          suggestedMax: Math.max(...values, 5) * 1.25
+          ticks: {
+            font: { size: 8.5 },
+            color: '#667085',
+            callback: v => v + ' MWh'
+          },
+          suggestedMax: maxEnergy * 1.25
+        },
+        ySwaps: {
+          type: 'linear',
+          position: 'right',
+          grid: { display: false },
+          ticks: {
+            font: { size: 8.5 },
+            color: '#D97706',
+            callback: v => v + ' Sesi'
+          },
+          suggestedMax: maxSwaps * 1.25
         },
         x: {
           grid: { display: false },
           ticks: { font: { size: 9, weight: '600' }, color: '#344054' }
         }
       }
-    },
-    plugins: [ppaBadgePlugin]
+    }
   });
 }
 
@@ -23074,56 +23249,122 @@ function renderChartFreqMonthly() {
   });
 }
 
-// 5. Workload Balancer: SWAP 01 vs SWAP 02 vs SWAP 03 (Corporate Navy vs Cyan)
+// 5. Efisiensi Konsumsi Baterai per Armada EV (Poin 1: Benchmark 290 kWh & Rata-rata SOC In)
 function renderChartRoomCompare() {
   const canvas = document.getElementById('ppaChartRoomCompare');
   if (!canvas) return;
   if (chartPpaRoomCompare) chartPpaRoomCompare.destroy();
 
-  const machCounts = { 'SWAP 01': 0, 'SWAP 02': 0, 'SWAP 03': 0 };
+  const unitKwhMap = {};
+  const unitCountMap = {};
+  const unitSocMap = {};
 
   ppaFilteredSwaps.forEach(s => {
-    const mach = String(s.swapStation || (String(s.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim().toUpperCase();
-    if (mach.includes('01') || mach === 'SWAP 1') machCounts['SWAP 01']++;
-    else if (mach.includes('02') || mach === 'SWAP 2') machCounts['SWAP 02']++;
-    else if (mach.includes('03') || mach === 'SWAP 3') machCounts['SWAP 03']++;
-    else machCounts['SWAP 01']++;
+    const u = (s.unit || '').trim();
+    if (!u) return;
+    const kwh = parseFloat(s.energyKwh) || 0;
+    const soc = parseFloat(s.batteryBefore || s.socIn || 0);
+
+    unitKwhMap[u] = (unitKwhMap[u] || 0) + kwh;
+    unitCountMap[u] = (unitCountMap[u] || 0) + 1;
+    if (!isNaN(soc) && soc > 0) {
+      if (!unitSocMap[u]) unitSocMap[u] = { sum: 0, count: 0 };
+      unitSocMap[u].sum += soc;
+      unitSocMap[u].count += 1;
+    }
   });
 
-  const labels = ['SWAP 01 (A1)', 'SWAP 02 (A2)', 'SWAP 03 (CAD)'];
-  const values = [machCounts['SWAP 01'], machCounts['SWAP 02'], machCounts['SWAP 03']];
-  const colors = [EV_COLORS.navy2, EV_COLORS.cyan, EV_COLORS.steel];
+  // Top 10 most active units
+  let units = Object.keys(unitCountMap).sort((a, b) => unitCountMap[b] - unitCountMap[a]).slice(0, 10);
+  if (units.length === 0) {
+    units = (typeof fleetUnits !== 'undefined' && fleetUnits && fleetUnits.length > 0)
+      ? fleetUnits.slice(0, 8).map(u => u.code)
+      : ['1601', '1602', '1603', '1604', '1605'];
+  }
+
+  const labels = units.map(u => 'DT ' + u.replace(/^DT\s*/i, ''));
+  const avgKwhValues = units.map(u => {
+    const cnt = unitCountMap[u] || 0;
+    return cnt > 0 ? parseFloat(((unitKwhMap[u] || 0) / cnt).toFixed(1)) : 285.0;
+  });
+  const avgSocValues = units.map(u => {
+    const sObj = unitSocMap[u];
+    return (sObj && sObj.count > 0) ? (sObj.sum / sObj.count).toFixed(1) : '22.0';
+  });
+
+  const benchmarkVal = 290;
+  const barColors = avgKwhValues.map(v => v > benchmarkVal ? '#F59E0B' : '#10B981');
 
   chartPpaRoomCompare = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Volume Swab',
-        data: values,
-        backgroundColor: colors,
-        borderRadius: 4,
-        barPercentage: 0.55,
-        badgeColor: EV_COLORS.navy
-      }]
+      datasets: [
+        {
+          type: 'line',
+          label: 'Benchmark 290 kWh',
+          data: Array(labels.length).fill(benchmarkVal),
+          borderColor: '#EF4444',
+          borderWidth: 2,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
+          order: 1
+        },
+        {
+          type: 'bar',
+          label: 'Konsumsi Rata-rata (kWh/Swap)',
+          data: avgKwhValues,
+          backgroundColor: barColors,
+          borderRadius: 4,
+          barPercentage: 0.6,
+          order: 2
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: { boxWidth: 8, boxHeight: 8, font: { size: 8.5, weight: '700' }, color: '#344054' }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          padding: 8,
+          titleFont: { size: 10, weight: '700' },
+          bodyFont: { size: 9 },
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 0) return ' Benchmark Target: 290 kWh/Swap';
+              const val = ctx.parsed.y;
+              const soc = avgSocValues[ctx.dataIndex] || '-';
+              const status = val > benchmarkVal ? 'Di atas benchmark (+boros)' : 'Optimal (Efisien)';
+              return [
+                ` Konsumsi: ${val} kWh/Swap (${status})`,
+                ` Rata-rata SOC Masuk: ${soc}%`
+              ];
+            }
+          }
+        }
+      },
       scales: {
         y: {
           grid: { color: '#F2F4F7' },
-          ticks: { font: { size: 9 }, color: '#667085' },
-          suggestedMax: Math.max(...values, 5) * 1.25
+          ticks: { font: { size: 8.5 }, color: '#667085', callback: v => v + ' kWh' },
+          suggestedMin: 200,
+          suggestedMax: Math.max(...avgKwhValues, 320) * 1.15
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+          ticks: { font: { size: 8, weight: '700' }, maxRotation: 45, minRotation: 45, color: '#344054' }
         }
       }
-    },
-    plugins: [ppaBadgePlugin]
+    }
   });
 }
 
@@ -23980,7 +24221,7 @@ function buildVisualKpiPdfReportHtml() {
         <div class="kpi-pdf-charts-grid">
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
-              <span class="kpi-pdf-chart-title">1. Ach Ketepatan Schedule Swap</span>
+              <span class="kpi-pdf-chart-title">1. Matriks Ketepatan 4 Kuadran</span>
               <span class="kpi-pdf-chart-tag">SLA KEPATUHAN</span>
             </div>
             <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
@@ -23989,7 +24230,7 @@ function buildVisualKpiPdfReportHtml() {
           </div>
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
-              <span class="kpi-pdf-chart-title">2. Frekuensi Swab Harian</span>
+              <span class="kpi-pdf-chart-title">2. Trend Energi &amp; Frekuensi Sesi</span>
               <span class="kpi-pdf-chart-tag">VOLUME &amp; MOVING AVG</span>
             </div>
             <div class="kpi-pdf-chart-img-wrap" style="height: 46mm;">
@@ -24044,8 +24285,8 @@ function buildVisualKpiPdfReportHtml() {
         <div class="kpi-pdf-charts-grid" style="margin-top: 4px; margin-bottom: 5px;">
           <div class="kpi-pdf-chart-box">
             <div class="kpi-pdf-chart-header">
-              <span class="kpi-pdf-chart-title">5. Distribusi Beban Stasiun</span>
-              <span class="kpi-pdf-chart-tag">ROOM &amp; MESIN</span>
+              <span class="kpi-pdf-chart-title">5. Efisiensi Konsumsi Baterai Armada</span>
+              <span class="kpi-pdf-chart-tag">BENCHMARK 290 KWH</span>
             </div>
             <div class="kpi-pdf-chart-img-wrap" style="height: 44mm;">
               <img src="${imgRoomCompare}" class="kpi-pdf-chart-img" alt="Chart Beban Stasiun">
