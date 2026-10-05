@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.05.v51';
+      var APP_BUILD_ID = '2026.10.05.v52';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -14516,8 +14516,8 @@ html, body {
             </label>
             <div id="boxBulkShiftInput" style="display: none; padding-left: 25px;">
               <select id="selectBulkNewShift" class="form-control-ent" style="max-width: 240px;">
-                <option value="1">Shift 1 (Siang) - 07:00 s/d 18:00</option>
-                <option value="2">Shift 2 (Malam) - 19:00 s/d 06:00</option>
+                <option value="1">Shift 1 (Siang) - 06:00 s/d 18:00</option>
+                <option value="2">Shift 2 (Malam) - 18:00 s/d 06:00</option>
               </select>
             </div>
           </div>
@@ -20748,8 +20748,14 @@ function initDedicatedInputForm() {
 
   if (jamInInput && !jamInInput.dataset.calcBound) {
     jamInInput.dataset.calcBound = 'true';
-    jamInInput.addEventListener('input', window.updateDedicatedChargingTime);
-    jamInInput.addEventListener('change', window.updateDedicatedChargingTime);
+    jamInInput.addEventListener('input', () => {
+      window.updateDedicatedChargingTime();
+      if (typeof updateDedSwapScheduleTarget === 'function') updateDedSwapScheduleTarget();
+    });
+    jamInInput.addEventListener('change', () => {
+      window.updateDedicatedChargingTime();
+      if (typeof updateDedSwapScheduleTarget === 'function') updateDedSwapScheduleTarget();
+    });
   }
   if (jamOutInput && !jamOutInput.dataset.calcBound) {
     jamOutInput.dataset.calcBound = 'true';
@@ -25179,9 +25185,19 @@ if (document.readyState === 'loading') {
 // =============================================================================
 
 
+function parseTimeMinutes(t) {
+  if (!t || t === '-' || t === 'null' || t === 'undefined') return null;
+  const cleaned = String(t).trim().replace(/\./g, ':');
+  const parts = cleaned.split(':').map(Number);
+  if (isNaN(parts[0])) return null;
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+window.parseTimeMinutes = parseTimeMinutes;
+
 function normalizeScheduleTime(t) {
   if (!t || t === '-' || t === 'null' || t === 'undefined') return '';
-  const parts = String(t).trim().split(':');
+  const s = String(t).trim().replace(/\./g, ':');
+  const parts = s.split(':');
   if (parts.length >= 2) {
     return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
   }
@@ -25194,12 +25210,97 @@ const SCHEDULE_ON_TIME_TOLERANCE_MINS = 55;
 window.SCHEDULE_ON_TIME_TOLERANCE_MINS = SCHEDULE_ON_TIME_TOLERANCE_MINS;
 
 function calculateMinutesDifference(timeA, timeB) {
-  if (!timeA || !timeB) return 0;
-  const parse = (t) => {
-    const parts = t.split(':').map(Number);
-    return (parts[0] || 0) * 60 + (parts[1] || 0);
-  };
-  return parse(timeA) - parse(timeB);
+  const minA = parseTimeMinutes(timeA);
+  const minB = parseTimeMinutes(timeB);
+  if (minA === null || minB === null) return 0;
+  let diff = minA - minB;
+  // Handle circular 24-hour wrap around (misal: 23:50 vs 00:10 -> selisih -20 menit, bukan 1420 menit)
+  if (diff > 720) diff -= 1440;
+  if (diff < -720) diff += 1440;
+  return diff;
+}
+window.calculateMinutesDifference = calculateMinutesDifference;
+
+// Helper: Deteksi jadwal-jadwal sebelum slot aktif yang belum pernah dilakukan swap (Terskip)
+function getSkippedSchedulesBefore(unitVal, targetShift, compDate, activeSlotIndex, matches) {
+  if (!Array.isArray(matches) || activeSlotIndex <= 0) return [];
+  const skipped = [];
+  const priorMatches = matches.slice(0, activeSlotIndex);
+
+  priorMatches.forEach(prevSlot => {
+    const prevTimeNorm = normalizeScheduleTime(prevSlot.timeSch);
+    if (!prevTimeNorm) return;
+
+    const hasSwapped = (window.swapsData || []).some(sw => {
+      const swUnit = String(sw.unit || '').replace(/^DT[- ]?/i, '').trim();
+      const swShift = String(sw.shift || '').replace(/[^0-9]/g, '') || '1';
+      if (swUnit !== unitVal || swShift !== targetShift) return false;
+
+      if (compDate && sw.date) {
+        if (typeof parseDateComparable === 'function') {
+          if (parseDateComparable(sw.date) !== compDate) return false;
+        }
+      }
+
+      // Cocokkan target jam jadwal
+      const swSchNorm = normalizeScheduleTime(sw.timeSch || '');
+      if (swSchNorm && swSchNorm === prevTimeNorm) return true;
+
+      // Atau jika transaksi masuk pada jendela toleransi slot tersebut (<= 55 menit)
+      if (sw.jamIn) {
+        const diff = Math.abs(calculateMinutesDifference(sw.jamIn, prevTimeNorm));
+        if (diff <= 55) return true;
+      }
+      return false;
+    });
+
+    if (!hasSwapped) {
+      skipped.push(prevTimeNorm);
+    }
+  });
+
+  return skipped;
+}
+
+// Helper: Memperbarui isi input Keterangan secara cerdas (tidak menghapus catatan manual operator)
+function updateAutoKeteranganNote(skippedList, isEarly) {
+  const ketInput = document.getElementById('dedSwapKeterangan');
+  if (!ketInput) return;
+
+  const parts = [];
+  if (Array.isArray(skippedList) && skippedList.length > 0) {
+    parts.push(`Jadwal ${skippedList.join(', ')} Terskip`);
+  }
+  if (isEarly) {
+    parts.push('Datang lebih awal');
+  }
+  const newAutoText = parts.join(' - ');
+
+  let currentVal = ketInput.value.trim();
+  const prevAutoText = ketInput.dataset.autoPrefix || '';
+
+  if (prevAutoText) {
+    currentVal = currentVal.replace(prevAutoText, '');
+  }
+
+  // Bersihkan pola auto teks sebelumnya
+  currentVal = currentVal.replace(/Jadwal\s+[\d:,\s.]+\s+Terskip/gi, '')
+                         .replace(/Datang lebih awal/gi, '')
+                         .replace(/^(\s*-\s*)+/, '')
+                         .replace(/(\s*-\s*)+$/, '')
+                         .trim();
+
+  let finalVal = newAutoText;
+  if (currentVal) {
+    finalVal = newAutoText ? `${newAutoText} - ${currentVal}` : currentVal;
+  }
+
+  ketInput.value = finalVal;
+  ketInput.dataset.autoPrefix = newAutoText;
+
+  if (typeof window.updateKeteranganRequirement === 'function') {
+    window.updateKeteranganRequirement();
+  }
 }
 
 function getSwapScheduleTime(s) {
@@ -25289,6 +25390,7 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   const targetShift = String(shiftVal || '1').replace(/[^0-9]/g, '') || '1';
 
   // Cari SEMUA jadwal untuk unit & shift ini pada tanggal operasional yang dipilih
+  // PENTING: Pertahankan urutan baris murni dari database Google Sheets (TANPA .sort alfabetik)
   const matches = (window.schedulesData || []).filter(s => {
     const scUnit = String(s.unit || '').replace(/^DT[- ]?/i, '').trim();
     const scShift = String(s.shift || '').replace(/[^0-9]/g, '') || '1';
@@ -25304,7 +25406,7 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
       }
     }
     return true;
-  }).sort((a, b) => normalizeScheduleTime(a.timeSch).localeCompare(normalizeScheduleTime(b.timeSch)));
+  });
 
   if (matches.length === 0) {
     if (schInput) schInput.value = '-';
@@ -25339,72 +25441,124 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
     return;
   }
 
-  // Tentukan jadwal mana yang aktif (Best Match berdasarkan Jam In atau Waktu Sekarang)
-  let activeMatch = null;
+  // Tentukan jadwal mana yang aktif (Sesuai baris urutan database / Best Match)
+  let activeIndex = 0;
   const jamInTime = (jamInInput && jamInInput.value && jamInInput.value !== '--:--') ? jamInInput.value.trim() : '';
   const now = new Date();
   const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const referenceTime = jamInTime || currentTimeStr;
 
   if (selectedSpecificTime) {
-    activeMatch = matches.find(m => normalizeScheduleTime(m.timeSch) === normalizeScheduleTime(selectedSpecificTime)) || matches[0];
+    const foundIdx = matches.findIndex(m => normalizeScheduleTime(m.timeSch) === normalizeScheduleTime(selectedSpecificTime));
+    activeIndex = (foundIdx >= 0) ? foundIdx : 0;
   } else if (matches.length === 1) {
-    activeMatch = matches[0];
+    activeIndex = 0;
   } else {
     // Multi-schedule: pilih yang selisih menitnya paling kecil terhadap referenceTime
     let minDiff = Infinity;
-    matches.forEach(m => {
+    matches.forEach((m, idx) => {
       const diff = Math.abs(calculateMinutesDifference(referenceTime, normalizeScheduleTime(m.timeSch)));
       if (diff < minDiff) {
         minDiff = diff;
-        activeMatch = m;
+        activeIndex = idx;
       }
     });
-    if (!activeMatch) activeMatch = matches[0];
   }
 
+  const activeMatch = matches[activeIndex] || matches[0];
   const displayTime = normalizeScheduleTime(activeMatch.timeSch);
-  if (schInput) schInput.value = displayTime;
+  const rawDbTime = activeMatch.timeSch || displayTime;
+  if (schInput) schInput.value = rawDbTime;
 
-  // Render Slot Buttons jika ada lebih dari 1 jadwal
+  // Cek apakah ada jadwal sebelum slot aktif yang terlewat (Skipped)
+  const skippedList = getSkippedSchedulesBefore(unitVal, targetShift, compDate, activeIndex, matches);
+
+  // Render Slot Buttons jika ada lebih dari 1 jadwal (URUT SESUAI DATABASE)
   let slotButtonsHtml = '';
   if (matches.length > 1) {
     slotButtonsHtml = '<div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">' +
       matches.map((m, mIdx) => {
         const mTime = normalizeScheduleTime(m.timeSch);
-        const isActive = (mTime === displayTime);
+        const isActive = (mIdx === activeIndex);
         const activeStyle = isActive 
-          ? 'background: #0284c7; color: #ffffff; border: 1.5px solid #0369a1; font-weight: 800;' 
+          ? 'background: #0284c7; color: #ffffff; border: 1.5px solid #0369a1; font-weight: 800; box-shadow: 0 1px 3px rgba(2,132,199,0.3);' 
           : 'background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; font-weight: 600;';
+        const labelText = m.timeSch || mTime;
         return `<button type="button" onclick="updateDedSwapScheduleTarget('${mTime}')" 
           style="padding: 3px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; transition: all 0.15s ease; ${activeStyle}">
-          Slot ${mIdx + 1}: ${mTime}${isActive ? ' (Aktif)' : ''}
+          Slot ${mIdx + 1}: ${labelText}${isActive ? ' (Aktif)' : ''}
         </button>`;
       }).join('') + '</div>';
   }
 
-  // Evaluasi On Time vs Out Off Time
+  // Evaluasi On Time vs Out Off Time berdasarkan Aturan Operasional:
+  // - On Time: diffMins >= 0 && diffMins <= 55 (Jadwal s/d +55 menit)
+  // - Datang lebih awal (Out Off Time): diffMins < 0 && diffMins >= -55
+  // - Out Off Time lainnya: diffMins > 55 atau diffMins < -55
+  let isEarly = false;
+  let statusResult = 'On Time';
+
   if (jamInTime) {
     const diffMins = calculateMinutesDifference(jamInTime, displayTime);
-    const isLate = Math.abs(diffMins) > 55;
-    if (statusSelect) statusSelect.value = isLate ? 'Out Off Time' : 'On Time';
-    if (!isLate && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
-
-    const diffText = diffMins > 0 ? `+${diffMins} mnt` : `${diffMins} mnt`;
-    if (isLate) {
-      if (schNotice) {
-        schNotice.innerHTML = `<div><strong>Out Off Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | Selisih: ${diffText})</div>${slotButtonsHtml}`;
-        schNotice.style.color = '#b91c1c';
-      }
+    if (diffMins >= 0 && diffMins <= 55) {
+      statusResult = 'On Time';
+      isEarly = false;
+    } else if (diffMins < 0 && diffMins >= -55) {
+      statusResult = 'Out Off Time';
+      isEarly = true;
     } else {
-      if (schNotice) {
-        schNotice.innerHTML = `<div><strong>On Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | Selisih: ${diffText})</div>${slotButtonsHtml}`;
+      statusResult = 'Out Off Time';
+      isEarly = false;
+    }
+
+    if (statusSelect) statusSelect.value = statusResult;
+    if (statusResult === 'On Time' && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+
+    // Update kolom Keterangan secara otomatis
+    updateAutoKeteranganNote(skippedList, isEarly);
+
+    const diffAbs = Math.abs(diffMins);
+    let diffInfoText = '';
+    if (isEarly) {
+      diffInfoText = `Datang Lebih Awal: -${diffAbs} mnt`;
+    } else if (diffMins >= 0) {
+      diffInfoText = `Tepat Waktu: +${diffMins} mnt`;
+    } else {
+      diffInfoText = `Datang Terlalu Awal: -${diffAbs} mnt`;
+    }
+    if (diffMins > 55) {
+      diffInfoText = `Terlambat: +${diffMins} mnt`;
+    }
+
+    let skipBadgeHtml = '';
+    if (skippedList.length > 0) {
+      skipBadgeHtml = `<div style="margin-top: 5px; font-size: 11px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+        ⚠️ <strong>Perhatian:</strong> Jadwal ${skippedList.join(', ')} Terskip (Belum ada transaksi di slot sebelumnya)
+      </div>`;
+    }
+
+    if (schNotice) {
+      if (statusResult === 'On Time') {
+        schNotice.innerHTML = `<div><strong>On Schedule</strong> (Target: ${rawDbTime} | Masuk: ${jamInTime} | ${diffInfoText})</div>${skipBadgeHtml}${slotButtonsHtml}`;
         schNotice.style.color = '#15803d';
+      } else {
+        schNotice.innerHTML = `<div><strong>Out Off Schedule</strong> (Target: ${rawDbTime} | Masuk: ${jamInTime} | ${diffInfoText})</div>${skipBadgeHtml}${slotButtonsHtml}`;
+        schNotice.style.color = isEarly ? '#d97706' : '#b91c1c';
       }
     }
   } else {
+    // Jam In belum diisi
+    updateAutoKeteranganNote(skippedList, false);
+
+    let skipBadgeHtml = '';
+    if (skippedList.length > 0) {
+      skipBadgeHtml = `<div style="margin-top: 5px; font-size: 11px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+        ⚠️ <strong>Perhatian:</strong> Jadwal ${skippedList.join(', ')} Terskip
+      </div>`;
+    }
+
     if (schNotice) {
-      schNotice.innerHTML = `<div>Target Jadwal: <strong>${displayTime} WIB</strong> • Shift ${shiftVal || '1'}${matches.length > 1 ? ` (${matches.length} jadwal terdaftar)` : ''}</div>${slotButtonsHtml}`;
+      schNotice.innerHTML = `<div>Target Jadwal: <strong>${rawDbTime} WIB</strong> • Shift ${shiftVal || '1'}${matches.length > 1 ? ` (${matches.length} jadwal terdaftar)` : ''}</div>${skipBadgeHtml}${slotButtonsHtml}`;
       schNotice.style.color = '#0369a1';
     }
     if (statusSelect && !statusSelect.value) statusSelect.value = 'On Time';
@@ -25944,12 +26098,12 @@ function renderScheduleTable() {
       return true;
     });
 
-    // Urutkan jadwal: tanggal terbaru di atas
+    // Urutkan jadwal: tanggal terbaru di atas, dan jika tanggal sama pertahankan urutan baris database (origIdx)
     filtered.sort((a, b) => {
       const da = (typeof parseDateComparable === 'function') ? parseDateComparable(a.tanggal) : (a.tanggal || '');
       const db = (typeof parseDateComparable === 'function') ? parseDateComparable(b.tanggal) : (b.tanggal || '');
       if (da && db && da !== db) return db.localeCompare(da);
-      return String(a.timeSch || '').localeCompare(String(b.timeSch || ''));
+      return (a.origIdx || 0) - (b.origIdx || 0);
     });
 
     currentFilteredScheduleItems = filtered;
