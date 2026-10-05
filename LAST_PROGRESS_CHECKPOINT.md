@@ -1,10 +1,45 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 03:48 WITA  
-**Status Sesi:** Resolusi Tuntas ID Transaksi Kembar / Duplikat Multi-User Melalui Server LockService Mutex & Smart ID Reconciliation (Status: Sukses & Teruji 100%, GAS @99, Build v51)
+**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 19:55 WITA  
+**Status Sesi:** Resolusi Tuntas Urutan Database Schedule, Window Toleransi On Time [0, +55] Menit, Out Off Time Datang Lebih Awal, dan Deteksi Otomatis Jadwal Terskip (Status: Sukses & Teruji 100%, GAS @100, Build v52, PWA Live di GitHub `main`)
 
 ---
 
-### 📋 Ringkasan Pekerjaan Hari Ini (05 Oktober 2026):
+### 📋 Ringkasan Pekerjaan Hari Ini (05 Oktober 2026 - Bagian Malam):
+
+#### 1. ⏱️ Penyelarasan Urutan Slot Jadwal Sesuai Database Google Sheets (Natural Order):
+- **Masalah:** Tombol slot jadwal di aplikasi menampilkan jam yang terbalik (misal jam `02.00.00` muncul di Slot 1 terlebih dahulu, baru kemudian `05.00.00`, `19.00.00`, dan `22.00.00`) karena adanya fungsi `.sort()` alfabetik string yang memotong urutan kronologis Shift 2 (Shift Malam: 18:00 - 06:00).
+- **Solusi & Implementasi:**
+  - Menghilangkan `.sort()` alfabetik pada `matches` di `updateDedSwapScheduleTarget()` dan tabel kelola jadwal `renderScheduleTable()`.
+  - Sistem sekarang 100% patuh pada urutan baris murni dari database Google Sheets `SCEDHULE`:
+    `Slot 1: 19.00.00` ➔ `Slot 2: 22.00.00` ➔ `Slot 3: 02.00.00` ➔ `Slot 4: 05.00.00`.
+
+#### 2. 🎯 Aturan Window Waktu Ketepatan & Status Toleransi 55 Menit:
+- **Aturan Operasional Baru:**
+  1. **`On Time`**: Hanya jika unit masuk di jam jadwal s/d $+55$ menit sesudahnya ($\Delta t \in [0, +55]$ menit).
+  2. **`Out Off Time` (Datang Lebih Awal)**: Jika unit masuk dalam rentang 55 menit sebelum jadwal ($\Delta t \in [-55, -1]$ menit), status otomatis `Out Off Time` dan kolom `KETERANGAN` otomatis mencatat: `Datang lebih awal`.
+  3. **`Out Off Time` (Terlambat)**: Jika unit masuk lebih dari $+55$ menit sesudah jadwal ($\Delta t > +55$ menit).
+- **Penyempurnaan Kalkulasi Waktu:**
+  - Normalisasi otomatis tanda pemisah titik (`.`) seperti format Google Sheets (`19.00.00`) ke format waktu kalkulasi tanpa error `NaN`.
+  - Penanganan penyeberangan tengah malam (*circular 24-hour rollover*, misal 23:55 vs 00:10 terhitung selisih 15 menit).
+
+#### 3. ⚠️ Deteksi Otomatis Jadwal Sebelumnya Terskip (Skipped Schedule):
+- **Logika Cerdas:**
+  - Jika unit masuk di slot ke-2 atau seterusnya (misal Slot 2 `22:00`), sistem secara otomatis memeriksa riwayat transaksi hari itu (`swapsData`) untuk unit dan shift yang bersangkutan.
+  - Jika slot sebelumnya (`19:00`) belum pernah melakukan swap, sistem menandainya sebagai TERSKIP.
+  - Kolom **`KETERANGAN`** otomatis terisi: `Jadwal 19:00 Terskip` (atau kombinasi `Jadwal 19:00 Terskip - Datang lebih awal` jika datang di rentang awal).
+  - Form memunculkan badge peringatan oranye: `⚠️ Perhatian: Jadwal 19:00 Terskip (Belum ada transaksi di slot sebelumnya)`.
+  - Catatan manual operator yang sudah diketik tetap aman dan tidak terhapus.
+  - Jam Masuk (`Jam In`) tersinkronisasi live (*real-time reactive*) begitu operator mengetik atau memilih waktu.
+
+#### 4. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.05.v52` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v52` di `sw.js` (PWA otomatis update di HP operator tanpa install ulang).
+- **GitHub Push:** Berhasil di-push ke branch `main` (`commit 5807b72`).
+- **Google Apps Script Deployment:** **`@100`** (Deployment ID `AKfycbz1S0_VHO2QaVFEKFjRxhtFhlCHqxI9MyNffFSM6iTfQA02lio6VAM_bf41vIRCk8Bh5Q`).
+
+---
+
+### 📋 Ringkasan Pekerjaan Sebelumnya (05 Oktober 2026 - Bagian Dini Hari):
 
 #### 1. 🔒 Pengamanan Server-Side LockService Mutex & Deteksi Duplikat di Backend (`Code.gs`):
 - **Masalah:** Transaksi yang diinput bersamaan oleh beberapa operator di lapangan menghasilkan Transaction ID kembar (contoh: Abi Setiawan dan Virnanda Agus Setiawan sama-sama mendapatkan ID `0478`, `0479`, `0480`) karena ID di-generate secara independen oleh memori lokal HP masing-masing tanpa koordinasi server terpusat.
