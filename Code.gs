@@ -1080,11 +1080,23 @@ function apiGetAllSheetsData() {
       for (let i = 1; i < schRows.length; i++) {
         const r = schRows[i];
         if (!r[2]) continue;
+        const cleanTgl = formatDateCell(r[0]);
+        const cleanSft = String(r[1]).trim();
+        const cleanUnt = String(r[2]).trim().replace(/^DT[\s\-_]*/i, '').replace(/\.0+$/, '');
+        const cleanTim = formatTimeCell(r[3]);
+
+        // Auto-repair baris Google Sheet jika ada data cacat (misal 46301 atau desimal 0.3333333333)
+        if (String(r[0]).trim() !== cleanTgl || String(r[3]).trim() !== cleanTim || String(r[2]).trim() !== cleanUnt) {
+          try {
+            schSheet.getRange(i + 1, 1, 1, 4).setValues([[cleanTgl, cleanSft, cleanUnt, cleanTim]]);
+          } catch(eRepair) {}
+        }
+
         schedules.push({
-          tanggal: formatDateCell(r[0]),
-          shift:   String(r[1]).trim(),
-          unit:    String(r[2]).trim(),
-          timeSch: formatTimeCell(r[3])
+          tanggal: cleanTgl,
+          shift:   cleanSft,
+          unit:    cleanUnt,
+          timeSch: cleanTim
         });
       }
     }
@@ -2888,25 +2900,72 @@ function apiBackupAllToSheets(payload) {
 // HELPER FUNCTIONS
 // =============================================================================
 function formatDateCell(val) {
-  if (!val) return '';
+  if (val === null || val === undefined || val === '') return '';
   if (val instanceof Date) {
     const d = String(val.getDate()).padStart(2, '0');
     const m = String(val.getMonth() + 1).padStart(2, '0');
     const y = val.getFullYear();
     return `${d}/${m}/${y}`;
   }
-  return String(val).trim();
+  let s = String(val).trim();
+  // Konversi angka serial Excel (misal: 46301 -> 06/10/2026)
+  if (/^\d{5}$/.test(s) || (typeof val === 'number' && val > 10000 && val < 60000)) {
+    try {
+      const utcDays = Math.floor(Number(val) - 25569);
+      const dateObj = new Date(utcDays * 86400 * 1000);
+      if (!isNaN(dateObj.getTime())) {
+        const d = String(dateObj.getUTCDate()).padStart(2, '0');
+        const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+        const y = dateObj.getUTCFullYear();
+        return `${d}/${m}/${y}`;
+      }
+    } catch(e) {}
+  }
+  // Format ISO YYYY-MM-DD
+  const mIso = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (mIso) {
+    return `${mIso[3].padStart(2, '0')}/${mIso[2].padStart(2, '0')}/${mIso[1]}`;
+  }
+  return s;
 }
 
 function formatTimeCell(val) {
-  if (!val) return '';
+  if (val === null || val === undefined || val === '') return '';
   if (val instanceof Date) {
     const h = String(val.getHours()).padStart(2, '0');
     const m = String(val.getMinutes()).padStart(2, '0');
-    const s = String(val.getSeconds()).padStart(2, '0');
-    return `${h}:${m}:${s}`;
+    const sec = String(val.getSeconds()).padStart(2, '0');
+    return `${h}.${m}.${sec}`;
   }
-  return String(val).trim();
+  // Konversi pecahan desimal hari Excel (misal: 0.3333333333 -> 08.00.00, 0.8333333333 -> 20.00.00)
+  if (typeof val === 'number' && val >= 0 && val < 1) {
+    let totalSeconds = Math.round(val * 86400);
+    if (totalSeconds >= 86400) totalSeconds = totalSeconds % 86400;
+    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const sec = String(totalSeconds % 60).padStart(2, '0');
+    return `${h}.${m}.${sec}`;
+  }
+  let s = String(val).trim();
+  if (/^0\.\d+$/.test(s)) {
+    let num = parseFloat(s);
+    let totalSeconds = Math.round(num * 86400);
+    if (totalSeconds >= 86400) totalSeconds = totalSeconds % 86400;
+    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const sec = String(totalSeconds % 60).padStart(2, '0');
+    return `${h}.${m}.${sec}`;
+  }
+  // Seragamkan pemisah ke titik (HH.MM.SS) sesuai standar database Google Sheets
+  s = s.replace(/:/g, '.');
+  const parts = s.split('.');
+  if (parts.length === 2) {
+    return `${parts[0].padStart(2, '0')}.${parts[1].padStart(2, '0')}.00`;
+  }
+  if (parts.length >= 3) {
+    return `${parts[0].padStart(2, '0')}.${parts[1].padStart(2, '0')}.${parts[2].substring(0, 2).padStart(2, '0')}`;
+  }
+  return s;
 }
 
 function formatTimeHHMM(val) {

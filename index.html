@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.06.v55';
+      var APP_BUILD_ID = '2026.10.06.v56';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -27137,12 +27137,12 @@ function excelFractionToTime(frac) {
   try {
     let totalSeconds = Math.round(Number(frac) * 86400);
     if (totalSeconds >= 86400) totalSeconds = totalSeconds % 86400;
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const s = String(totalSeconds % 60).padStart(2, '0');
+    return `${h}.${m}.${s}`;
   } catch (e) {
-    return '07:00:00';
+    return '07.00.00';
   }
 }
 
@@ -27185,12 +27185,12 @@ function normalizeScheduleExcelDate(val) {
 }
 
 function normalizeScheduleExcelTime(val) {
-  if (val === null || val === undefined || val === '') return '07:00:00';
+  if (val === null || val === undefined || val === '') return '07.00.00';
   if (val instanceof Date) {
     const hh = String(val.getHours()).padStart(2, '0');
     const mm = String(val.getMinutes()).padStart(2, '0');
     const ss = String(val.getSeconds()).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
+    return `${hh}.${mm}.${ss}`;
   }
   if (typeof val === 'number' && val >= 0 && val < 1) {
     return excelFractionToTime(val);
@@ -27199,20 +27199,20 @@ function normalizeScheduleExcelTime(val) {
   if (/^0\.\d+$/.test(s)) {
     return excelFractionToTime(parseFloat(s));
   }
-  // Ganti titik menjadi titik dua (misal: 19.00.00 atau 19.00 -> 19:00)
-  s = s.replace(/\./g, ':').replace(/\s+/g, '');
-  const parts = s.split(':');
+  // Seragamkan pemisah ke titik '.' (HH.MM.SS) sesuai standar database Google Sheets SCEDHULE
+  s = s.replace(/:/g, '.').replace(/\s+/g, '');
+  const parts = s.split('.');
   if (parts.length === 1 && /^\d{1,2}$/.test(parts[0])) {
-    return `${parts[0].padStart(2, '0')}:00:00`;
+    return `${parts[0].padStart(2, '0')}.00.00`;
   }
   if (parts.length === 2) {
-    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00`;
+    return `${parts[0].padStart(2, '0')}.${parts[1].padStart(2, '0')}.00`;
   }
   if (parts.length >= 3) {
     const hh = parts[0].padStart(2, '0');
     const mm = parts[1].padStart(2, '0');
     const ss = parts[2].substring(0, 2).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
+    return `${hh}.${mm}.${ss}`;
   }
   return s;
 }
@@ -27244,16 +27244,17 @@ window.downloadScheduleTemplateExcel = function() {
   const todayStr = `${d}/${m}/${y}`;
 
   // Data contoh realistis untuk unit armada DT EV PPA (Shift 1 & Shift 2)
+  // Format jam menggunakan titik (HH.MM.SS) sesuai format Google Sheets SCEDHULE
   const aoa = [
     ['Tanggal', 'Shift', 'Kode Unit', 'Time Sch'],
-    [todayStr, '1', '1601', '07:00:00'],
-    [todayStr, '1', '1618', '07:00:00'],
-    [todayStr, '1', '1615', '10:00:00'],
-    [todayStr, '1', '1622', '14:00:00'],
-    [todayStr, '2', '1605', '19:00:00'],
-    [todayStr, '2', '1616', '22:00:00'],
-    [todayStr, '2', '1617', '02:00:00'],
-    [todayStr, '2', '1620', '05:00:00']
+    [todayStr, '1', '1601', '07.00.00'],
+    [todayStr, '1', '1618', '07.00.00'],
+    [todayStr, '1', '1615', '10.00.00'],
+    [todayStr, '1', '1622', '14.00.00'],
+    [todayStr, '2', '1605', '19.00.00'],
+    [todayStr, '2', '1616', '22.00.00'],
+    [todayStr, '2', '1617', '02.00.00'],
+    [todayStr, '2', '1620', '05.00.00']
   ];
 
   if (typeof XLSX !== 'undefined') {
@@ -27288,7 +27289,7 @@ window.downloadScheduleTemplateExcel = function() {
         ['Tanggal', 'DD/MM/YYYY', todayStr, 'Format: Hari/Bulan/Tahun (Contoh: 06/10/2026)'],
         ['Shift', '1 atau 2', '1', '1 = Shift 1 (Siang: 07:00-18:00), 2 = Shift 2 (Malam: 19:00-06:00)'],
         ['Kode Unit', 'Nomor Unit', '1601', 'Nomor armada murni (bisa ditulis 1601 atau DT-1601)'],
-        ['Time Sch', 'HH:MM:SS (24 Jam)', '07:00:00', 'Jam target swap baterai masuk (Contoh: 07:00:00, 19:00:00)']
+        ['Time Sch', 'HH.MM.SS (24 Jam)', '07.00.00', 'Jam target swap baterai masuk (Contoh: 07.00.00, 19.00.00)']
       ];
       const wsPanduan = XLSX.utils.aoa_to_sheet(panduanAoa);
       wsPanduan['!cols'] = [{ wch: 16 }, { wch: 24 }, { wch: 20 }, { wch: 55 }];
@@ -27304,10 +27305,10 @@ window.downloadScheduleTemplateExcel = function() {
 
   // Fallback CSV template
   let csv = 'Tanggal,Shift,Kode Unit,Time Sch\n';
-  csv += `${todayStr},1,1601,07:00:00\n`;
-  csv += `${todayStr},1,1618,07:00:00\n`;
-  csv += `${todayStr},2,1605,19:00:00\n`;
-  csv += `${todayStr},2,1616,22:00:00\n`;
+  csv += `${todayStr},1,1601,07.00.00\n`;
+  csv += `${todayStr},1,1618,07.00.00\n`;
+  csv += `${todayStr},2,1605,19.00.00\n`;
+  csv += `${todayStr},2,1616,22.00.00\n`;
   const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -27379,10 +27380,10 @@ function parseScheduleFile(file) {
       let rows = [];
       if (typeof XLSX !== 'undefined') {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: false });
         const firstSheetName = workbook.SheetNames[0];
         const firstSheet = workbook.Sheets[firstSheetName];
-        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: false });
       } else {
         const text = new TextDecoder().decode(e.target.result);
         rows = text.split(/\r?\n/).map(line => line.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
