@@ -1,6 +1,37 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 19:55 WITA  
-**Status Sesi:** Resolusi Tuntas Urutan Database Schedule, Window Toleransi On Time [0, +55] Menit, Out Off Time Datang Lebih Awal, dan Deteksi Otomatis Jadwal Terskip (Status: Sukses & Teruji 100%, GAS @100, Build v52, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 05 Oktober 2026, Pukul 23:15 WITA  
+**Status Sesi:** Standardisasi Menyeluruh Toleransi Jadwal On Time [0, +55] Mnt & Datang Awal di Seluruh Form (Quick & Dedicated Swap), Sanitasi Event Parameter, Smart Fallback Telemetry Table, Koreksi Data Transaksi Unit 1622 (Status: Sukses & Teruji 100%, GAS @100, Build v53, PWA Live di GitHub `main`)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (05 Oktober 2026 - Pukul 23:15 WITA - Build v53):
+
+#### 1. ⏱️ Penyelarasan Menyeluruh Form Quick Swap / Regular Add Swap (`formNewSwap`):
+- **Masalah:** Form Tambah Swap Biasa / Quick Modal sebelumnya masih memakai formula toleransi lama simetris `Math.abs(diff) > 55`, sehingga unit yang datang 30 menit sebelum jadwal (seperti unit 1622 jam 20:30 jadwal 21:00) dievaluasi sebagai `On Time` dan `13.NO PROBLEM`.
+- **Implementasi:**
+  - Menyelaraskan logika waktu:
+    - $\Delta t \in [0, +55]$ menit &rarr; `On Time`, problem `13.NO PROBLEM`.
+    - $\Delta t \in [-55, -1]$ menit &rarr; `Out Off Time`, `isEarly = true`, otomatis mengisi Keterangan `Datang awal`.
+    - $\Delta t > +55$ atau $\Delta t < -55$ menit &rarr; `Out Off Time`.
+
+#### 2. 🛡️ Sanitasi Parameter & Event Listener Dedicated Swap:
+- Menghindari bug `[object InputEvent]` yang terkirim saat operator mengetik `Jam In` dengan membungkus listener `addEventListener('input', () => updateDedSwapScheduleTarget())` dan sanitasi tipe data string pada `updateDedSwapScheduleTarget(selectedSpecificTime)`.
+
+#### 3. 🏷️ Standardisasi Teks Keterangan Lapangan ("Datang awal"):
+- Menyeragamkan format auto-keterangan menjadi `Datang awal` (2 kata, sesuai kebiasaan operator dan format data historis di Google Sheets).
+
+#### 4. 🧠 Smart Fallback Evaluasi Ketepatan di Tabel Telemetry & PDF Export:
+- Pada `renderPpaExecTable()` dan `buildVisualKpiPdfReportHtml()`, ditambahkan dynamic check `(diffCalc !== null && (diffCalc < 0 || diffCalc > 55))` sehingga jika ada anomali atau data lama yang statusnya tidak sinkron, tabel secara otomatis menampilkan pill merah `OUT OFF TIME` dan Keterangan `Datang awal`.
+
+#### 5. ✏️ Koreksi Riil Transaksi Unit 1622 (ID `0664`) di Google Sheets & Firestore:
+- Memperbarui baris transaksi `DA01/CHG/2026/SWAP/0664` pada sheet `DATA INPUT` dan Firestore:
+  - `statusRemark`: dari `On Time` &rarr; `Out Off Time`
+  - `keterangan`: dari `13.NO PROBLEM` &rarr; `Datang awal`
+
+#### 6. 🚀 Rilis Versi & Deployment:
+- **Build Version:** `2026.10.05.v53` di `index.html`.
+- **Service Worker Cache:** `charging-ev-v53` di `sw.js`.
+- **Backend Google Apps Script:** Versi tetap **`@100`** (tidak perlu redeploy backend karena backend sudah 100% stabil).
 
 ---
 

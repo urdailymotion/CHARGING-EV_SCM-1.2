@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.05.v52';
+      var APP_BUILD_ID = '2026.10.05.v53';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -18779,20 +18779,61 @@ function initTableControls() {
       if (jamInInput && jamInInput.value && jamInInput.value !== '--:--') {
         const jamInTime = jamInInput.value.trim();
         const diffMins = calculateMinutesDifference(jamInTime, displayTime);
-        const isLate = Math.abs(diffMins) > 55;
-        if (statusSelect) statusSelect.value = isLate ? 'Out Off Time' : 'On Time';
-        if (!isLate && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+        let isEarly = false;
+        let isLate = false;
+        let statusResult = 'On Time';
 
-        const diffText = diffMins > 0 ? `+${diffMins} mnt` : `${diffMins} mnt`;
-        if (isLate) {
-          if (schNotice) {
-            schNotice.innerHTML = `<strong>Out Off Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | Selisih: ${diffText})`;
-            schNotice.style.color = '#b91c1c';
-          }
+        if (diffMins >= 0 && diffMins <= 55) {
+          statusResult = 'On Time';
+          isEarly = false;
+          isLate = false;
+        } else if (diffMins < 0 && diffMins >= -55) {
+          statusResult = 'Out Off Time';
+          isEarly = true;
+          isLate = true;
         } else {
-          if (schNotice) {
-            schNotice.innerHTML = `<strong>On Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | Selisih: ${diffText})`;
+          statusResult = 'Out Off Time';
+          isEarly = false;
+          isLate = true;
+        }
+
+        if (statusSelect) statusSelect.value = statusResult;
+        if (statusResult === 'On Time' && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+
+        // Auto update keterangan di modal regular swap jika datang awal
+        const ketInput = document.getElementById('newSwapKeterangan');
+        if (ketInput) {
+          if (isEarly) {
+            if (!ketInput.value || ketInput.value === '13.NO PROBLEM' || ketInput.dataset.autoEarly) {
+              ketInput.value = 'Datang awal';
+              ketInput.dataset.autoEarly = 'true';
+            }
+          } else if (ketInput.dataset.autoEarly && ketInput.value === 'Datang awal') {
+            ketInput.value = '';
+            delete ketInput.dataset.autoEarly;
+          }
+        }
+
+        const diffAbs = Math.abs(diffMins);
+        let diffInfoText = '';
+        if (isEarly) {
+          diffInfoText = `Datang Awal: -${diffAbs} mnt`;
+        } else if (diffMins >= 0) {
+          diffInfoText = `Tepat Waktu: +${diffMins} mnt`;
+        } else {
+          diffInfoText = `Datang Terlalu Awal: -${diffAbs} mnt`;
+        }
+        if (diffMins > 55) {
+          diffInfoText = `Terlambat: +${diffMins} mnt`;
+        }
+
+        if (schNotice) {
+          if (statusResult === 'On Time') {
+            schNotice.innerHTML = `<strong>On Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | ${diffInfoText})`;
             schNotice.style.color = '#15803d';
+          } else {
+            schNotice.innerHTML = `<strong>Out Off Schedule</strong> (Target: ${displayTime} | Masuk: ${jamInTime} | ${diffInfoText})`;
+            schNotice.style.color = isEarly ? '#d97706' : '#b91c1c';
           }
         }
       } else {
@@ -20653,21 +20694,21 @@ function initDedicatedInputForm() {
 
   if (dedUnitSel && !dedUnitSel.dataset.schBound) {
     dedUnitSel.dataset.schBound = 'true';
-    dedUnitSel.addEventListener('change', updateDedSwapScheduleTarget);
+    dedUnitSel.addEventListener('change', () => updateDedSwapScheduleTarget());
   }
   if (jamInInput && !jamInInput.dataset.schBound) {
     jamInInput.dataset.schBound = 'true';
-    jamInInput.addEventListener('input', updateDedSwapScheduleTarget);
+    jamInInput.addEventListener('input', () => updateDedSwapScheduleTarget());
   }
   const dedDateEl = document.getElementById('dedSwapDate');
   if (dedDateEl && !dedDateEl.dataset.schBound) {
     dedDateEl.dataset.schBound = 'true';
-    dedDateEl.addEventListener('change', updateDedSwapScheduleTarget);
+    dedDateEl.addEventListener('change', () => updateDedSwapScheduleTarget());
   }
   const dedShiftEl = document.getElementById('dedSwapShift');
   if (dedShiftEl && !dedShiftEl.dataset.schBound) {
     dedShiftEl.dataset.schBound = 'true';
-    dedShiftEl.addEventListener('change', updateDedSwapScheduleTarget);
+    dedShiftEl.addEventListener('change', () => updateDedSwapScheduleTarget());
   }
 
   // Charging Time Auto Calculator (Jam Out - Jam In)
@@ -23661,7 +23702,13 @@ function renderPpaExecTable() {
 
   pageItems.forEach((s, i) => {
     const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
-    const isLate = !isNonSch && (String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late'));
+    const schTime = getSwapScheduleTime(s);
+    const diffCalc = (s.jamIn && schTime && schTime !== '-') ? calculateMinutesDifference(s.jamIn, schTime) : null;
+    const isLate = !isNonSch && (
+      String(s.statusRemark || '').toLowerCase().includes('out') || 
+      String(s.statusRemark || '').toLowerCase().includes('late') ||
+      (diffCalc !== null && (diffCalc < 0 || diffCalc > 55))
+    );
     
     // Status pill HTML (EV Intelligence style)
     let statusPill = '';
@@ -23689,12 +23736,15 @@ function renderPpaExecTable() {
           if (rawKet && rawProb && rawProb !== '13.NO PROBLEM') {
             return `${rawProb} • ${rawKet}`;
           }
-          if (rawKet) return rawKet;
+          if (rawKet && rawKet !== '13.NO PROBLEM') return rawKet;
           if (rawProb && rawProb !== '13.NO PROBLEM') return rawProb;
           if (isLate) {
             const schTime = getSwapScheduleTime(s);
             if (schTime && schTime !== '-' && s.jamIn) {
               const diff = calculateMinutesDifference(s.jamIn, schTime);
+              if (diff < 0) {
+                return 'Datang awal';
+              }
               const diffText = diff > 0 ? `+${diff} mnt` : `${diff} mnt`;
               return `Out Off Schedule (${diffText})`;
             }
@@ -23814,7 +23864,13 @@ function buildVisualKpiPdfReportHtml() {
   } else {
     sampleSwaps.forEach(s => {
       const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
-      const isLate = !isNonSch && (String(s.statusRemark || '').toLowerCase().includes('out') || String(s.statusRemark || '').toLowerCase().includes('late'));
+      const schTime = getSwapScheduleTime(s);
+      const diffCalc = (s.jamIn && schTime && schTime !== '-') ? calculateMinutesDifference(s.jamIn, schTime) : null;
+      const isLate = !isNonSch && (
+        String(s.statusRemark || '').toLowerCase().includes('out') || 
+        String(s.statusRemark || '').toLowerCase().includes('late') ||
+        (diffCalc !== null && (diffCalc < 0 || diffCalc > 55))
+      );
       const statusText = isNonSch ? 'NON-SCHEDULE' : (isLate ? 'OUT OFF TIME' : 'ON SCHEDULE');
       const statusColor = isNonSch ? '#287C8E' : (isLate ? '#D64545' : '#168A5B');
 
@@ -25272,7 +25328,7 @@ function updateAutoKeteranganNote(skippedList, isEarly) {
     parts.push(`Jadwal ${skippedList.join(', ')} Terskip`);
   }
   if (isEarly) {
-    parts.push('Datang lebih awal');
+    parts.push('Datang awal');
   }
   const newAutoText = parts.join(' - ');
 
@@ -25285,7 +25341,7 @@ function updateAutoKeteranganNote(skippedList, isEarly) {
 
   // Bersihkan pola auto teks sebelumnya
   currentVal = currentVal.replace(/Jadwal\s+[\d:,\s.]+\s+Terskip/gi, '')
-                         .replace(/Datang lebih awal/gi, '')
+                         .replace(/Datang\s+(lebih\s+)?awal/gi, '')
                          .replace(/^(\s*-\s*)+/, '')
                          .replace(/(\s*-\s*)+$/, '')
                          .trim();
@@ -25448,8 +25504,9 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const referenceTime = jamInTime || currentTimeStr;
 
-  if (selectedSpecificTime) {
-    const foundIdx = matches.findIndex(m => normalizeScheduleTime(m.timeSch) === normalizeScheduleTime(selectedSpecificTime));
+  const specificTimeStr = (typeof selectedSpecificTime === 'string') ? selectedSpecificTime.trim() : null;
+  if (specificTimeStr) {
+    const foundIdx = matches.findIndex(m => normalizeScheduleTime(m.timeSch) === normalizeScheduleTime(specificTimeStr));
     activeIndex = (foundIdx >= 0) ? foundIdx : 0;
   } else if (matches.length === 1) {
     activeIndex = 0;
@@ -25493,7 +25550,7 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
 
   // Evaluasi On Time vs Out Off Time berdasarkan Aturan Operasional:
   // - On Time: diffMins >= 0 && diffMins <= 55 (Jadwal s/d +55 menit)
-  // - Datang lebih awal (Out Off Time): diffMins < 0 && diffMins >= -55
+  // - Datang awal (Out Off Time): diffMins < 0 && diffMins >= -55
   // - Out Off Time lainnya: diffMins > 55 atau diffMins < -55
   let isEarly = false;
   let statusResult = 'On Time';
@@ -25520,7 +25577,7 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
     const diffAbs = Math.abs(diffMins);
     let diffInfoText = '';
     if (isEarly) {
-      diffInfoText = `Datang Lebih Awal: -${diffAbs} mnt`;
+      diffInfoText = `Datang Awal: -${diffAbs} mnt`;
     } else if (diffMins >= 0) {
       diffInfoText = `Tepat Waktu: +${diffMins} mnt`;
     } else {
@@ -26186,7 +26243,8 @@ function renderScheduleTable() {
         let cleanKet = '-';
 
         if (matchedSwap) {
-          const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && typeof calculateMinutesDifference === 'function' && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
+          const diffMatch = (matchedSwap.jamIn && typeof calculateMinutesDifference === 'function') ? calculateMinutesDifference(matchedSwap.jamIn, itemTime) : null;
+          const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (diffMatch !== null && (diffMatch > 55 || diffMatch < 0));
           cleanStatus = isLate ? `Out Off Time (${matchedSwap.jamIn || '-'})` : `On Time (${matchedSwap.jamIn || '-'})`;
           cleanKet = matchedSwap.keterangan || (matchedSwap.problemRemark && matchedSwap.problemRemark !== '13.NO PROBLEM' ? matchedSwap.problemRemark : 'Selesai On Time');
         } else {
@@ -26735,7 +26793,8 @@ function exportScheduleToExcel() {
     let ketText = '-';
 
     if (matchedSwap) {
-      const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (matchedSwap.jamIn && Math.abs(calculateMinutesDifference(matchedSwap.jamIn, itemTime)) > 55);
+      const diffMatch = (matchedSwap.jamIn && typeof calculateMinutesDifference === 'function') ? calculateMinutesDifference(matchedSwap.jamIn, itemTime) : null;
+      const isLate = (matchedSwap.statusRemark === 'Out Off Time') || (diffMatch !== null && (diffMatch > 55 || diffMatch < 0));
       statusText = isLate ? `Out Off Time (${matchedSwap.jamIn})` : `On Time (${matchedSwap.jamIn})`;
       
       const parts = [];
