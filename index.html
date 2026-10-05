@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.06.v56';
+      var APP_BUILD_ID = '2026.10.06.v57';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -11503,8 +11503,15 @@ html, body {
                   </select> entries
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                  Filter Shift:
-                  <select id="filterScheduleShift" class="entries-select" style="width: 130px;">
+                  <span style="font-size: 12px; font-weight: 600; color: #475569;">Filter Tanggal:</span>
+                  <select id="filterScheduleDate" class="entries-select" style="min-width: 155px; font-weight: 600; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;">
+                    <option value="ALL">Semua Tanggal</option>
+                  </select>
+                  <button type="button" class="btn-show" onclick="window.setScheduleFilterToToday()" style="padding: 4px 9px; font-size: 11px; background: #0284c7; color: #ffffff; border: 1px solid #0369a1; border-radius: 5px; font-weight: 700; cursor: pointer;" title="Tampilkan jadwal hari ini">Hari Ini</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 12px; font-weight: 600; color: #475569;">Filter Shift:</span>
+                  <select id="filterScheduleShift" class="entries-select" style="width: 135px; font-weight: 600;">
                     <option value="ALL">Semua Shift</option>
                     <option value="1">Shift 1 (Siang)</option>
                     <option value="2">Shift 2 (Malam)</option>
@@ -17407,6 +17414,11 @@ function populateDateFilters() {
     } else {
       ppaDateSelect.value = 'ALL';
     }
+  }
+
+  // 3. Swap Schedule Date Filter
+  if (typeof populateScheduleDateFilter === 'function') {
+    populateScheduleDateFilter();
   }
 }
 
@@ -25896,8 +25908,64 @@ function initHeaderScheduleToggle() {
 // Schedule Table View Controller
 let scheduleSearchQuery = '';
 let scheduleFilterShift = 'ALL';
+let scheduleFilterDate = 'ALL';
 let scheduleCurrentPage = 1;
 let schedulePerPage = 15;
+window.scheduleFilterDate = scheduleFilterDate;
+window.scheduleFilterShift = scheduleFilterShift;
+
+function populateScheduleDateFilter() {
+  const selectDate = document.getElementById('filterScheduleDate');
+  if (!selectDate) return;
+
+  const currentVal = scheduleFilterDate || selectDate.value || 'ALL';
+  const dateSet = new Set();
+  (schedulesData || []).forEach(s => {
+    const raw = (s.tanggal || s.date || '').trim();
+    if (raw) dateSet.add(raw);
+  });
+
+  const sortedDates = Array.from(dateSet).sort((a, b) => {
+    const compA = (typeof parseDateComparable === 'function') ? parseDateComparable(a) : a;
+    const compB = (typeof parseDateComparable === 'function') ? parseDateComparable(b) : b;
+    return (compB || '').localeCompare(compA || '');
+  });
+
+  const todayComp = (typeof getTodayComparableDate === 'function') ? getTodayComparableDate() : '';
+  const todayFormatted = (typeof getTodayDateFormatted === 'function') ? getTodayDateFormatted() : '';
+
+  let html = `<option value="ALL">Semua Tanggal</option>`;
+  if (todayFormatted) {
+    html += `<option value="TODAY">Hari Ini (${todayFormatted})</option>`;
+  }
+
+  sortedDates.forEach(d => {
+    const dComp = (typeof parseDateComparable === 'function') ? parseDateComparable(d) : '';
+    const isToday = todayComp && dComp === todayComp;
+    const label = isToday ? `${d} (Hari Ini)` : d;
+    html += `<option value="${d}">${label}</option>`;
+  });
+
+  selectDate.innerHTML = html;
+
+  if (currentVal && Array.from(selectDate.options).some(o => o.value === currentVal)) {
+    selectDate.value = currentVal;
+  } else {
+    selectDate.value = 'ALL';
+    scheduleFilterDate = 'ALL';
+  }
+}
+window.populateScheduleDateFilter = populateScheduleDateFilter;
+
+window.setScheduleFilterToToday = function() {
+  const selectDate = document.getElementById('filterScheduleDate');
+  scheduleFilterDate = 'TODAY';
+  if (selectDate) selectDate.value = 'TODAY';
+  scheduleCurrentPage = 1;
+  renderScheduleTable();
+  const todayFormatted = (typeof getTodayDateFormatted === 'function') ? getTodayDateFormatted() : 'Hari Ini';
+  showToast(`Menampilkan jadwal swap khusus ${todayFormatted}`, 'info');
+};
 
 function updateScheduleSummaryMetrics() {
   const totalEl = document.getElementById('metricTotalSchedule');
@@ -25911,9 +25979,24 @@ function updateScheduleSummaryMetrics() {
   const modeSubEl = document.getElementById('metricModeSub');
   const cardMode = document.getElementById('cardScheduleModeToggle');
 
-  const total = schedulesData.length;
-  const shift1 = schedulesData.filter(s => String(s.shift) === '1').length;
-  const shift2 = schedulesData.filter(s => String(s.shift) === '2').length;
+  // Filter list target sesuai tanggal jika filter aktif
+  let targetList = schedulesData || [];
+  if (scheduleFilterDate && scheduleFilterDate !== 'ALL') {
+    let targetComp = scheduleFilterDate;
+    if (targetComp === 'TODAY') {
+      targetComp = (typeof getTodayComparableDate === 'function') ? getTodayComparableDate() : '';
+    } else {
+      targetComp = (typeof parseDateComparable === 'function') ? parseDateComparable(targetComp) : targetComp;
+    }
+    targetList = targetList.filter(s => {
+      const sComp = (typeof parseDateComparable === 'function') ? parseDateComparable(s.tanggal || s.date) : (s.tanggal || s.date);
+      return sComp === targetComp;
+    });
+  }
+
+  const total = targetList.length;
+  const shift1 = targetList.filter(s => String(s.shift) === '1').length;
+  const shift2 = targetList.filter(s => String(s.shift) === '2').length;
 
   // Swapped realization
   const isSameDate = (sc, sw) => {
@@ -25922,24 +26005,25 @@ function updateScheduleSummaryMetrics() {
     if (scComp && swComp) return scComp === swComp;
     return true;
   };
-  const swappedCount = schedulesData.filter(s => swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === String(s.shift) && isSameDate(s, sw))).length;
-  const swappedShift1 = schedulesData.filter(s => String(s.shift) === '1' && swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === '1' && isSameDate(s, sw))).length;
-  const swappedShift2 = schedulesData.filter(s => String(s.shift) === '2' && swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === '2' && isSameDate(s, sw))).length;
+  const swappedCount = targetList.filter(s => swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === String(s.shift) && isSameDate(s, sw))).length;
+  const swappedShift1 = targetList.filter(s => String(s.shift) === '1' && swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === '1' && isSameDate(s, sw))).length;
+  const swappedShift2 = targetList.filter(s => String(s.shift) === '2' && swapsData.some(sw => sw.unit === s.unit && String(sw.shift) === '2' && isSameDate(s, sw))).length;
   const pctRealized = total > 0 ? Math.round((swappedCount / total) * 100) : 0;
 
   if (totalEl) totalEl.textContent = `${total} Unit`;
   if (totalSubEl) {
-    totalSubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #0284c7;">●</span><span>Realisasi: ${swappedCount}/${total} (${pctRealized}%)</span>`;
+    const scopeLabel = (scheduleFilterDate && scheduleFilterDate !== 'ALL') ? 'Tgl Terpilih' : 'Total';
+    totalSubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #0284c7;">● </span><span>Realisasi ${scopeLabel}: ${swappedCount}/${total} (${pctRealized}%)</span>`;
   }
 
   if (shift1El) shift1El.textContent = `${shift1} Unit`;
   if (shift1SubEl) {
-    shift1SubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #f59e0b;">●</span><span>Sudah: ${swappedShift1}/${shift1} (07:00-18:00)</span>`;
+    shift1SubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #f59e0b;">● </span><span>Sudah: ${swappedShift1}/${shift1} (07:00-18:00)</span>`;
   }
 
   if (shift2El) shift2El.textContent = `${shift2} Unit`;
   if (shift2SubEl) {
-    shift2SubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #7c3aed;">●</span><span>Sudah: ${swappedShift2}/${shift2} (19:00-06:00)</span>`;
+    shift2SubEl.innerHTML = `<span class="sch-sub-bullet" style="color: #7c3aed;">● </span><span>Sudah: ${swappedShift2}/${shift2} (19:00-06:00)</span>`;
   }
 
   const isScheduleOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || 'OFF') === 'ON';
@@ -25950,7 +26034,7 @@ function updateScheduleSummaryMetrics() {
     modeIconEl.textContent = '';
   }
   if (modeSubEl) {
-    modeSubEl.innerHTML = `<span class="sch-sub-bullet" style="color: ${isScheduleOn ? '#ef4444' : '#10b981'};">●</span><span>${isScheduleOn ? 'Komparasi Jadwal Aktif' : 'Input Bebas Tanpa Beban'}</span>`;
+    modeSubEl.innerHTML = `<span class="sch-sub-bullet" style="color: ${isScheduleOn ? '#ef4444' : '#10b981'};">● </span><span>${isScheduleOn ? 'Komparasi Jadwal Aktif' : 'Input Bebas Tanpa Beban'}</span>`;
   }
   if (cardMode) {
     if (isScheduleOn) {
@@ -25960,6 +26044,7 @@ function updateScheduleSummaryMetrics() {
     }
   }
 }
+window.updateScheduleSummaryMetrics = updateScheduleSummaryMetrics;
 
 function initScheduleModule() {
   if (!schedulesData) {
@@ -25967,6 +26052,7 @@ function initScheduleModule() {
     window.schedulesData = schedulesData;
   }
   const selectPerPage = document.getElementById('selectSchedulePerPage');
+  const selectDate = document.getElementById('filterScheduleDate');
   const selectShift = document.getElementById('filterScheduleShift');
   const inputSearch = document.getElementById('inputScheduleSearch');
   const btnExport = document.getElementById('btnExportScheduleExcel');
@@ -25983,6 +26069,15 @@ function initScheduleModule() {
     selectPerPage.dataset.bound = 'true';
     selectPerPage.addEventListener('change', (e) => {
       schedulePerPage = parseInt(e.target.value) || 15;
+      scheduleCurrentPage = 1;
+      renderScheduleTable();
+    });
+  }
+
+  if (selectDate && !selectDate.dataset.bound) {
+    selectDate.dataset.bound = 'true';
+    selectDate.addEventListener('change', (e) => {
+      scheduleFilterDate = e.target.value;
       scheduleCurrentPage = 1;
       renderScheduleTable();
     });
@@ -26027,9 +26122,11 @@ function initScheduleModule() {
     btnExport.addEventListener('click', exportScheduleToExcel);
   }
 
+  populateScheduleDateFilter();
   updateScheduleSummaryMetrics();
   renderScheduleTable();
 }
+window.initScheduleModule = initScheduleModule;
 
 
 // =============================================================================
@@ -26383,9 +26480,24 @@ function renderScheduleTable() {
 
   try {
     let filtered = (schedulesData || []).map((item, origIdx) => ({ ...item, origIdx })).filter(item => {
+      // 1. Filter Tanggal
+      if (scheduleFilterDate && scheduleFilterDate !== 'ALL') {
+        const itemComp = (typeof parseDateComparable === 'function') ? parseDateComparable(item.tanggal || item.date) : (item.tanggal || item.date);
+        let targetComp = scheduleFilterDate;
+        if (targetComp === 'TODAY') {
+          targetComp = (typeof getTodayComparableDate === 'function') ? getTodayComparableDate() : '';
+        } else {
+          targetComp = (typeof parseDateComparable === 'function') ? parseDateComparable(targetComp) : targetComp;
+        }
+        if (itemComp && targetComp && itemComp !== targetComp) {
+          return false;
+        }
+      }
+      // 2. Filter Shift
       if (scheduleFilterShift !== 'ALL' && String(item.shift) !== String(scheduleFilterShift)) {
         return false;
       }
+      // 3. Search Query
       if (scheduleSearchQuery) {
         const q = scheduleSearchQuery.toLowerCase();
         const inUnit = String(item.unit || '').toLowerCase().includes(q);
@@ -26448,7 +26560,9 @@ function renderScheduleTable() {
           </tr>
         `;
       } else {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #64748b;">Tidak ada data jadwal yang sesuai dengan kriteria pencarian / filter shift.</td></tr>';
+        const dateNote = (scheduleFilterDate && scheduleFilterDate !== 'ALL') ? ` pada ${scheduleFilterDate === 'TODAY' ? 'hari ini' : 'tanggal ' + scheduleFilterDate}` : '';
+        const shiftNote = (scheduleFilterShift !== 'ALL') ? ` untuk Shift ${scheduleFilterShift}` : '';
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: #64748b;">Tidak ada data jadwal yang sesuai dengan filter${dateNote}${shiftNote}${scheduleSearchQuery ? ' atau kata kunci "' + scheduleSearchQuery + '"' : ''}.</td></tr>`;
       }
     } else {
       tbody.innerHTML = pageItems.map((item, idx) => {
@@ -26537,7 +26651,11 @@ function renderScheduleTable() {
 
     if (panelTitle) {
       const shiftText = scheduleFilterShift === '1' ? ' - Shift 1 (Siang)' : scheduleFilterShift === '2' ? ' - Shift 2 (Malam)' : '';
-      panelTitle.textContent = `Daftar Rencana Jadwal Swap Unit DT EV (${totalEntries} Data Terdaftar${shiftText})`;
+      let dateText = '';
+      if (scheduleFilterDate && scheduleFilterDate !== 'ALL') {
+        dateText = scheduleFilterDate === 'TODAY' ? ' - Hari Ini' : ` - Tanggal ${scheduleFilterDate}`;
+      }
+      panelTitle.textContent = `Daftar Rencana Jadwal Swap Unit DT EV (${totalEntries} Data Terdaftar${shiftText}${dateText})`;
     }
 
     if (recordInfo) {
@@ -27001,7 +27119,12 @@ function renderSchedulePagination(totalPages, container) {
 // =============================================================================
 
 function exportScheduleToExcel() {
-  if (!schedulesData || schedulesData.length === 0) {
+  const isFiltered = (scheduleFilterShift !== 'ALL' || (scheduleFilterDate && scheduleFilterDate !== 'ALL') || !!scheduleSearchQuery);
+  const targetList = (isFiltered && currentFilteredScheduleItems && currentFilteredScheduleItems.length > 0)
+    ? currentFilteredScheduleItems
+    : (schedulesData || []);
+
+  if (!targetList || targetList.length === 0) {
     showToast('Tidak ada data jadwal untuk diekspor!', 'warning');
     return;
   }
@@ -27013,7 +27136,7 @@ function exportScheduleToExcel() {
   const now = new Date();
   const currentClockStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-  schedulesData.forEach((item, idx) => {
+  targetList.forEach((item, idx) => {
     const itemUnit = String(item.unit || '').replace(/^DT[- ]?/i, '').trim();
     const itemShift = String(item.shift || '').replace(/[^0-9]/g, '') || '1';
     const itemTime = normalizeScheduleTime(item.timeSch);
@@ -27076,6 +27199,11 @@ function exportScheduleToExcel() {
     ]);
   });
 
+  const shiftTag = (scheduleFilterShift && scheduleFilterShift !== 'ALL') ? `_Shift${scheduleFilterShift}` : '';
+  const dateTag = (scheduleFilterDate && scheduleFilterDate !== 'ALL') ? `_${scheduleFilterDate === 'TODAY' ? 'HariIni' : scheduleFilterDate.replace(/\//g, '-')}` : '';
+  const todayStr = new Date().toISOString().split('T')[0];
+  const filename = `Rencana_Jadwal_Swap_EV${shiftTag}${dateTag}_${todayStr}.xlsx`;
+
   if (typeof XLSX !== 'undefined') {
     try {
       const wb = XLSX.utils.book_new();
@@ -27093,8 +27221,7 @@ function exportScheduleToExcel() {
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, 'Jadwal Swap EV');
-      const todayStr = new Date().toISOString().split('T')[0];
-      XLSX.writeFile(wb, `Rencana_Jadwal_Swap_EV_${todayStr}.xlsx`);
+      XLSX.writeFile(wb, filename);
       showToast('Berkas Microsoft Excel (.xlsx) berhasil diunduh!', 'success');
       return;
     } catch (e) {
