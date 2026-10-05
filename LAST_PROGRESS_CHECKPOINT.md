@@ -1,6 +1,32 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 06 Oktober 2026, Pukul 00:10 WITA  
-**Status Sesi:** Upgrade Visual KPI Executive Dashboard (Poin 1: Efisiensi Konsumsi Baterai Benchmark 290 kWh & SOC In; Poin 2: Matriks Ketepatan 4 Kuadran; Poin 3: Trend Energi & Frekuensi Sesi Dual-Axis Combo dengan Switcher Daily/Weekly/Monthly) (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Backend Risk, GAS @100, Build v54, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 06 Oktober 2026, Pukul 04:45 WITA  
+**Status Sesi:** Penyelarasan Menyeluruh Template Swap Schedule & Smart Auto-Normalizer Upload Excel ke Database (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Operational Disruption, Zero Backend Risk, GAS @100, Build v55, PWA Live di GitHub `main`)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (06 Oktober 2026 - Pukul 04:45 WITA - Build v55):
+
+#### 1. 📥 Perbaikan & Peningkatan Format Template Excel Jadwal Swap (`downloadScheduleTemplateExcel`):
+- **Struktur Kolom Baku:** Menyeragamkan header template menjadi `Tanggal`, `Shift`, `Kode Unit`, `Time Sch` yang selaras 100% dengan database Google Sheets `SCEDHULE`.
+- **Penguncian Tipe Teks (`t: 's'`, `z: '@'`):** Seluruh sel template diatur bertipe string teks agar Microsoft Excel / Office tidak mengubah format jam (`07:00:00`) menjadi angka desimal (`0.2916...`) atau format tanggal menjadi serial number (`46301`).
+- **Data Contoh Dinamis & Relevan:** Menggunakan tanggal operasional hari ini (`DD/MM/YYYY`) secara otomatis dengan contoh armada riil (`1601`, `1618`, `1615`, `1622`, `1605`, `1616`, `1617`, `1620`) pada Shift 1 (07:00, 10:00, 14:00) dan Shift 2 (19:00, 22:00, 02:00, 05:00).
+- **Sheet Panduan Pengisian Tambahan:** Menambahkan worksheet kedua berlabel `"Panduan"` di dalam file `.xlsx` berisi petunjuk aturan pengisian database.
+- **Pembaruan Fallback CSV:** Menggunakan tanggal hari ini dan format kolom yang identik.
+
+#### 2. 🧠 Smart Auto-Normalizer di Parser Upload Frontend (`parseScheduleFile`):
+- **Normalisasi Tanggal (`normalizeScheduleExcelDate`):** Otomatis mendeteksi angka serial Excel (`46301`), objek JavaScript `Date`, format ISO (`YYYY-MM-DD`), dan format pemisah minus (`DD-MM-YYYY`), lalu mengonversinya ke format baku database `DD/MM/YYYY`.
+- **Normalisasi Jam (`normalizeScheduleExcelTime`):** Otomatis mendeteksi angka desimal pecahan hari Excel (`0.29166667` &rarr; `07:00:00`, `0.79166667` &rarr; `19:00:00`), normalisasi pemisah titik (`19.00.00` / `19.00` &rarr; `19:00:00`), dan pemformatan `H:M` (`7:15` &rarr; `07:15:00`).
+- **Normalisasi Shift (`normalizeScheduleExcelShift`):** Mendukung kata `"Siang"`, `"Pagi"`, `"Shift 1"` &rarr; `'1'`, serta `"Malam"`, `"Night"`, `"Shift 2"` &rarr; `'2'`.
+- **Normalisasi Kode Unit (`normalizeScheduleExcelUnit`):** Membersihkan prefix `DT-`, spasi, dan desimal float Excel (`1601.0` &rarr; `1601`).
+- **Preview & Verifikasi:** Modal menampilkan preview baris yang telah dinormalisasi rapi sebelum diterapkan ke database.
+
+#### 3. 🛡️ Double-Layer Defense di Backend (`Code.gs`):
+- Menambahkan sanitasi otomatis pada `apiSaveUploadedSchedules` di sisi server sebelum menulis baris ke sheet `SCEDHULE` dan Firestore agar database selalu terlindungi dari data anomali.
+
+#### 4. 🚀 Rilis Versi & Deployment:
+- **Build ID:** `2026.10.06.v55` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+- **Service Worker Cache:** `charging-ev-v55` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+- **Keamanan Operasional:** Zero disruption & zero backend downtime.
 
 ---
 

@@ -2129,13 +2129,17 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       return { status: 'error', message: 'Daftar jadwal kosong' };
     }
 
-    const rows = schedulesList.map(s => [
-      s.tanggal || s.date || '',
-      s.shift   || '1',
-      s.unit    || s.kodeUnit || '',
-      s.timeSch || s.time || '07:00:00'
-    ]);
-
+    const rows = schedulesList.map(s => {
+      let tgl = formatDateCell(s.tanggal || s.date || '');
+      let sft = String(s.shift || '1').trim();
+      if (sft.toLowerCase().indexOf('malam') !== -1 || sft === '2') sft = '2';
+      else sft = '1';
+      let unt = String(s.unit || s.kodeUnit || '').replace(/^DT[\s\-_]*/i, '').replace(/\.0+$/, '').trim();
+      let tim = formatTimeCell(s.timeSch || s.time || '07:00:00');
+      tim = String(tim).replace(/\./g, ':');
+      if (tim.split(':').length === 2) tim += ':00';
+      return [tgl, sft, unt, tim];
+    });
 
     if (mode === 'overwrite') {
       const lastR = Math.max(sheet.getLastRow(), 2);
@@ -2150,13 +2154,13 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
       sheet.getRange(startRow, 1, rows.length, 4).setValues(rows);
     }
 
-    schedulesList.forEach(s => {
-      const docId = `${s.tanggal || ''}_${s.shift || '1'}_${s.unit || ''}`.replace(/[\/\\]/g, '_');
+    rows.forEach(r => {
+      const docId = `${r[0] || ''}_${r[1] || '1'}_${r[2] || ''}`.replace(/[\/\\]/g, '_');
       syncToFirestoreFromGas_('schedules', docId, {
-        tanggal: s.tanggal || s.date || '',
-        shift: s.shift || '1',
-        unit: s.unit || s.kodeUnit || '',
-        timeSch: s.timeSch || s.time || '07:00:00'
+        tanggal: r[0],
+        shift: r[1],
+        unit: r[2],
+        timeSch: r[3]
       });
     });
 

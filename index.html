@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.06.v54';
+      var APP_BUILD_ID = '2026.10.06.v55';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -27115,30 +27115,187 @@ function exportScheduleToExcel() {
   showToast('Berkas jadwal berhasil diunduh!', 'success');
 }
 
+// =============================================================================
+// ROBUST SCHEDULE EXCEL TEMPLATE & SMART PARSER NORMALIZER ENGINE
+// =============================================================================
+
+function excelSerialToDate(serial) {
+  try {
+    const utcDays = Math.floor(Number(serial) - 25569);
+    const dateObj = new Date(utcDays * 86400 * 1000);
+    if (isNaN(dateObj.getTime())) return '';
+    const d = String(dateObj.getUTCDate()).padStart(2, '0');
+    const m = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const y = dateObj.getUTCFullYear();
+    return `${d}/${m}/${y}`;
+  } catch (e) {
+    return '';
+  }
+}
+
+function excelFractionToTime(frac) {
+  try {
+    let totalSeconds = Math.round(Number(frac) * 86400);
+    if (totalSeconds >= 86400) totalSeconds = totalSeconds % 86400;
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  } catch (e) {
+    return '07:00:00';
+  }
+}
+
+function normalizeScheduleExcelDate(val) {
+  if (val === null || val === undefined || val === '') {
+    const now = new Date();
+    return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+  }
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) {
+      const now = new Date();
+      return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    }
+    const d = String(val.getDate()).padStart(2, '0');
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const y = val.getFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  if (typeof val === 'number') {
+    const fromSerial = excelSerialToDate(val);
+    if (fromSerial) return fromSerial;
+  }
+  let s = String(val).trim();
+  // Jika 5 digit angka serial Excel (misal "46301")
+  if (/^\d{5}$/.test(s)) {
+    const fromSerial = excelSerialToDate(s);
+    if (fromSerial) return fromSerial;
+  }
+  // Format YYYY-MM-DD atau YYYY/MM/DD
+  const mYmd = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (mYmd) {
+    return `${mYmd[3].padStart(2, '0')}/${mYmd[2].padStart(2, '0')}/${mYmd[1]}`;
+  }
+  // Format DD-MM-YYYY atau DD/MM/YYYY
+  const mDmy = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+  if (mDmy) {
+    return `${mDmy[1].padStart(2, '0')}/${mDmy[2].padStart(2, '0')}/${mDmy[3]}`;
+  }
+  return s;
+}
+
+function normalizeScheduleExcelTime(val) {
+  if (val === null || val === undefined || val === '') return '07:00:00';
+  if (val instanceof Date) {
+    const hh = String(val.getHours()).padStart(2, '0');
+    const mm = String(val.getMinutes()).padStart(2, '0');
+    const ss = String(val.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+  if (typeof val === 'number' && val >= 0 && val < 1) {
+    return excelFractionToTime(val);
+  }
+  let s = String(val).trim();
+  if (/^0\.\d+$/.test(s)) {
+    return excelFractionToTime(parseFloat(s));
+  }
+  // Ganti titik menjadi titik dua (misal: 19.00.00 atau 19.00 -> 19:00)
+  s = s.replace(/\./g, ':').replace(/\s+/g, '');
+  const parts = s.split(':');
+  if (parts.length === 1 && /^\d{1,2}$/.test(parts[0])) {
+    return `${parts[0].padStart(2, '0')}:00:00`;
+  }
+  if (parts.length === 2) {
+    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00`;
+  }
+  if (parts.length >= 3) {
+    const hh = parts[0].padStart(2, '0');
+    const mm = parts[1].padStart(2, '0');
+    const ss = parts[2].substring(0, 2).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+  return s;
+}
+
+function normalizeScheduleExcelShift(val) {
+  if (!val) return '1';
+  const s = String(val).trim().toLowerCase();
+  if (s.includes('malam') || s.includes('night') || s === '2') return '2';
+  if (s.includes('siang') || s.includes('day') || s.includes('pagi') || s === '1') return '1';
+  const digits = s.replace(/[^0-9]/g, '');
+  return digits === '2' ? '2' : '1';
+}
+
+function normalizeScheduleExcelUnit(val) {
+  if (!val) return '';
+  let s = String(val).trim();
+  // Bersihkan prefix DT-, DT_, spasi
+  s = s.replace(/^DT[\s\-_]*/i, '');
+  // Bersihkan desimal .0 dari hasil pembacaan numeric Excel (misal "1601.0")
+  s = s.replace(/\.0+$/, '');
+  return s.trim();
+}
+
 window.downloadScheduleTemplateExcel = function() {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  const todayStr = `${d}/${m}/${y}`;
+
+  // Data contoh realistis untuk unit armada DT EV PPA (Shift 1 & Shift 2)
   const aoa = [
-    ['Tanggal', 'Shift', 'Kode Unit', 'Target Jam (Time Sch)'],
-    ['11/09/2026', '1', '1601', '07:00:00'],
-    ['11/09/2026', '1', '1618', '07:00:00'],
-    ['11/09/2026', '1', '1615', '07:15:00'],
-    ['11/09/2026', '2', '1605', '19:00:00'],
-    ['11/09/2026', '2', '1616', '19:15:00'],
-    ['11/09/2026', '2', '1617', '19:30:00']
+    ['Tanggal', 'Shift', 'Kode Unit', 'Time Sch'],
+    [todayStr, '1', '1601', '07:00:00'],
+    [todayStr, '1', '1618', '07:00:00'],
+    [todayStr, '1', '1615', '10:00:00'],
+    [todayStr, '1', '1622', '14:00:00'],
+    [todayStr, '2', '1605', '19:00:00'],
+    [todayStr, '2', '1616', '22:00:00'],
+    [todayStr, '2', '1617', '02:00:00'],
+    [todayStr, '2', '1620', '05:00:00']
   ];
 
   if (typeof XLSX !== 'undefined') {
     try {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // Kunci seluruh sel ke tipe teks ('s') dan format string ('@') agar Excel tidak merusak jam/tanggal
+      for (const cellAddress in ws) {
+        if (cellAddress[0] === '!') continue;
+        const cell = ws[cellAddress];
+        if (cell && typeof cell === 'object') {
+          cell.t = 's';
+          cell.z = '@';
+        }
+      }
+
       ws['!cols'] = [
-        { wch: 14 },
-        { wch: 10 },
-        { wch: 14 },
-        { wch: 22 }
+        { wch: 16 }, // Tanggal
+        { wch: 12 }, // Shift
+        { wch: 16 }, // Kode Unit
+        { wch: 22 }  // Time Sch
       ];
+
       XLSX.utils.book_append_sheet(wb, ws, 'Template Jadwal');
+
+      // Sheet 2: Petunjuk Pengisian Baku Database
+      const panduanAoa = [
+        ['PETUNJUK PENGISIAN TEMPLATE JADWAL SWAP BATTERY EV (PPA SCM)'],
+        [''],
+        ['KOLOM', 'FORMAT WAJIB', 'CONTOH VALID', 'KETERANGAN DATABASE'],
+        ['Tanggal', 'DD/MM/YYYY', todayStr, 'Format: Hari/Bulan/Tahun (Contoh: 06/10/2026)'],
+        ['Shift', '1 atau 2', '1', '1 = Shift 1 (Siang: 07:00-18:00), 2 = Shift 2 (Malam: 19:00-06:00)'],
+        ['Kode Unit', 'Nomor Unit', '1601', 'Nomor armada murni (bisa ditulis 1601 atau DT-1601)'],
+        ['Time Sch', 'HH:MM:SS (24 Jam)', '07:00:00', 'Jam target swap baterai masuk (Contoh: 07:00:00, 19:00:00)']
+      ];
+      const wsPanduan = XLSX.utils.aoa_to_sheet(panduanAoa);
+      wsPanduan['!cols'] = [{ wch: 16 }, { wch: 24 }, { wch: 20 }, { wch: 55 }];
+      XLSX.utils.book_append_sheet(wb, wsPanduan, 'Panduan');
+
       XLSX.writeFile(wb, 'Template_Import_Jadwal_Swap.xlsx');
-      showToast('Template Excel (.xlsx) berhasil diunduh! Silakan isi lalu upload.', 'success');
+      showToast('Template Excel (.xlsx) berhasil diunduh! Format telah siap diisi.', 'success');
       return;
     } catch (e) {
       console.warn('SheetJS error, fallback CSV:', e);
@@ -27146,10 +27303,11 @@ window.downloadScheduleTemplateExcel = function() {
   }
 
   // Fallback CSV template
-  let csv = 'Tanggal,Shift,Kode Unit,Target Jam (Time Sch)\n';
-  csv += '11/09/2026,1,1601,07:00:00\n';
-  csv += '11/09/2026,1,1618,07:00:00\n';
-  csv += '11/09/2026,2,1605,19:00:00\n';
+  let csv = 'Tanggal,Shift,Kode Unit,Time Sch\n';
+  csv += `${todayStr},1,1601,07:00:00\n`;
+  csv += `${todayStr},1,1618,07:00:00\n`;
+  csv += `${todayStr},2,1605,19:00:00\n`;
+  csv += `${todayStr},2,1616,22:00:00\n`;
   const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -27221,8 +27379,9 @@ function parseScheduleFile(file) {
       let rows = [];
       if (typeof XLSX !== 'undefined') {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true, raw: true });
+        const firstSheetName = workbook.SheetNames[0];
+        const firstSheet = workbook.Sheets[firstSheetName];
         rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
       } else {
         const text = new TextDecoder().decode(e.target.result);
@@ -27234,10 +27393,10 @@ function parseScheduleFile(file) {
         return;
       }
 
-      // Deteksi index kolom
+      // Deteksi index kolom secara fleksibel (bisa format template maupun format Google Sheets)
       const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
-      let colDate = headers.findIndex(h => h.includes('tanggal') || h.includes('date'));
-      let colShift = headers.findIndex(h => h.includes('shift'));
+      let colDate = headers.findIndex(h => h.includes('tanggal') || h.includes('date') || h.includes('tgl'));
+      let colShift = headers.findIndex(h => h.includes('shift') || h.includes('sft'));
       let colUnit = headers.findIndex(h => h.includes('unit') || h.includes('dt') || h.includes('kode') || h.includes('armada'));
       let colTime = headers.findIndex(h => h.includes('time') || h.includes('jam') || h.includes('sch') || h.includes('target') || h.includes('waktu'));
 
@@ -27248,34 +27407,24 @@ function parseScheduleFile(file) {
       if (colTime === -1) colTime = 3;
 
       tempParsedScheduleList = [];
-      const now = new Date();
-      const defaultDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r || r.length === 0) continue;
-        const rawUnit = String(r[colUnit] || '').trim();
-        if (!rawUnit) continue;
+        const rawUnit = r[colUnit];
+        const cleanUnit = normalizeScheduleExcelUnit(rawUnit);
+        if (!cleanUnit) continue;
 
-        const cleanUnit = rawUnit.replace(/^DT[\s\-_]*/i, '').trim();
-        let rawDate = String(r[colDate] || '').trim();
-        let rawShift = String(r[colShift] || '1').trim().replace(/[^0-9]/g, '') || '1';
-        let rawTime = String(r[colTime] || '07:00:00').trim();
-
-        if (!rawDate || rawDate.length < 5) rawDate = defaultDate;
-
-        // Normalize time if format is H:M
-        if (rawTime.length === 4 || rawTime.length === 5) {
-          if (rawTime.indexOf(':') !== -1 && rawTime.split(':').length === 2) {
-            rawTime += ':00';
-          }
-        }
+        // Normalisasi otomatis seluruh field ke standar baku database
+        const cleanDate = normalizeScheduleExcelDate(r[colDate]);
+        const cleanShift = normalizeScheduleExcelShift(r[colShift]);
+        const cleanTime = normalizeScheduleExcelTime(r[colTime]);
 
         tempParsedScheduleList.push({
-          tanggal: rawDate,
-          shift: rawShift,
+          tanggal: cleanDate,
+          shift: cleanShift,
           unit: cleanUnit,
-          timeSch: rawTime
+          timeSch: cleanTime
         });
       }
 
@@ -27293,8 +27442,8 @@ function parseScheduleFile(file) {
       const btnApply = document.getElementById('btnApplyScheduleImport');
 
       if (statusBox) statusBox.style.display = 'block';
-        if (fileNameEl) fileNameEl.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> <strong>' + file.name + '</strong> (' + (file.size / 1024).toFixed(1) + ' KB)';
-      if (rowCountEl) rowCountEl.textContent = `${tempParsedScheduleList.length} Jadwal Siap Diimpor`;
+      if (fileNameEl) fileNameEl.innerHTML = '<svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> <strong>' + file.name + '</strong> (' + (file.size / 1024).toFixed(1) + ' KB)';
+      if (rowCountEl) rowCountEl.textContent = `${tempParsedScheduleList.length} Jadwal Siap Diimpor (Format Telah Diselaraskan)`;
 
       if (previewBox) previewBox.style.display = 'block';
       if (previewBody) {
@@ -27315,7 +27464,7 @@ function parseScheduleFile(file) {
         btnApply.style.cursor = 'pointer';
       }
 
-      showToast(`Berhasil membaca ${tempParsedScheduleList.length} jadwal dari file Excel!`, 'success');
+      showToast(`Berhasil membaca & menormalkan ${tempParsedScheduleList.length} jadwal dari file Excel!`, 'success');
     } catch (err) {
       showToast('Gagal memproses file Excel: ' + err.message, 'danger');
     }
@@ -27330,26 +27479,35 @@ function applyParsedScheduleToApp() {
     return;
   }
 
+  // Sanitasi akhir sebelum dikirim ke database
+  const sanitizedList = tempParsedScheduleList.map(s => ({
+    tanggal: normalizeScheduleExcelDate(s.tanggal),
+    shift: normalizeScheduleExcelShift(s.shift),
+    unit: normalizeScheduleExcelUnit(s.unit),
+    timeSch: normalizeScheduleExcelTime(s.timeSch)
+  }));
+
   const modeRad = document.querySelector('input[name="radScheduleImportMode"]:checked');
   const importMode = modeRad ? modeRad.value : 'overwrite';
 
   if (importMode === 'overwrite') {
-    schedulesData = [...tempParsedScheduleList];
+    schedulesData = [...sanitizedList];
   } else {
-    schedulesData = (schedulesData || []).concat(tempParsedScheduleList);
+    schedulesData = (schedulesData || []).concat(sanitizedList);
   }
 
-  if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured() && Array.isArray(tempParsedScheduleList)) {
-    VoltFirebase.bulkSaveSchedules(tempParsedScheduleList);
+  if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured() && Array.isArray(sanitizedList)) {
+    VoltFirebase.bulkSaveSchedules(sanitizedList);
   }
   if (typeof gasSync !== 'undefined' && typeof gasSync.pushSchedules === 'function') {
-    gasSync.pushSchedules(tempParsedScheduleList, importMode);
+    gasSync.pushSchedules(sanitizedList, importMode);
   }
   closeModal('modalUploadScheduleExcel');
 
   scheduleCurrentPage = 1;
   updateScheduleSummaryMetrics();
   renderScheduleTable();
+  if (typeof renderDbSchedulesTable === 'function') renderDbSchedulesTable();
 
   // Reset temp
   tempParsedScheduleList = [];
@@ -27364,7 +27522,7 @@ function applyParsedScheduleToApp() {
     btnApply.style.cursor = 'not-allowed';
   }
 
-  showToast(`Berhasil menerapkan ${schedulesData.length} total jadwal swap operasional!`, 'success');
+  showToast(`Berhasil menerapkan ${schedulesData.length} total jadwal swap operasional ke database!`, 'success');
 }
 
 window.quickInputSwapForUnit = function(unit, shift, targetTime) {
