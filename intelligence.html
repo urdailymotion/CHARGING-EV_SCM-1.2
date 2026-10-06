@@ -138,6 +138,45 @@
     .notice.is-visible { display:flex; }
     .notice strong { display:block; margin-bottom:2px; }
 
+    /* Compact Two-Tier Filter System (Reference Design) */
+    .intel-panel-compact { position:relative; z-index:20; margin-bottom:16px; padding:0; border:none; background:transparent; box-shadow:none; }
+    .intel-filter-topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+    .intel-opmode-pills { display:inline-flex; align-items:center; background:#EAECF0; border-radius:8px; padding:3px; gap:3px; }
+    .intel-opmode-btn { padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; border:none; background:transparent; color:#344054; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+    .intel-opmode-btn:hover { color:#0F2747; }
+    .intel-opmode-btn.active { background:#ffffff!important; color:#0F2747!important; font-weight:700; box-shadow:0 1px 3px rgba(16,24,40,.08); }
+    html[data-theme="dark"] .intel-opmode-pills { background:#202D3E; }
+    html[data-theme="dark"] .intel-opmode-btn { color:#CDD5DF; }
+    html[data-theme="dark"] .intel-opmode-btn.active { background:#29384C!important; color:#F2F4F7!important; }
+
+    .intel-quick-presets-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:0; }
+    .intel-preset-label { font-size:11.5px; font-weight:700; color:var(--muted); margin-right:4px; }
+    .intel-preset-chip { padding:5px 12px; border-radius:6px; font-size:11.5px; font-weight:600; border:1px solid #E4E7EC; background:#ffffff; color:#344054; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+    .intel-preset-chip:hover { border-color:#2563EB; color:#2563EB; }
+    .intel-preset-chip.active { background:#EDF3FC!important; color:#2563EB!important; border-color:#2563EB!important; font-weight:700; }
+    html[data-theme="dark"] .intel-preset-chip { background:#192433; border-color:#324154; color:#CDD5DF; }
+    html[data-theme="dark"] .intel-preset-chip:hover { border-color:#3B82F6; color:#93C5FD; }
+    html[data-theme="dark"] .intel-preset-chip.active { background:#233854!important; color:#93C5FD!important; border-color:#3B82F6!important; }
+
+    .intel-filter-bar { display:flex; flex-wrap:wrap; gap:8px 12px; background:var(--surface,#ffffff); border:1px solid var(--line,#E4E7EC); border-radius:8px; padding:10px 14px; margin-bottom:16px; box-shadow:0 1px 2px rgba(16,24,40,.03); align-items:center; }
+    .intel-filter-group { display:flex; align-items:center; gap:5px; min-width:0; }
+    .intel-filter-label { font-weight:700; font-size:10.5px; color:var(--muted,#667085); text-transform:uppercase; letter-spacing:.02em; white-space:nowrap; flex-shrink:0; }
+    .intel-filter-control { font-weight:500; padding:4px 8px; border:1px solid var(--line,#E4E7EC); border-radius:6px; font-size:12px; background:var(--surface,#ffffff); color:var(--ink,#172033); height:32px; min-height:32px; outline:none; transition:all .15s ease; }
+    .intel-filter-control:hover { border-color:var(--muted,#64748B); }
+    .intel-filter-control:focus { border-color:var(--blue,#2563EB); box-shadow:0 0 0 2px var(--blue-soft,#EDF3FC); }
+    html[data-theme="dark"] .intel-filter-bar { background:#192433; border-color:#324154; }
+    html[data-theme="dark"] .intel-filter-control { background:#202D3E; border-color:#324154; color:#F2F4F7; }
+
+    .intel-filter-actions { display:flex; align-items:center; gap:6px; margin-left:auto; flex-shrink:0; }
+    .intel-filter-actions .primary-btn, .intel-filter-actions .secondary-btn { height:32px; min-height:32px; padding:0 12px; font-size:11.5px; font-weight:600; border-radius:6px; gap:5px; }
+    .intel-filter-actions svg { width:14px; height:14px; }
+    @media (max-width:760px) {
+      .intel-filter-bar { gap:8px; padding:10px; }
+      .intel-filter-group { flex:1 1 calc(50% - 6px); }
+      .intel-filter-group input, .intel-filter-group select { width:100%; min-width:0!important; }
+      .intel-filter-actions { width:100%; justify-content:flex-end; margin-top:4px; }
+    }
+
      
     .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:20px; }
     .kpi-card { min-width:0; min-height:128px; padding:17px 18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); box-shadow:var(--shadow-sm); }
@@ -803,51 +842,72 @@
       </div>
     </section>
 
-    <section class="filter-panel" aria-label="Filter dashboard">
-      <div class="filter-row">
-        <div class="field">
-          <label for="startDate">Mulai tanggal</label>
-          <input id="startDate" type="date">
+    <section class="filter-panel intel-panel-compact" aria-label="Filter dashboard">
+      <!-- Row 1: Segmented Switcher & Quick Date Presets -->
+      <div class="intel-filter-topbar">
+        <div class="intel-opmode-pills">
+          <button type="button" class="intel-opmode-btn active" data-view="charging" data-opmode="ALL">Semua Operasional</button>
+          <button type="button" class="intel-opmode-btn" data-view="charging" data-opmode="SCHEDULED">SCHEDULE</button>
+          <button type="button" class="intel-opmode-btn" data-view="charging" data-opmode="ON_DEMAND">NON SCHEDULE</button>
         </div>
-        <div class="field">
-          <label for="endDate">Sampai tanggal</label>
-          <input id="endDate" type="date">
+
+        <div class="intel-quick-presets-row">
+          <span class="intel-preset-label">Periode:</span>
+          <button type="button" class="intel-preset-chip active" id="chargingPresetAll" onclick="setIntelDatePreset('charging', 'ALL')">Semua Data</button>
+          <button type="button" class="intel-preset-chip" id="chargingPresetToday" onclick="setIntelDatePreset('charging', 'TODAY')">Hari Ini</button>
+          <button type="button" class="intel-preset-chip" id="chargingPreset7d" onclick="setIntelDatePreset('charging', '7D')">7 Hari Terakhir</button>
+          <button type="button" class="intel-preset-chip" id="chargingPresetMonth" onclick="setIntelDatePreset('charging', 'MONTH')">Bulan Ini</button>
+          <button type="button" class="intel-preset-chip" id="chargingPresetReset" onclick="resetFilters()" style="color: var(--muted); font-weight: 600;" title="Reset semua filter">Reset Filter</button>
         </div>
-        <div class="field">
-          <label for="locationFilter">ROM</label>
-          <select id="locationFilter"><option value="">Semua ROM</option></select>
+      </div>
+
+      <!-- Row 2: Horizontal White Filter Bar (Inline Layout) -->
+      <div class="intel-filter-bar">
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">DARI:</span>
+          <input id="startDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Mulai Tanggal">
         </div>
-        <div class="field">
-          <label for="chargerFilter">Charger</label>
-          <select id="chargerFilter"><option value="">Semua charger</option></select>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">SAMPAI:</span>
+          <input id="endDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Sampai Tanggal">
         </div>
-        <div class="field">
-          <label for="meterFilter">Port / meter</label>
-          <select id="meterFilter"><option value="">Semua port</option></select>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">ROM:</span>
+          <select id="locationFilter" class="intel-filter-control" style="min-width: 105px;"><option value="">Semua ROM</option></select>
         </div>
-        <div class="field">
-          <label for="truckFilter">Unit / truck</label>
-          <select id="truckFilter"><option value="">Semua unit</option></select>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">CHARGER:</span>
+          <select id="chargerFilter" class="intel-filter-control" style="min-width: 95px;"><option value="">Semua charger</option></select>
         </div>
-        <div class="field">
-          <label for="batteryFilter">Battery ID</label>
-          <select id="batteryFilter"><option value="">Semua battery</option></select>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">PORT:</span>
+          <select id="meterFilter" class="intel-filter-control" style="min-width: 95px;"><option value="">Semua port</option></select>
         </div>
-        <div class="filter-actions">
-          <button class="secondary-btn" id="resetFilterBtn" type="button" title="Kembalikan seluruh filter">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
-            Reset
-          </button>
-          <button class="primary-btn" id="applyFilterBtn" type="button">
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">ID UNIT:</span>
+          <select id="truckFilter" class="intel-filter-control" style="min-width: 100px;"><option value="">Semua unit</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">BATTERY:</span>
+          <select id="batteryFilter" class="intel-filter-control" style="min-width: 110px;"><option value="">Semua battery</option></select>
+        </div>
+
+        <div class="intel-filter-actions">
+          <button class="primary-btn" id="applyFilterBtn" type="button" title="Terapkan Filter">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
             Terapkan
+          </button>
+          <button class="secondary-btn" id="resetFilterBtn" type="button" title="Kembalikan Seluruh Filter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
+            Reset
           </button>
           <button class="secondary-btn btn-upload-excel" type="button" onclick="triggerParentUploadModal('charging')" title="Upload file Excel / CSV data charging" style="background: #f0f9ff; color: #0284c7; border: 1.5px solid #7dd3fc; font-weight: 700; gap: 5px;">
             <span>📂</span> Upload Data
           </button>
         </div>
       </div>
-      <div class="filter-summary">
+
+      <div class="filter-summary" style="display:none;" id="chargingFilterSummaryWrap">
         <div class="active-filters" id="activeFilters"><span class="filter-chip">Semua data</span></div>
         <div class="filter-footnote" id="filterFootnote">Tanggal operasional mengikuti Charging End Time · WITA</div>
       </div>
@@ -1089,57 +1149,78 @@
         </div>
       </section>
 
-      <section class="filter-panel" aria-label="Filter dashboard ketahanan battery">
-        <div class="filter-row battery-filter-row">
-          <div class="field">
-            <label for="batteryStartDate">Mulai tanggal</label>
-            <input id="batteryStartDate" type="date">
-          </div>
-          <div class="field">
-            <label for="batteryEndDate">Sampai tanggal</label>
-            <input id="batteryEndDate" type="date">
-          </div>
-          <div class="field">
-            <label for="batteryRomFilter">ROM</label>
-            <select id="batteryRomFilter"><option value="">Semua ROM</option></select>
-          </div>
-          <div class="field">
-            <label for="batteryUnitFilter">Unit</label>
-            <select id="batteryUnitFilter"><option value="">Semua unit</option></select>
-          </div>
-          <div class="field">
-            <label for="batteryShiftFilter">Shift</label>
-            <select id="batteryShiftFilter"><option value="">Semua shift</option></select>
-          </div>
-          <div class="field">
-            <label for="batteryStatusFilter">Status cycle</label>
-            <select id="batteryStatusFilter">
-              <option value="">Semua status</option>
-              <option value="VALID">Valid 3–5 jam</option>
-              <option value="TAKEOUT_LOW">Takeout &lt; 3 jam</option>
-              <option value="TAKEOUT_HIGH">Takeout &gt; 5 jam</option>
-              <option value="DATA_INVALID">Data tidak valid</option>
-            </select>
-          </div>
-          <div class="filter-actions">
-            <button class="secondary-btn" id="batteryResetFilterBtn" type="button" title="Kembalikan filter battery">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
-              Reset
-            </button>
-            <button class="primary-btn" id="batteryApplyFilterBtn" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
-              Terapkan
-            </button>
-            <button class="secondary-btn btn-upload-excel" type="button" onclick="triggerParentUploadModal('battery')" title="Upload file Excel / CSV data battery" style="background: #f0f9ff; color: #0284c7; border: 1.5px solid #7dd3fc; font-weight: 700; gap: 5px;">
-              <span>📂</span> Upload Data
-            </button>
-          </div>
+    <section class="filter-panel intel-panel-compact" aria-label="Filter dashboard ketahanan battery">
+      <!-- Row 1: Segmented Switcher & Quick Date Presets -->
+      <div class="intel-filter-topbar">
+        <div class="intel-opmode-pills">
+          <button type="button" class="intel-opmode-btn active" data-view="battery" data-opmode="ALL">Semua Cycle</button>
+          <button type="button" class="intel-opmode-btn" data-view="battery" data-opmode="VALID">VALID (3–5 Jam)</button>
+          <button type="button" class="intel-opmode-btn" data-view="battery" data-opmode="TAKEOUT">TAKEOUT</button>
         </div>
-        <div class="filter-summary">
-          <div class="active-filters" id="batteryActiveFilters"><span class="filter-chip">Semua data swab</span></div>
-          <div class="filter-footnote" id="batteryFilterFootnote">Valid bila 3,00 ≤ ΔHM ≤ 5,00 jam · SOC/hour hanya dari pasangan SOC valid</div>
+
+        <div class="intel-quick-presets-row">
+          <span class="intel-preset-label">Periode:</span>
+          <button type="button" class="intel-preset-chip active" id="batteryPresetAll" onclick="setIntelDatePreset('battery', 'ALL')">Semua Data</button>
+          <button type="button" class="intel-preset-chip" id="batteryPresetToday" onclick="setIntelDatePreset('battery', 'TODAY')">Hari Ini</button>
+          <button type="button" class="intel-preset-chip" id="batteryPreset7d" onclick="setIntelDatePreset('battery', '7D')">7 Hari Terakhir</button>
+          <button type="button" class="intel-preset-chip" id="batteryPresetMonth" onclick="setIntelDatePreset('battery', 'MONTH')">Bulan Ini</button>
+          <button type="button" class="intel-preset-chip" id="batteryPresetReset" onclick="resetBatteryFilters()" style="color: var(--muted); font-weight: 600;" title="Reset semua filter">Reset Filter</button>
         </div>
-      </section>
+      </div>
+
+      <!-- Row 2: Horizontal White Filter Bar (Inline Layout) -->
+      <div class="intel-filter-bar">
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">DARI:</span>
+          <input id="batteryStartDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Mulai Tanggal">
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">SAMPAI:</span>
+          <input id="batteryEndDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Sampai Tanggal">
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">ROM:</span>
+          <select id="batteryRomFilter" class="intel-filter-control" style="min-width: 105px;"><option value="">Semua ROM</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">ID UNIT:</span>
+          <select id="batteryUnitFilter" class="intel-filter-control" style="min-width: 100px;"><option value="">Semua unit</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">SHIFT:</span>
+          <select id="batteryShiftFilter" class="intel-filter-control" style="min-width: 95px;"><option value="">Semua shift</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">STATUS:</span>
+          <select id="batteryStatusFilter" class="intel-filter-control" style="min-width: 125px;">
+            <option value="">Semua status</option>
+            <option value="VALID">Valid 3–5 jam</option>
+            <option value="TAKEOUT_LOW">Takeout &lt; 3 jam</option>
+            <option value="TAKEOUT_HIGH">Takeout &gt; 5 jam</option>
+            <option value="DATA_INVALID">Data tidak valid</option>
+          </select>
+        </div>
+
+        <div class="intel-filter-actions">
+          <button class="primary-btn" id="batteryApplyFilterBtn" type="button" title="Terapkan Filter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+            Terapkan
+          </button>
+          <button class="secondary-btn" id="batteryResetFilterBtn" type="button" title="Kembalikan Filter Battery">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
+            Reset
+          </button>
+          <button class="secondary-btn btn-upload-excel" type="button" onclick="triggerParentUploadModal('battery')" title="Upload file Excel / CSV data battery" style="background: #f0f9ff; color: #0284c7; border: 1.5px solid #7dd3fc; font-weight: 700; gap: 5px;">
+            <span>📂</span> Upload Data
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-summary" style="display:none;" id="batteryFilterSummaryWrap">
+        <div class="active-filters" id="batteryActiveFilters"><span class="filter-chip">Semua data swab</span></div>
+        <div class="filter-footnote" id="batteryFilterFootnote">Valid bila 3,00 ≤ ΔHM ≤ 5,00 jam · SOC/hour hanya dari pasangan SOC valid</div>
+      </div>
+    </section>
 
       <div class="notice" id="batteryErrorNotice" role="alert">
         <span aria-hidden="true">⚠</span>
@@ -1338,31 +1419,88 @@
         </div>
       </section>
 
-      <section class="filter-panel" aria-label="Filter dashboard swab cycle time">
-        <div class="filter-row cycle-filter-row">
-          <div class="field"><label for="cycleStartDate">Mulai tanggal</label><input id="cycleStartDate" type="date"></div>
-          <div class="field"><label for="cycleEndDate">Sampai tanggal</label><input id="cycleEndDate" type="date"></div>
-          <div class="field"><label for="cycleStationFilter">Station / ROM</label><select id="cycleStationFilter"><option value="">Semua station</option></select></div>
-          <div class="field"><label for="cycleUnitFilter">Unit</label><select id="cycleUnitFilter"><option value="">Semua unit</option></select></div>
-          <div class="field"><label for="cycleVinFilter">VIN</label><select id="cycleVinFilter"><option value="">Semua VIN</option></select></div>
-          <div class="field"><label for="cycleBatteryFilter">Battery down</label><select id="cycleBatteryFilter"><option value="">Semua battery</option></select></div>
-          <div class="field"><label for="cycleDownCompFilter">Compartment down</label><select id="cycleDownCompFilter"><option value="">Semua compartment</option></select></div>
-          <div class="field"><label for="cycleUpCompFilter">Compartment up</label><select id="cycleUpCompFilter"><option value="">Semua compartment</option></select></div>
-          <div class="field"><label for="cycleShiftFilter">Shift</label><select id="cycleShiftFilter"><option value="">Semua shift</option></select></div>
-          <div class="field"><label for="cycleStatusFilter">Status / SLA</label><select id="cycleStatusFilter"><option value="">Semua status</option></select></div>
-          <div class="filter-actions">
-            <button class="secondary-btn" id="cycleResetFilterBtn" type="button" title="Kembalikan filter cycle time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>Reset</button>
-            <button class="primary-btn" id="cycleApplyFilterBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10M10 19h4"/></svg>Terapkan</button>
-            <button class="secondary-btn btn-upload-excel" type="button" onclick="triggerParentUploadModal('cycle')" title="Upload file Excel / CSV data cycle time" style="background: #f0f9ff; color: #0284c7; border: 1.5px solid #7dd3fc; font-weight: 700; gap: 5px;">
-              <span>📂</span> Upload Data
-            </button>
-          </div>
+    <section class="filter-panel intel-panel-compact" aria-label="Filter dashboard swab cycle time">
+      <!-- Row 1: Segmented Switcher & Quick Date Presets -->
+      <div class="intel-filter-topbar">
+        <div class="intel-opmode-pills">
+          <button type="button" class="intel-opmode-btn active" data-view="cycle" data-opmode="ALL">Semua SLA</button>
+          <button type="button" class="intel-opmode-btn" data-view="cycle" data-opmode="ON_TARGET">ON TARGET (≤ 6m)</button>
+          <button type="button" class="intel-opmode-btn" data-view="cycle" data-opmode="OVER_SLA">OVER SLA (> 6m)</button>
         </div>
-        <div class="filter-summary">
-          <div class="active-filters" id="cycleActiveFilters"><span class="filter-chip">Semua data swab</span></div>
-          <div class="filter-footnote" id="cycleFilterFootnote">SLA cycle time mengikuti batas operasional database · WITA</div>
+
+        <div class="intel-quick-presets-row">
+          <span class="intel-preset-label">Periode:</span>
+          <button type="button" class="intel-preset-chip active" id="cyclePresetAll" onclick="setIntelDatePreset('cycle', 'ALL')">Semua Data</button>
+          <button type="button" class="intel-preset-chip" id="cyclePresetToday" onclick="setIntelDatePreset('cycle', 'TODAY')">Hari Ini</button>
+          <button type="button" class="intel-preset-chip" id="cyclePreset7d" onclick="setIntelDatePreset('cycle', '7D')">7 Hari Terakhir</button>
+          <button type="button" class="intel-preset-chip" id="cyclePresetMonth" onclick="setIntelDatePreset('cycle', 'MONTH')">Bulan Ini</button>
+          <button type="button" class="intel-preset-chip" id="cyclePresetReset" onclick="resetCycleFilters()" style="color: var(--muted); font-weight: 600;" title="Reset semua filter">Reset Filter</button>
         </div>
-      </section>
+      </div>
+
+      <!-- Row 2: Horizontal White Filter Bar (Inline Layout) -->
+      <div class="intel-filter-bar">
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">DARI:</span>
+          <input id="cycleStartDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Mulai Tanggal">
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">SAMPAI:</span>
+          <input id="cycleEndDate" type="date" class="intel-filter-control" style="min-width: 124px;" title="Sampai Tanggal">
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">STATION:</span>
+          <select id="cycleStationFilter" class="intel-filter-control" style="min-width: 105px;"><option value="">Semua station</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">ID UNIT:</span>
+          <select id="cycleUnitFilter" class="intel-filter-control" style="min-width: 95px;"><option value="">Semua unit</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">VIN:</span>
+          <select id="cycleVinFilter" class="intel-filter-control" style="min-width: 105px;"><option value="">Semua VIN</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">BATTERY:</span>
+          <select id="cycleBatteryFilter" class="intel-filter-control" style="min-width: 105px;"><option value="">Semua battery</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">COMP DOWN:</span>
+          <select id="cycleDownCompFilter" class="intel-filter-control" style="min-width: 90px;"><option value="">Semua comp</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">COMP UP:</span>
+          <select id="cycleUpCompFilter" class="intel-filter-control" style="min-width: 90px;"><option value="">Semua comp</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">SHIFT:</span>
+          <select id="cycleShiftFilter" class="intel-filter-control" style="min-width: 95px;"><option value="">Semua shift</option></select>
+        </div>
+        <div class="intel-filter-group">
+          <span class="intel-filter-label">STATUS SLA:</span>
+          <select id="cycleStatusFilter" class="intel-filter-control" style="min-width: 110px;"><option value="">Semua status</option></select>
+        </div>
+
+        <div class="intel-filter-actions">
+          <button class="primary-btn" id="cycleApplyFilterBtn" type="button" title="Terapkan Filter Cycle Time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+            Terapkan
+          </button>
+          <button class="secondary-btn" id="cycleResetFilterBtn" type="button" title="Kembalikan Filter Cycle Time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>
+            Reset
+          </button>
+          <button class="secondary-btn btn-upload-excel" type="button" onclick="triggerParentUploadModal('cycle')" title="Upload file Excel / CSV data cycle time" style="background: #f0f9ff; color: #0284c7; border: 1.5px solid #7dd3fc; font-weight: 700; gap: 5px;">
+            <span>📂</span> Upload Data
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-summary" style="display:none;" id="cycleFilterSummaryWrap">
+        <div class="active-filters" id="cycleActiveFilters"><span class="filter-chip">Semua data swab</span></div>
+        <div class="filter-footnote" id="cycleFilterFootnote">SLA cycle time mengikuti batas operasional database · WITA</div>
+      </div>
+    </section>
 
       <div class="notice" id="cycleErrorNotice" role="alert"><span aria-hidden="true">⚠</span><div><strong id="cycleErrorTitle">Dashboard cycle time gagal dimuat</strong><span id="cycleErrorMessage"></span></div></div>
 
@@ -1866,6 +2004,8 @@
         if (el) el.addEventListener('change', () => loadCycleDashboard(false));
       });
 
+      initIntelOpmodeButtons();
+
       window.addEventListener('beforeprint', () => {
         const activePayload = getActivePayload();
         if (!state.printPrepared && activePayload && !activePayload.empty) buildPrintReport();
@@ -1921,6 +2061,100 @@
           });
           renderCycleTrendChart();
           invalidatePrintReport();
+        });
+      });
+    }
+
+    function setIntelDatePreset(view, preset) {
+      const now = new Date();
+      const formatDate = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      let startVal = '';
+      let endVal = '';
+
+      if (preset === 'TODAY') {
+        const todayStr = formatDate(now);
+        startVal = todayStr;
+        endVal = todayStr;
+      } else if (preset === '7D') {
+        const past7 = new Date(now);
+        past7.setDate(past7.getDate() - 6);
+        startVal = formatDate(past7);
+        endVal = formatDate(now);
+      } else if (preset === 'MONTH') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        startVal = formatDate(firstDay);
+        endVal = formatDate(now);
+      } else if (preset === 'ALL') {
+        startVal = '';
+        endVal = '';
+      }
+
+      const presetIds = [
+        `${view}PresetAll`,
+        `${view}PresetToday`,
+        `${view}Preset7d`,
+        `${view}PresetMonth`
+      ];
+      presetIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      const activeId = `${view}Preset${preset === 'ALL' ? 'All' : preset === 'TODAY' ? 'Today' : preset === '7D' ? '7d' : 'Month'}`;
+      const activeEl = document.getElementById(activeId);
+      if (activeEl) activeEl.classList.add('active');
+
+      if (view === 'charging') {
+        if ($('startDate')) $('startDate').value = startVal;
+        if ($('endDate')) $('endDate').value = endVal;
+        loadDashboard(false);
+      } else if (view === 'battery') {
+        if ($('batteryStartDate')) $('batteryStartDate').value = startVal;
+        if ($('batteryEndDate')) $('batteryEndDate').value = endVal;
+        loadBatteryDashboard(false);
+      } else if (view === 'cycle') {
+        if ($('cycleStartDate')) $('cycleStartDate').value = startVal;
+        if ($('cycleEndDate')) $('cycleEndDate').value = endVal;
+        loadCycleDashboard(false);
+      }
+    }
+    window.setIntelDatePreset = setIntelDatePreset;
+
+    function initIntelOpmodeButtons() {
+      document.querySelectorAll('.intel-opmode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const view = this.dataset.view;
+          const opmode = this.dataset.opmode;
+          const group = this.closest('.intel-opmode-pills');
+          if (group) {
+            group.querySelectorAll('.intel-opmode-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+          }
+          if (view === 'battery') {
+            const statusSelect = $('batteryStatusFilter');
+            if (statusSelect) {
+              if (opmode === 'ALL') statusSelect.value = '';
+              else if (opmode === 'VALID') statusSelect.value = 'VALID';
+              else if (opmode === 'TAKEOUT') statusSelect.value = 'TAKEOUT_LOW';
+              loadBatteryDashboard(false);
+            }
+          } else if (view === 'cycle') {
+            const statusSelect = $('cycleStatusFilter');
+            if (statusSelect) {
+              if (opmode === 'ALL') statusSelect.value = '';
+              else if (opmode === 'ON_TARGET') statusSelect.value = 'ON_TARGET';
+              else if (opmode === 'OVER_SLA') statusSelect.value = 'OVER_SLA';
+              loadCycleDashboard(false);
+            }
+          } else if (view === 'charging') {
+            state.chargingOpMode = opmode;
+            loadDashboard(false);
+          }
         });
       });
     }
@@ -2287,6 +2521,11 @@
 
       const all = state.rawChargingRecords || [];
       const filtered = all.filter(r => {
+        if (state.chargingOpMode && state.chargingOpMode !== 'ALL') {
+          const isNonSch = String(r.status || '').toLowerCase().includes('non') || String(r.remark || '').toLowerCase().includes('non');
+          if (state.chargingOpMode === 'SCHEDULED' && isNonSch) return false;
+          if (state.chargingOpMode === 'ON_DEMAND' && !isNonSch) return false;
+        }
         if (sDate && r.dateKey < sDate) return false;
         if (eDate && r.dateKey > eDate) return false;
         if (filters.location && r.location !== filters.location) return false;
@@ -3580,6 +3819,12 @@
       $('cycleStartDate').value = '';
       $('cycleEndDate').value = '';
       ['cycleStationFilter', 'cycleUnitFilter', 'cycleVinFilter', 'cycleBatteryFilter', 'cycleDownCompFilter', 'cycleUpCompFilter', 'cycleShiftFilter', 'cycleStatusFilter'].forEach((id) => { $(id).value = ''; });
+      document.querySelectorAll('.intel-quick-presets-row #cyclePresetAll, .intel-quick-presets-row #cyclePresetToday, .intel-quick-presets-row #cyclePreset7d, .intel-quick-presets-row #cyclePresetMonth').forEach(btn => btn.classList.remove('active'));
+      if ($('cyclePresetAll')) $('cyclePresetAll').classList.add('active');
+      const cGroup = document.querySelector('.intel-opmode-pills button[data-view="cycle"]');
+      if (cGroup) {
+        cGroup.closest('.intel-opmode-pills').querySelectorAll('.intel-opmode-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      }
       renderPendingCycleFilterChips();
       loadCycleDashboard(false);
     }
@@ -4123,6 +4368,12 @@
       $('batteryStartDate').value = '';
       $('batteryEndDate').value = '';
       ['batteryRomFilter', 'batteryUnitFilter', 'batteryShiftFilter', 'batteryStatusFilter'].forEach((id) => { $(id).value = ''; });
+      document.querySelectorAll('.intel-quick-presets-row #batteryPresetAll, .intel-quick-presets-row #batteryPresetToday, .intel-quick-presets-row #batteryPreset7d, .intel-quick-presets-row #batteryPresetMonth').forEach(btn => btn.classList.remove('active'));
+      if ($('batteryPresetAll')) $('batteryPresetAll').classList.add('active');
+      const bGroup = document.querySelector('.intel-opmode-pills button[data-view="battery"]');
+      if (bGroup) {
+        bGroup.closest('.intel-opmode-pills').querySelectorAll('.intel-opmode-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      }
       renderPendingBatteryFilterChips();
       loadBatteryDashboard(false);
     }
@@ -4613,6 +4864,13 @@
       $('startDate').value = '';
       $('endDate').value = '';
       ['locationFilter', 'chargerFilter', 'meterFilter', 'truckFilter', 'batteryFilter'].forEach((id) => $(id).value = '');
+      state.chargingOpMode = 'ALL';
+      document.querySelectorAll('.intel-quick-presets-row #chargingPresetAll, .intel-quick-presets-row #chargingPresetToday, .intel-quick-presets-row #chargingPreset7d, .intel-quick-presets-row #chargingPresetMonth').forEach(btn => btn.classList.remove('active'));
+      if ($('chargingPresetAll')) $('chargingPresetAll').classList.add('active');
+      const chGroup = document.querySelector('.intel-opmode-pills button[data-view="charging"]');
+      if (chGroup) {
+        chGroup.closest('.intel-opmode-pills').querySelectorAll('.intel-opmode-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      }
       loadDashboard(true);
     }
 

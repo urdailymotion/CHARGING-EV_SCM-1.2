@@ -1,6 +1,36 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 06 Oktober 2026, Pukul 04:45 WITA  
-**Status Sesi:** Penyelarasan Menyeluruh Template Swap Schedule & Smart Auto-Normalizer Upload Excel ke Database (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Operational Disruption, Zero Backend Risk, GAS @100, Build v55, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 06:50 WITA  
+**Status Sesi:** Penataan Ulang Menyeluruh Filter EV Intelligence (Charging Station, Ketahanan Battery, Swab Cycle Time) Menjadi Compact Two-Tier Horizontal Toolbar (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Operational Disruption, Build v58, PWA Live di GitHub `main`)
+
+---
+
+### 📋 Ringkasan Pekerjaan Hari Ini (07 Oktober 2026 - Pukul 06:50 WITA - Build v58):
+
+#### 1. 🎨 Perombakan Menyeluruh Tata Letak Filter EV Intelligence:
+- **Konsep Compact Two-Tier Horizontal Toolbar:**
+  - Mengubah layout lama dari grid kolom vertikal 4 kolom yang memakan ~250px ruang layar vertikal menjadi toolbar horizontal 2 tingkat yang ramping (~70px), menghemat hingga 70% ruang vertikal.
+  - Kartu KPI, matriks performa, dan grafik analitik kini langsung terlihat di layar pertama (*above the fold*) tanpa perlu *scroll*.
+- **Tingkat 1 (Top Bar - Segmented Switcher & Quick Date Presets):**
+  - **Kiri:** Segmented pill button untuk penyaringan cepat kategori:
+    - *Charging Station:* `[Semua Operasional]` | `[SCHEDULE]` | `[NON SCHEDULE]`
+    - *Ketahanan Battery:* `[Semua Cycle]` | `[VALID (3–5 Jam)]` | `[TAKEOUT]`
+    - *Swab Cycle Time:* `[Semua SLA]` | `[ON TARGET (≤ 6m)]` | `[OVER SLA (> 6m)]`
+  - **Kanan:** Preset periode instan: `Periode:` `[Semua Data]` | `[Hari Ini]` | `[7 Hari Terakhir]` | `[Bulan Ini]` | `[Reset Filter]` yang langsung mengisi input tanggal dan memuat dashboard secara otomatis tanpa repot membuka popup kalender.
+- **Tingkat 2 (Horizontal White Filter Bar - Inline Controls):**
+  - Container berlatar putih halus (`#ffffff` / dark `#192433`), border halus (`#E4E7EC` / dark `#324154`), radius `8px`, dan shadow lembut.
+  - Setiap filter mengadopsi label inline huruf kapital tebal di sebelah kiri kontrol (`DARI:`, `SAMPAI:`, `ROM:`, `ID UNIT:`, dll.) dengan teks slate (`#667085`), font 10.5px.
+  - Input tanggal & dropdown berukuran proporsional (tinggi 32px, font 12px, border halus).
+  - Tombol aksi `[Terapkan]`, `[Reset]`, dan `[📂 Upload Data]` terintegrasi rapi di sisi kanan baris.
+
+#### 2. ⚡ Sinkronisasi Interaktif & Reset:
+- Menambahkan fungsi `setIntelDatePreset(view, preset)` untuk auto-fill tanggal hari ini, 7 hari terakhir, atau bulan berjalan.
+- Menambahkan listener `initIntelOpmodeButtons()` untuk interaktivitas tombol segmented.
+- Memperbarui fungsi `resetFilters()`, `resetBatteryFilters()`, dan `resetCycleFilters()` agar mengembalikan chip preset ke `Semua Data` dan tombol segmented ke mode awal.
+
+#### 3. 🔄 Sinkronisasi Ganda & Deployment:
+- Sinkronisasi instan antara [intelligence.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/intelligence.html) dan string sumber tertanam `window.INTELLIGENCE_HTML_SOURCE` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) (100% identik).
+- Bump versi aplikasi: `APP_BUILD_ID = '2026.10.07.v58'` dan Service Worker cache `charging-ev-v58` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+- Teruji di Chrome headless untuk mode terang (*light*) dan mode gelap (*dark*).
 
 ---
 
