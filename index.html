@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.07.v59';
+      var APP_BUILD_ID = '2026.10.07.v60';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -21255,16 +21255,66 @@ let probMobileViewMode = 'cards';
 let probControlsInitialized = false;
 let problemToDeleteId = null;
 
-// Time & Duration Parsing Helpers
+// Time & Duration Parsing Helpers (Mendukung format Google Sheets titik 'HH.MM.SS', titik dua 'HH:MM:SS', desimal hari Excel, integer menit, dan teks durasi)
 function parseTimeToSeconds(timeStr) {
-  if (!timeStr) return null;
-  const parts = String(timeStr).trim().split(':');
-  if (parts.length < 2) return null;
-  const h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  const s = parts[2] ? (parseInt(parts[2], 10) || 0) : 0;
-  return h * 3600 + m * 60 + s;
+  if (timeStr === null || timeStr === undefined) return null;
+  let str = String(timeStr).trim();
+  if (!str || str === '-' || str === '0') return 0;
+  if (str.toUpperCase() === 'MASIH BERLANGSUNG') return null;
+
+  // 1. Durasi tekstual: misal "1 Jam 30 Menit", "45 Menit", "2 Jam", "1h 30m"
+  let parsedFromText = 0;
+  let hasTextMatch = false;
+  const jamMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:jam|hours?|h\b)/i);
+  if (jamMatch) {
+    parsedFromText += Math.round(parseFloat(jamMatch[1]) * 3600);
+    hasTextMatch = true;
+  }
+  const minMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:menit|mins?|m\b)/i);
+  if (minMatch) {
+    parsedFromText += Math.round(parseFloat(minMatch[1]) * 60);
+    hasTextMatch = true;
+  }
+  const secMatch = str.match(/(\d+(?:\.\d+)?)\s*(?:detik|secs?|s\b)/i);
+  if (secMatch) {
+    parsedFromText += Math.round(parseFloat(secMatch[1]));
+    hasTextMatch = true;
+  }
+  if (hasTextMatch) return parsedFromText;
+
+  // 2. Pecahan hari Excel/Sheets: misal "0.03125"
+  if (/^0\.\d+$/.test(str)) {
+    const dec = parseFloat(str);
+    if (!isNaN(dec) && dec > 0 && dec < 1) {
+      return Math.round(dec * 86400);
+    }
+  }
+
+  // 3. Normalisasi pemisah titik ke titik dua: "HH.MM.SS" atau "HH.MM" -> "HH:MM:SS" / "HH:MM"
+  const dotTimeMatch = str.match(/^\d{1,2}\.\d{1,2}(?:\.\d{1,2})?$/);
+  if (dotTimeMatch) {
+    str = str.replace(/\./g, ':');
+  }
+
+  if (str.includes(':')) {
+    const parts = str.split(':');
+    if (parts.length >= 2) {
+      const h = parseInt(parts[0], 10) || 0;
+      const m = parseInt(parts[1], 10) || 0;
+      const s = parts[2] ? (parseInt(parts[2], 10) || 0) : 0;
+      return h * 3600 + m * 60 + s;
+    }
+  }
+
+  // 4. Integer/Float murni (jika <= 1440 diasumsikan menit, > 1440 diasumsikan detik)
+  const num = parseFloat(str);
+  if (!isNaN(num) && num > 0) {
+    return num <= 1440 ? Math.round(num * 60) : Math.round(num);
+  }
+
+  return null;
 }
+
 
 function formatHmsFromSeconds(sec) {
   if (isNaN(sec) || sec < 0) sec = 0;
@@ -23536,13 +23586,32 @@ function renderChartProblemBreakdown() {
   if (sourceProblems && sourceProblems.length > 0) {
     const probCountMap = {};
     sourceProblems.forEach(p => {
-      const unit = (p.unit || 'Fasilitas Lain').trim();
-      probCountMap[unit] = (probCountMap[unit] || 0) + 1;
+      let desc = (p.problem || '').trim();
+      if (!desc || desc === '-') desc = (p.unit || 'Kendala Teknis').trim();
+
+      // Kelompokkan kategori Root Cause kendala secara rapi & ringkas agar muat di chart
+      const u = desc.toUpperCase();
+      let label = desc;
+      if (u.includes('PEMADAMAN') || u.includes('MATI LAMPU') || u.includes('LISTRIK')) {
+        label = 'Pemadaman Listrik';
+      } else if (u.includes('CRANE') || u.includes('SELING') || u.includes('HOIST')) {
+        label = 'Crane & Hoist SWB';
+      } else if (u.includes('LOCK') || u.includes('LOOK BATERAI') || u.includes('TERKUNCI')) {
+        label = 'Lock Baterai Truk';
+      } else if (u.includes('BATTERY') || u.includes('LOW BAT')) {
+        label = 'Baterai Low Volt';
+      } else if (u.includes('CONNECTOR') || u.includes('PLUG')) {
+        label = 'Connector Error';
+      } else if (label.length > 20) {
+        label = label.slice(0, 18) + '...';
+      }
+
+      probCountMap[label] = (probCountMap[label] || 0) + 1;
     });
     const sorted = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]).slice(0, 6);
     labels = sorted.length > 0 ? sorted : ['TIDAK ADA KENDALA'];
     values = labels.map(l => probCountMap[l] || 0);
-    const colorPalette = [EV_COLORS.blue, EV_COLORS.cyan, '#5284AC', EV_COLORS.amber, EV_COLORS.red, EV_COLORS.slate];
+    const colorPalette = ['#D99000', '#D64545', '#2563EB', '#287C8E', '#5284AC', '#94A3B8'];
     bgColors = labels.map((l, idx) => colorPalette[idx % colorPalette.length]);
   } else {
     const probCountMap = {};
@@ -23567,7 +23636,7 @@ function renderChartProblemBreakdown() {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Frekuensi Kendala',
+        label: 'Frekuensi Akar Masalah',
         data: values,
         backgroundColor: bgColors,
         borderRadius: 4,
@@ -23580,6 +23649,9 @@ function renderChartProblemBreakdown() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
+      layout: {
+        padding: { left: 4 }
+      },
       scales: {
         x: {
           grid: { color: '#F2F4F7' },
@@ -23588,45 +23660,66 @@ function renderChartProblemBreakdown() {
         },
         y: {
           grid: { display: false },
-          ticks: { font: { size: 8.5, weight: '700' }, color: '#172033' }
+          ticks: { font: { size: 8, weight: '700' }, color: '#172033' }
         }
       }
     },
     plugins: [ppaBadgePlugin]
   });
+  window.chartPpaProblemBreakdown = chartPpaProblemBreakdown;
 }
 
 // =============================================================================
 // SEKSI INTEGRASI PROBLEM LOG & ANALISIS DOWNTIME PADA VISUAL KPI
 // =============================================================================
+function formatProblemFacility(unitStr) {
+  if (!unitStr) return 'Fasilitas Lain';
+  let s = String(unitStr).trim();
+  const u = s.toUpperCase();
+  if ((u.includes('02') && u.includes('03')) || u.includes('SWB02-03')) return 'SWB 02 & 03';
+  if (u.includes('SWB 01') || u.includes('SWAB 01') || u.includes('SWAP 01')) return 'SWB 01';
+  if (u.includes('SWB 02')) return 'SWB 02';
+  if (u.includes('SWB 03')) return 'SWB 03';
+  if (/^\d{4}$/.test(s)) return 'DT ' + s;
+  return s.length > 25 ? s.slice(0, 22) + '...' : s;
+}
+
 function getProblemSeconds(p) {
   if (!p) return 0;
-  if (!p.timeClose || p.timeClose === '-' || p.timeClose.trim() === '' || p.duration === 'MASIH BERLANGSUNG') {
-    if (p.timeOpen) {
+  const hasClose = p.timeClose && p.timeClose !== '-' && p.timeClose.trim() !== '' && String(p.timeClose).toUpperCase() !== 'MASIH BERLANGSUNG';
+  const hasOpen = p.timeOpen && p.timeOpen !== '-' && p.timeOpen.trim() !== '';
+
+  // 1. Selisih timeClose - timeOpen jika keduanya ada
+  if (hasOpen && hasClose) {
+    const openSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeOpen) : null;
+    const closeSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeClose) : null;
+    if (openSec !== null && closeSec !== null) {
+      let diff = closeSec - openSec;
+      if (diff < 0) diff += 86400; // lewati tengah malam
+      if (diff > 0) return diff;
+    }
+  }
+
+  // 2. Durasi tersimpan jika ada (dari kolom duration)
+  if (p.duration && p.duration !== '-' && String(p.duration).toUpperCase() !== 'MASIH BERLANGSUNG') {
+    const durSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.duration) : null;
+    if (durSec !== null && durSec > 0) return durSec;
+  }
+
+  // 3. Masih berlangsung (durasi berjalan sejak timeOpen)
+  if (!hasClose || String(p.duration).toUpperCase() === 'MASIH BERLANGSUNG') {
+    if (hasOpen) {
       const openSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeOpen) : null;
       if (openSec !== null) {
         const now = new Date();
         const curSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
         if (curSec > openSec) return curSec - openSec;
+        if (curSec < openSec) return (86400 - openSec) + curSec;
       }
     }
-    return 1800; // default 30 min if active
+    return 1800; // default 30 min jika belum selesai dan tanpa waktu open valid
   }
-  if (p.timeOpen && p.timeClose) {
-    const openSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeOpen) : null;
-    const closeSec = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.timeClose) : null;
-    if (openSec !== null && closeSec !== null) {
-      let diff = closeSec - openSec;
-      if (diff < 0) diff += 86400;
-      return diff;
-    }
-  }
-  if (p.duration) {
-    const s = (typeof parseTimeToSeconds === 'function') ? parseTimeToSeconds(p.duration) : null;
-    if (s !== null) return s;
-    const m = String(p.duration).match(/(\d+)\s*Menit/i);
-    if (m) return parseInt(m[1], 10) * 60;
-  }
+
   return 0;
 }
 
@@ -23703,7 +23796,8 @@ function renderPpaProblemAnalytics() {
     const sec = getProblemSeconds(p);
     totalDowntimeSec += sec;
 
-    const unitKey = (p.unit || 'Lainnya').trim();
+    const rawUnit = (p.unit || 'Lainnya').trim();
+    const unitKey = (typeof formatProblemFacility === 'function') ? formatProblemFacility(rawUnit) : rawUnit;
     unitCountMap[unitKey] = (unitCountMap[unitKey] || 0) + 1;
     unitDurationMap[unitKey] = (unitDurationMap[unitKey] || 0) + Math.round(sec / 60);
   });

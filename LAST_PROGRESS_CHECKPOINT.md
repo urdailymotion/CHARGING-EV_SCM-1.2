@@ -1,10 +1,62 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 08:30 WITA  
-**Status Sesi:** Perbaikan Tuntas Grafik EV Intelligence (Charging Station, Ketahanan Battery, Swab Cycle Time) yang Sempat Tidak Muncul Akibat Script Parsing Token Conflict & Penambahan Dependency Preload Chart.js (Status: Sukses & Terverifikasi 100% via CDP Headless, Zero Operational Disruption, Build v59, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 09:15 WITA  
+**Status Sesi:** Perbaikan Tuntas Angka 0 Menit pada Grafik Distribusi Durasi Downtime (Dukungan Format Titik/Desimal/Teks Waktu Google Sheets) & Penghapusan Redundansi Grafik Visual KPI (Chart 8 Fokus ke Akar Masalah/Root Cause vs Chart A Fokus ke Fasilitas/Unit Terdampak) (Status: Sukses & Terverifikasi 100% via CDP Headless, Build v60, PWA Live di GitHub `main`)
 
 ---
 
-### 📋 Ringkasan Pekerjaan Sesi Ini (07 Oktober 2026 - Pukul 08:30 WITA - Build v59):
+### 📋 Ringkasan Pekerjaan Sesi Ini (07 Oktober 2026 - Pukul 09:15 WITA - Build v60):
+
+#### 1. 🔍 Investigasi & Perbaikan Angka 0 pada Grafik Durasi Downtime:
+- **Akar Masalah (*Root Cause*):**
+  - Pada fungsi `parseTimeToSeconds` sebelumnya, pemisahan waktu hanya menggunakan titik dua (`:` / `timeStr.split(':')`).
+  - Google Sheets (`Code.gs` dan spreadsheet Problem Log) menyimpan format waktu menggunakan titik (`.` e.g. `01.23.00`, `03.56.00`, `02.33.00`). Selain itu, formula durasi Google Sheets dapat mengembalikan bilangan desimal pecahan hari (contoh `0.020833` = 30 menit), integer menit, atau teks (`45 Menit`).
+  - Karena pemisahan titik dua gagal pada format titik, `parseTimeToSeconds` selalu mengembalikan `null`.
+  - Akibatnya, `getProblemSeconds(p)` selalu bernilai `0 detik` untuk seluruh rekaman Google Sheets, sehingga grafik **"Distribusi Durasi Downtime (Menit Terbuang)"** (`ppaChartProbDuration`) menampilkan angka **0** pada seluruh batang grafik.
+- **Solusi yang Diterapkan:**
+  - Memperbarui fungsi `parseTimeToSeconds` dan `getProblemSeconds` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dengan parser waktu tangguh (*multi-format*):
+    1. Normalisasi titik ke titik dua (`.replace(/\./g, ':')`) untuk mendukung `HH.MM.SS` dan `HH.MM`.
+    2. Parsing angka pecahan desimal dari Google Sheets / Excel (`val * 86400`).
+    3. Parsing teks durasi eksplisit (contoh: `2 Jam 30 Menit`, `45 Menit`).
+    4. Prioritas selisih `timeClose - timeOpen` otomatis jika kedua waktu tercatat, dengan fallback ke kolom `duration`.
+  - **Hasil Pengujian Headless:**
+    - `08.30.00` -> 30.600 detik (8 Jam 30 Menit).
+    - `02.33.00` -> 9.180 detik (2 Jam 33 Menit).
+    - `05.29.00` -> 19.740 detik (5 Jam 29 Menit).
+    - `45 Menit` -> 2.700 detik (45 Menit).
+    - Durasi Downtime per fasilitas langsung muncul secara riil: **SWB 02 & 03: 497 Menit**, **SWB 01: 378 Menit**, **DT 1619: 209 Menit**, **SWB 02: 42 Menit**. Kartu KPI Akumulasi Downtime menampilkan **18 Jam 46 Menit** (tidak lagi 0 Menit).
+
+---
+
+#### 2. 📊 Mengatasi Duplikasi Grafik "Analisis Kendala" vs "Pareto Frekuensi Kendala":
+- **Akar Masalah (*Root Cause*):**
+  - **Chart 8 di Page 1** (`#ppaChartProblemBreakdown`) sebelumnya memetakan data berdasarkan `p.unit`.
+  - **Chart A di Page 2** (`#ppaChartProbFreq`) juga memetakan data berdasarkan `p.unit`.
+  - Keduanya menampilkan grafik batang horizontal yang persis sama (unit vs frekuensi kasus), menciptakan redundansi tampilan bagi pengguna.
+- **Solusi yang Diterapkan:**
+  - Mengubah Chart 8 di Page 1 agar mengelompokkan data berdasarkan **Kategori Akar Masalah / Deskripsi Kendala (*Root Cause*)** (`p.problem`) sesuai dengan lencana header-nya (`ROOT CAUSE`), dengan kategori yang ringkas dan rapi:
+    - `Pemadaman Listrik`
+    - `Crane & Hoist SWB`
+    - `Lock Baterai Truk`
+    - `Baterai Low Volt`
+    - `Connector Error`
+  - Sedangkan **Chart A di Page 2** dipertahankan untuk analisis **Pareto Frekuensi per Fasilitas / Unit Terdampak** (`SWB 01`, `SWB 02 & 03`, `DT 1619`, dll.).
+  - Dengan pemisahan ini:
+    - **Chart 8 (Page 1):** Menjawab pertanyaan *"Masalah/kerusakan apa yang paling sering terjadi secara operasional?"*
+    - **Chart A (Page 2):** Menjawab pertanyaan *"Fasilitas/mesin mana yang paling sering mengalami gangguan?"*
+    - **Chart B (Page 2):** Menjawab pertanyaan *"Fasilitas mana yang menyebabkan menit downtime (waktu terbuang) paling besar?"*
+  - Ketiga grafik kini saling melengkapi (*complementary*) dan tidak ada lagi yang kembar/duplikat.
+
+---
+
+#### 3. 🧪 Verifikasi Headless Otomatis & Deployment:
+- Pengujian headless non-live preview melalui Google Chrome CDP:
+  - Seluruh nilai durasi terhitung akurat tanpa nilai 0.
+  - Tangkapan layar headless tersimpan di `scratch/problem_charts_fixed.png` dan `scratch/page1_chart8_fixed.png`.
+- Pembaruan versi aplikasi ke `APP_BUILD_ID = '2026.10.07.v60'` dan Service Worker cache `charging-ev-v60` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
+---
+
+### 📋 Ringkasan Pekerjaan Sesi Sebelumnya (07 Oktober 2026 - Pukul 08:30 WITA - Build v59):
 
 #### 1. 🔍 Investigasi Akar Masalah (*Root Cause Analysis*):
 - **Akar Masalah Utama (HTML Script Parsing Conflict):**
