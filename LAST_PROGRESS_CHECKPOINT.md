@@ -1,10 +1,36 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 09:15 WITA  
-**Status Sesi:** Perbaikan Tuntas Angka 0 Menit pada Grafik Distribusi Durasi Downtime (Dukungan Format Titik/Desimal/Teks Waktu Google Sheets) & Penghapusan Redundansi Grafik Visual KPI (Chart 8 Fokus ke Akar Masalah/Root Cause vs Chart A Fokus ke Fasilitas/Unit Terdampak) (Status: Sukses & Terverifikasi 100% via CDP Headless, Build v60, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 17:00 WITA  
+**Status Sesi:** Sinkronisasi Penuh Visual KPI dengan Database Google Sheets & Firestore, Penanganan Isolasi Scope Data Dua Arah, Perbaikan Urutan Eksekusi Render Chart 8 vs Filter Problem Aktif, Eliminasi Data Dummy pada Chart 5, dan Penambahan Tombol Aksi Sync Database (Status: Sukses & Terverifikasi 100% via CDP Headless, Build v62, PWA Live)
 
 ---
 
-### 📋 Ringkasan Pekerjaan Sesi Ini (07 Oktober 2026 - Pukul 09:15 WITA - Build v60):
+### 📋 Ringkasan Pekerjaan Sesi Ini (07 Oktober 2026 - Pukul 17:00 WITA - Build v62):
+
+#### 1. 🔍 Investigasi & Solusi Sinkronisasi Visual KPI dengan Database:
+- **Akar Masalah (*Root Cause*):**
+  1. **Isolasi Scope Global vs Lexical:** Pada fungsi `updatePpaExecutiveDashboard()`, variabel `swapsData` dibaca dari lexical scope closure (`swapsData || []`). Jika data diperbarui atau diinjeksi via `window.swapsData` (seperti dari Firestore real-time listener atau script eksternal), `swapsData || []` tetap menggunakan array kosong lokal, menyebabkan data transaksi terfilter menjadi 0 item dan grafik tampak kosong.
+  2. **Race Condition Urutan Render Chart 8:** `renderChartProblemBreakdown()` dipanggil sebelum `renderPpaProblemAnalytics()`. Akibatnya, Chart 8 selalu menggunakan data `ppaFilteredProblems` dari iterasi filter sebelumnya (atau data lama/stale).
+  3. **Kebocoran Data Historis pada Filter Nol Kendala:** Ketika filter aktif menghasilkan 0 kendala (misal pada unit atau tanggal tertentu), kondisi fallback memeriksa `sourceProblems.length > 0`. Karena bernilai false, chart jatuh ke fallback seluruh 9 masalah historis dari database, membuat pengguna mengira ada masalah pada tanggal/unit tersebut padahal sebenarnya 0 kendala.
+  4. **Nilai Dummy 285 kWh pada Chart 5 (Room Compare):** Ketika suatu unit belum memiliki transaksi pada filter aktif (`cnt === 0`), fungsi mengembalikan nilai default palsu `285.0` kWh.
+  5. **Inkonsistensi Mingguan pada Chart 3:** Pengelompokan minggu pada Chart 3 menggunakan formula hari dalam tahun, sementara filter dropdown menggunakan ISO 8601 `getIsoWeek()`.
+
+- **Solusi yang Diterapkan:**
+  1. **Sinkronisasi Data Dua Arah:** Menambahkan bridge sinkronisasi di awal `updatePpaExecutiveDashboard()` dan `populatePpaDashboardFilters()` yang menjamin `swapsData`, `problemsData`, `schedulesData`, dan `fleetUnits` selalu sinkron antara lexical closure dan `window` global.
+  2. **Perbaikan Urutan Eksekusi:** Menjalankan `renderPpaProblemAnalytics()` terlebih dahulu sehingga `ppaFilteredProblems` sudah selesai dihitung untuk filter aktif sebelum `renderChartProblemBreakdown()` merender Chart 8.
+  3. **Penyajian Data Riil & Akurat (Zero-Tolerance Dummy Data):**
+     - Jika filter menghasilkan 0 kendala, Chart 8 menampilkan badge hijau optimal `"TIDAK ADA KENDALA"` (0 kasus).
+     - Chart 5 mengembalikan nilai 0 kWh jika belum ada sesi swap (`cnt === 0`), dengan status tooltip `"Tidak ada sesi"`.
+     - Chart 3 menggunakan `getIsoWeek(s.date)` sehingga 100% konsisten dengan dropdown filter minggu (`W40`, `W41`).
+     - Dropdown filter unit armadanya diisi dari gabungan data `fleetUnits` dan unit aktual di `swapsData` yang diurutkan secara numerik (`DT 1601` s/d `DT 1660`).
+  4. **Tombol Interaktif "Sync Database":**
+     - Menambahkan tombol **`[ 🔄 Sync Database ]`** di `.header-bar` Visual KPI yang memungkinkan supervisor atau operator menyegarkan data langsung dari Google Sheets API (`gasSync.loadAll()`) kapan saja dengan indikator status dan notifikasi toast.
+  5. **Pembaruan Versi & Cache PWA:**
+     - `APP_BUILD_ID = '2026.10.07.v62'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+     - `CACHE_NAME = 'charging-ev-v62'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
+---
+
+### 📋 Ringkasan Pekerjaan Sesi Sebelumnya (07 Oktober 2026 - Pukul 09:15 WITA - Build v60):
 
 #### 1. 🔍 Investigasi & Perbaikan Angka 0 pada Grafik Durasi Downtime:
 - **Akar Masalah (*Root Cause*):**

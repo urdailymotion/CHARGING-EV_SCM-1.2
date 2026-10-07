@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.07.v60';
+      var APP_BUILD_ID = '2026.10.07.v62';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -232,6 +232,7 @@
             if (linkDash) linkDash.classList.add('active');
             if (itemOp) { itemOp.classList.add('open'); itemOp.classList.add('active'); }
             if (itemIntel) itemIntel.classList.remove('open');
+            if (typeof populatePpaDashboardFilters === 'function') populatePpaDashboardFilters();
             if (typeof window.renderPpaExecutiveDashboard === 'function') window.renderPpaExecutiveDashboard();
             break;
 
@@ -11599,6 +11600,16 @@ html, body {
                 Live Synced
               </span>
 
+              <!-- Live Sync Database Button -->
+              <button type="button" class="btn-ppa-action-pdf" id="btnSyncVisualKpi" onclick="window.syncVisualKpiData()" style="background: #FFFFFF; color: #0F2747; border: 1px solid #CBD5E1; font-weight: 600;" title="Sinkronkan grafik secara langsung dengan Database Google Sheets">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 5px;">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Sync Database</span>
+              </button>
+
               <!-- Official PDF Document Export -->
               <button type="button" class="btn-ppa-action-pdf" id="btnDownloadVisualKpiPdf" onclick="window.downloadVisualKpiPdf()" title="Download PDF Seluruh Tampilan Visual KPI (Semua Grafik & Data Utuh)">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right: 5px;">
@@ -19247,6 +19258,7 @@ function initTableControls() {
       }
       renderMainTable();
       updateSummaryCard();
+      if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
       if (typeof window.showSaveSuccessCelebration === 'function') {
         window.showSaveSuccessCelebration(newId, newRec.unit);
       }
@@ -19283,6 +19295,9 @@ function initTableControls() {
           gasSync.updateTransaction(rec);
         }
         closeModal('modalEdit');
+        renderMainTable();
+        updateSummaryCard();
+        if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
         showToast(`Data transaksi ${id} berhasil diperbarui!`, 'success');
       }
     });
@@ -19303,6 +19318,9 @@ function initTableControls() {
           gasSync.deleteTransaction(idToDelete);
         }
         closeModal('modalDelete');
+        renderMainTable();
+        updateSummaryCard();
+        if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
         showToast(`Transaksi ${idToDelete} telah dihapus.`, 'warning');
       }
     });
@@ -21056,6 +21074,7 @@ function initDedicatedInputForm() {
       try {
         renderMainTable();
         updateSummaryCard();
+        if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
         if (typeof window.showSaveSuccessCelebration === 'function') {
           window.showSaveSuccessCelebration(newId, newRec.unit);
         }
@@ -21513,6 +21532,7 @@ function initProblemLogControls() {
       showToast(`Laporan gangguan unit ${unit} berhasil dicatat (Status: Masih Berlangsung)!`, 'success');
       probCurrentPage = 1;
       renderProblemTable();
+      if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
     });
   }
 
@@ -21562,6 +21582,7 @@ function initProblemLogControls() {
         : `Catatan gangguan unit ${unit} berhasil diperbarui!`;
       showToast(toastMsg, 'success');
       renderProblemTable();
+      if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
     });
   }
 
@@ -21586,6 +21607,7 @@ function initProblemLogControls() {
       showToast('Catatan kendala telah dihapus.', 'warning');
       problemToDeleteId = null;
       renderProblemTable();
+      if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
     });
   }
 
@@ -22164,6 +22186,31 @@ let chartPpaProblemBreakdown = null;
 let chartPpaProbFreq = null;
 let chartPpaProbDuration = null;
 
+// Helper Global: Parsing Persentase Baterai (Dukungan Format Desimal 0.0..1.0 Google Sheets & String %)
+function parseBatteryPercent(val) {
+  if (val === null || val === undefined || val === '' || val === '-') return null;
+  const clean = String(val).replace(/%/g, '').trim();
+  const num = parseFloat(clean);
+  if (isNaN(num)) return null;
+  if (num > 0 && num <= 1) return Math.round(num * 100);
+  return Math.round(num);
+}
+window.parseBatteryPercent = parseBatteryPercent;
+
+// Helper Global: Penentuan Cerdas Status Operasional (Schedule vs Non-Schedule / On-Demand)
+function isSwapNonScheduled(s) {
+  if (!s) return true;
+  const st = String(s.statusRemark || '').trim().toLowerCase();
+  if (st.includes('non')) return true;
+  if (st.includes('on') || st.includes('out') || st.includes('late')) return false;
+  const sch = (typeof getSwapScheduleTime === 'function') ? getSwapScheduleTime(s) : s.timeSch;
+  if (sch && sch !== '-' && sch !== 'NON-SCH' && sch !== 'null' && sch !== 'undefined') return false;
+  const loc = String(s.location || '').toUpperCase();
+  if (loc.includes('A2')) return true;
+  return false;
+}
+window.isSwapNonScheduled = isSwapNonScheduled;
+
 let ppaExecPage = 1;
 const ppaExecPerPage = 10;
 let ppaFilteredSwaps = [];
@@ -22283,15 +22330,30 @@ function getIsoWeek(dateStr) {
 }
 
 function populatePpaDashboardFilters() {
-  // 1. Populate Unit Filter
+  const sourceSwaps = (window.swapsData && window.swapsData.length > 0) ? window.swapsData : ((typeof swapsData !== 'undefined' && Array.isArray(swapsData)) ? swapsData : []);
+  const sourceFleet = (window.fleetUnits && window.fleetUnits.length > 0) ? window.fleetUnits : ((typeof fleetUnits !== 'undefined' && Array.isArray(fleetUnits)) ? fleetUnits : []);
+
+  // 1. Populate Unit Filter (menggabungkan fleetUnits dan data aktual swapsData)
   const unitSelect = document.getElementById('ppaFilterUnit');
   if (unitSelect) {
     const prev = unitSelect.value || 'ALL';
     unitSelect.innerHTML = '<option value="ALL">Semua Unit</option>';
-    const unitsList = (fleetUnits && fleetUnits.length > 0) ? fleetUnits : buildDefaultFleet();
-    unitsList.forEach(u => {
-      const code = typeof u === 'object' ? u.code : u;
-      if (!code) return;
+    const unitCodesSet = new Set();
+    const sourceFleetList = (sourceFleet && sourceFleet.length > 0) ? sourceFleet : buildDefaultFleet();
+    sourceFleetList.forEach(u => {
+      let c = '';
+      if (typeof u === 'string') c = u;
+      else if (u && typeof u === 'object') c = u.code || u.unit || u.id || '';
+      if (typeof c === 'object' && c && c.code) c = c.code;
+      c = String(c || '').replace(/^DT\s*/i, '').trim();
+      if (c) unitCodesSet.add(c);
+    });
+    sourceSwaps.forEach(s => {
+      const c = String(s.unit || '').replace(/^DT\s*/i, '').trim();
+      if (c) unitCodesSet.add(c);
+    });
+    const sortedUnitCodes = Array.from(unitCodesSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    sortedUnitCodes.forEach(code => {
       const opt = document.createElement('option');
       opt.value = code;
       opt.textContent = 'DT ' + code;
@@ -22304,7 +22366,7 @@ function populatePpaDashboardFilters() {
   const weekSelect = document.getElementById('ppaFilterWeek');
   if (weekSelect) {
     const prevWeek = weekSelect.value || 'ALL';
-    const distinctWeeks = Array.from(new Set((swapsData || []).map(s => getIsoWeek(s.date || s.dateDisplay)).filter(Boolean)));
+    const distinctWeeks = Array.from(new Set(sourceSwaps.map(s => getIsoWeek(s.date || s.dateDisplay)).filter(Boolean)));
     distinctWeeks.sort((a, b) => b.localeCompare(a));
     weekSelect.innerHTML = '<option value="ALL">Semua Week</option>';
     distinctWeeks.forEach(w => {
@@ -22321,7 +22383,7 @@ function populatePpaDashboardFilters() {
   if (probSelect) {
     const prevProb = probSelect.value || 'ALL';
     probSelect.innerHTML = '<option value="ALL">Semua Problem</option>';
-    const distinctProbs = Array.from(new Set(swapsData.map(s => (s.problemRemark || '').trim()).filter(p => p && p !== '13.NO PROBLEM' && p !== '-')));
+    const distinctProbs = Array.from(new Set(sourceSwaps.map(s => (s.problemRemark || '').trim()).filter(p => p && p !== '13.NO PROBLEM' && p !== '-')));
     distinctProbs.unshift('13.NO PROBLEM');
     distinctProbs.forEach(p => {
       const opt = document.createElement('option');
@@ -22552,6 +22614,31 @@ const EV_COLORS = {
 };
 
 function updatePpaExecutiveDashboard() {
+  // 1. Sinkronisasi data dua arah antara lexical scope dan window global
+  const sourceSwaps = (window.swapsData && window.swapsData.length > 0)
+    ? window.swapsData
+    : ((typeof swapsData !== 'undefined' && Array.isArray(swapsData) && swapsData.length > 0) ? swapsData : []);
+  if ((!swapsData || swapsData.length === 0) && sourceSwaps.length > 0) swapsData = sourceSwaps;
+  if ((!window.swapsData || window.swapsData.length === 0) && sourceSwaps.length > 0) window.swapsData = sourceSwaps;
+
+  const sourceProblems = (window.problemsData && window.problemsData.length > 0)
+    ? window.problemsData
+    : ((typeof problemsData !== 'undefined' && Array.isArray(problemsData) && problemsData.length > 0) ? problemsData : []);
+  if ((!problemsData || problemsData.length === 0) && sourceProblems.length > 0) problemsData = sourceProblems;
+  if ((!window.problemsData || window.problemsData.length === 0) && sourceProblems.length > 0) window.problemsData = sourceProblems;
+
+  const sourceSchedules = (window.schedulesData && window.schedulesData.length > 0)
+    ? window.schedulesData
+    : ((typeof schedulesData !== 'undefined' && Array.isArray(schedulesData) && schedulesData.length > 0) ? schedulesData : []);
+  if ((!schedulesData || schedulesData.length === 0) && sourceSchedules.length > 0) schedulesData = sourceSchedules;
+  if ((!window.schedulesData || window.schedulesData.length === 0) && sourceSchedules.length > 0) window.schedulesData = sourceSchedules;
+
+  const sourceFleet = (window.fleetUnits && window.fleetUnits.length > 0)
+    ? window.fleetUnits
+    : ((typeof fleetUnits !== 'undefined' && Array.isArray(fleetUnits) && fleetUnits.length > 0) ? fleetUnits : []);
+  if ((!fleetUnits || fleetUnits.length === 0) && sourceFleet.length > 0) fleetUnits = sourceFleet;
+  if ((!window.fleetUnits || window.fleetUnits.length === 0) && sourceFleet.length > 0) window.fleetUnits = sourceFleet;
+
   // Read Filter Values
   const shiftVal = document.getElementById('ppaFilterShift')?.value || 'ALL';
   const locVal = document.getElementById('ppaFilterLocation')?.value || 'ALL';
@@ -22566,11 +22653,11 @@ function updatePpaExecutiveDashboard() {
   const opMode = window.ppaOperationalMode || 'ALL';
 
   // Filter Data with robust normalization
-  ppaFilteredSwaps = (swapsData || []).filter(s => {
+  ppaFilteredSwaps = (sourceSwaps || []).filter(s => {
     if (!s) return false;
 
     // Filter Mode Operasional (ALL vs SCHEDULED vs ON_DEMAND)
-    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
+    const isNonSch = isSwapNonScheduled(s);
 
     if (opMode === 'SCHEDULED') {
       if (isNonSch) return false;
@@ -22664,12 +22751,12 @@ function updatePpaExecutiveDashboard() {
     if (u) distinctUnits.add(u);
   });
   
+  const displayUnitCount = distinctUnits.size > 0 ? distinctUnits.size : (totalSwaps > 0 ? 1 : 0);
+
   // Total Fleet Reference
   const totalFleetCount = (typeof fleetUnits !== 'undefined' && fleetUnits && fleetUnits.length > 0) 
-    ? fleetUnits.length 
-    : 60;
-  
-  const displayUnitCount = distinctUnits.size > 0 ? distinctUnits.size : (totalSwaps > 0 ? 1 : 0);
+    ? Math.max(fleetUnits.length, displayUnitCount) 
+    : Math.max(60, displayUnitCount);
 
   // Distinct Dates for Daily Average
   const distinctDatesSet = new Set();
@@ -22686,10 +22773,12 @@ function updatePpaExecutiveDashboard() {
   let validChargingCount = 0;
 
   ppaFilteredSwaps.forEach(s => {
-    const e = parseFloat(s.energyKwh);
-    if (!isNaN(e)) totalEnergy += e;
+    const rawE = s.energyKwh;
+    const e = (typeof rawE === 'string') ? parseFloat(rawE.replace(/,/g, '.')) : parseFloat(rawE);
+    if (!isNaN(e) && e > 0) totalEnergy += e;
 
-    const dur = parseFloat(s.chargingDurationMin);
+    const rawDur = s.durationMin || s.chargingDurationMin || s.duration;
+    const dur = (typeof rawDur === 'string') ? parseFloat(rawDur.replace(/,/g, '.')) : parseFloat(rawDur);
     if (!isNaN(dur) && dur > 0) {
       totalChargingMinutes += dur;
       validChargingCount++;
@@ -22697,7 +22786,7 @@ function updatePpaExecutiveDashboard() {
   });
 
   const avgUsage = totalSwaps > 0 ? (totalEnergy / totalSwaps).toFixed(2) : '0.00';
-  const avgChargingTime = validChargingCount > 0 ? (totalChargingMinutes / validChargingCount).toFixed(2) : '7.02';
+  const avgChargingTime = validChargingCount > 0 ? (totalChargingMinutes / validChargingCount).toFixed(1) : '6.0';
 
   // ESG Savings: 0.288 L Solar saved per kWh, 0.774 kg CO2 avoided per kWh
   const dieselSavedLiters = Math.round(totalEnergy * 0.288);
@@ -22802,7 +22891,10 @@ function updatePpaExecutiveDashboard() {
   if (lbl3) lbl3.textContent = 'Green Mining & ESG';
   if (lbl5) lbl5.textContent = 'Rata-Rata Durasi';
 
-  // Render 8 Charts with EV Intelligence Palette
+  // 1. Render Problem Log & Downtime Intelligence TERLEBIH DAHULU agar ppaFilteredProblems ter-filter sesuai parameter aktif
+  renderPpaProblemAnalytics();
+
+  // 2. Render 8 Charts with EV Intelligence Palette
   renderChartKetepatan();
   renderChartFreqDaily();
   renderChartFreqWeekly();
@@ -22812,11 +22904,8 @@ function updatePpaExecutiveDashboard() {
   renderChartEnergyDaily();
   renderChartProblemBreakdown();
 
-  // Render Table
+  // 3. Render Table
   renderPpaExecTable();
-
-  // Render Problem Log & Downtime Intelligence
-  renderPpaProblemAnalytics();
 }
 
 // 1. Matriks Ketepatan 4 Kuadran (Poin 2 - Schedule Compliance Detail)
@@ -22841,8 +22930,8 @@ function renderChartKetepatan() {
     let normalCount = 0;
     let lowCount = 0;
     ppaFilteredSwaps.forEach(s => {
-      const b = parseFloat(s.batteryBefore);
-      if (!isNaN(b) && b <= 20) lowCount++;
+      const b = (typeof parseBatteryPercent === 'function') ? parseBatteryPercent(s.batteryBefore) : parseFloat(s.batteryBefore);
+      if (b !== null && b <= 20) lowCount++;
       else normalCount++;
     });
 
@@ -22861,8 +22950,7 @@ function renderChartKetepatan() {
     let nonSchCount = 0;
 
     ppaFilteredSwaps.forEach(s => {
-      const isNon = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
-      if (isNon) {
+      if (isSwapNonScheduled(s)) {
         nonSchCount++;
         return;
       }
@@ -22875,9 +22963,11 @@ function renderChartKetepatan() {
 
       if (ket.includes('terskip') || st.includes('skip')) {
         skippedCount++;
-      } else if (ket.includes('awal') || (diffCalc !== null && diffCalc < 0 && diffCalc >= -55)) {
+      } else if (ket.includes('awal') || (diffCalc !== null && diffCalc < 0)) {
         earlyCount++;
       } else if (st.includes('on') && (diffCalc === null || (diffCalc >= 0 && diffCalc <= 55))) {
+        onTimeCount++;
+      } else if (diffCalc !== null && diffCalc >= 0 && diffCalc <= 55) {
         onTimeCount++;
       } else {
         lateCount++;
@@ -22955,6 +23045,7 @@ function renderChartKetepatan() {
     },
     plugins: [ppaDonutCenterPlugin]
   });
+  window.chartPpaKetepatan = chartPpaKetepatan;
 }
 
 // Time Range Switcher for Poin 3 (Trend Energi & Frekuensi Sesi Combo)
@@ -23149,6 +23240,7 @@ function renderChartFreqDaily() {
       }
     }
   });
+  window.chartPpaFreqDaily = chartPpaFreqDaily;
 }
 
 // 3. Trend Ach Frekuensi Swab Weekly (Cobalt vs Muted Navy Target)
@@ -23160,16 +23252,7 @@ function renderChartFreqWeekly() {
   const weekMap = {};
   ppaFilteredSwaps.forEach(s => {
     const dStr = s.date || '';
-    let wKey = 'W1';
-    try {
-      const parts = dStr.split(/[\/\-]/);
-      if (parts.length === 3) {
-        const d = new Date(parts[2].length === 4 ? parts[2] : ('20' + parts[2]), parts[1] - 1, parts[0]);
-        const oneJan = new Date(d.getFullYear(), 0, 1);
-        const wNum = Math.ceil((((d - oneJan) / 86400000) + oneJan.getDay() + 1) / 7);
-        wKey = 'W' + wNum;
-      }
-    } catch (e) {}
+    const wKey = (typeof getIsoWeek === 'function') ? (getIsoWeek(dStr) || 'W1') : 'W1';
     weekMap[wKey] = (weekMap[wKey] || 0) + 1;
   });
 
@@ -23233,6 +23316,7 @@ function renderChartFreqWeekly() {
     },
     plugins: [ppaBadgePlugin]
   });
+  window.chartPpaFreqWeekly = chartPpaFreqWeekly;
 }
 
 // 4. 24-Hour Peak Swap Rush Hour (Petrol Cyan Curve)
@@ -23309,6 +23393,7 @@ function renderChartFreqMonthly() {
       }
     }
   });
+  window.chartPpaFreqMonthly = chartPpaFreqMonthly;
 }
 
 // 5. Efisiensi Konsumsi Baterai per Armada EV (Poin 1: Benchmark 290 kWh & Rata-rata SOC In)
@@ -23325,11 +23410,11 @@ function renderChartRoomCompare() {
     const u = (s.unit || '').trim();
     if (!u) return;
     const kwh = parseFloat(s.energyKwh) || 0;
-    const soc = parseFloat(s.batteryBefore || s.socIn || 0);
+    const soc = (typeof parseBatteryPercent === 'function') ? parseBatteryPercent(s.batteryBefore || s.socIn) : parseFloat(s.batteryBefore || s.socIn || 0);
 
     unitKwhMap[u] = (unitKwhMap[u] || 0) + kwh;
     unitCountMap[u] = (unitCountMap[u] || 0) + 1;
-    if (!isNaN(soc) && soc > 0) {
+    if (soc !== null && !isNaN(soc) && soc > 0) {
       if (!unitSocMap[u]) unitSocMap[u] = { sum: 0, count: 0 };
       unitSocMap[u].sum += soc;
       unitSocMap[u].count += 1;
@@ -23338,24 +23423,26 @@ function renderChartRoomCompare() {
 
   // Top 10 most active units
   let units = Object.keys(unitCountMap).sort((a, b) => unitCountMap[b] - unitCountMap[a]).slice(0, 10);
-  if (units.length === 0) {
-    units = (typeof fleetUnits !== 'undefined' && fleetUnits && fleetUnits.length > 0)
-      ? fleetUnits.slice(0, 8).map(u => u.code)
+  const hasData = units.length > 0;
+  if (!hasData) {
+    const sourceFleet = (window.fleetUnits && window.fleetUnits.length > 0) ? window.fleetUnits : ((typeof fleetUnits !== 'undefined' && Array.isArray(fleetUnits)) ? fleetUnits : []);
+    units = (sourceFleet && sourceFleet.length > 0)
+      ? sourceFleet.slice(0, 8).map(u => (typeof u === 'object' ? u.code : u))
       : ['1601', '1602', '1603', '1604', '1605'];
   }
 
   const labels = units.map(u => 'DT ' + u.replace(/^DT\s*/i, ''));
   const avgKwhValues = units.map(u => {
     const cnt = unitCountMap[u] || 0;
-    return cnt > 0 ? parseFloat(((unitKwhMap[u] || 0) / cnt).toFixed(1)) : 285.0;
+    return cnt > 0 ? parseFloat(((unitKwhMap[u] || 0) / cnt).toFixed(1)) : 0;
   });
   const avgSocValues = units.map(u => {
     const sObj = unitSocMap[u];
-    return (sObj && sObj.count > 0) ? (sObj.sum / sObj.count).toFixed(1) : '22.0';
+    return (sObj && sObj.count > 0) ? (sObj.sum / sObj.count).toFixed(1) : '-';
   });
 
   const benchmarkVal = 290;
-  const barColors = avgKwhValues.map(v => v > benchmarkVal ? '#F59E0B' : '#10B981');
+  const barColors = avgKwhValues.map(v => v > benchmarkVal ? '#F59E0B' : (v > 0 ? '#10B981' : '#CBD5E1'));
 
   chartPpaRoomCompare = new Chart(canvas.getContext('2d'), {
     type: 'bar',
@@ -23405,10 +23492,10 @@ function renderChartRoomCompare() {
               if (ctx.datasetIndex === 0) return ' Benchmark Target: 290 kWh/Swap';
               const val = ctx.parsed.y;
               const soc = avgSocValues[ctx.dataIndex] || '-';
-              const status = val > benchmarkVal ? 'Di atas benchmark (+boros)' : 'Optimal (Efisien)';
+              const status = val > benchmarkVal ? 'Di atas benchmark (+boros)' : (val > 0 ? 'Optimal (Efisien)' : 'Tidak ada sesi');
               return [
                 ` Konsumsi: ${val} kWh/Swap (${status})`,
-                ` Rata-rata SOC Masuk: ${soc}%`
+                ` Rata-rata SOC Masuk: ${soc}${soc !== '-' ? '%' : ''}`
               ];
             }
           }
@@ -23418,7 +23505,7 @@ function renderChartRoomCompare() {
         y: {
           grid: { color: '#F2F4F7' },
           ticks: { font: { size: 8.5 }, color: '#667085', callback: v => v + ' kWh' },
-          suggestedMin: 200,
+          suggestedMin: 0,
           suggestedMax: Math.max(...avgKwhValues, 320) * 1.15
         },
         x: {
@@ -23428,6 +23515,7 @@ function renderChartRoomCompare() {
       }
     }
   });
+  window.chartPpaRoomCompare = chartPpaRoomCompare;
 }
 
 // 6. Top 10 Haul Trucks by Energy Consumption (Pareto Cobalt)
@@ -23491,6 +23579,7 @@ function renderChartEnergyUnit() {
       }
     }
   });
+  window.chartPpaEnergyUnit = chartPpaEnergyUnit;
 }
 
 // 7. Trend Energi Bersih Harian (Daily Clean Energy Emerald)
@@ -23566,6 +23655,7 @@ function renderChartEnergyDaily() {
     },
     plugins: [ppaBadgePlugin]
   });
+  window.chartPpaEnergyDaily = chartPpaEnergyDaily;
 }
 
 // 8. Pareto Analisis Problem Log (EV Palette Root Cause)
@@ -23574,10 +23664,10 @@ function renderChartProblemBreakdown() {
   if (!canvas) return;
   if (chartPpaProblemBreakdown) chartPpaProblemBreakdown.destroy();
 
-  // Prefer real Problem Log data from ppaFilteredProblems or problemsData
-  let sourceProblems = (window.ppaFilteredProblems && window.ppaFilteredProblems.length > 0)
-    ? window.ppaFilteredProblems
-    : ((window.problemsData && window.problemsData.length > 0) ? window.problemsData : null);
+  // Prefer filtered problems from ppaFilteredProblems
+  const sourceProblems = (typeof ppaFilteredProblems !== 'undefined' && Array.isArray(ppaFilteredProblems))
+    ? ppaFilteredProblems
+    : ((window.ppaFilteredProblems && Array.isArray(window.ppaFilteredProblems)) ? window.ppaFilteredProblems : null);
 
   let labels = [];
   let values = [];
@@ -23613,6 +23703,11 @@ function renderChartProblemBreakdown() {
     values = labels.map(l => probCountMap[l] || 0);
     const colorPalette = ['#D99000', '#D64545', '#2563EB', '#287C8E', '#5284AC', '#94A3B8'];
     bgColors = labels.map((l, idx) => colorPalette[idx % colorPalette.length]);
+  } else if (sourceProblems && sourceProblems.length === 0) {
+    // Kondisi optimal: 0 kendala pada filter yang aktif
+    labels = ['TIDAK ADA KENDALA'];
+    values = [0];
+    bgColors = ['#10B981'];
   } else {
     const probCountMap = {};
     ppaFilteredSwaps.forEach(s => {
@@ -23730,7 +23825,11 @@ function renderPpaProblemAnalytics() {
   const shiftVal = document.getElementById('ppaFilterShift')?.value || 'ALL';
   const unitVal = document.getElementById('ppaFilterUnit')?.value || 'ALL';
 
-  const rawList = (window.problemsData && window.problemsData.length > 0) ? window.problemsData : [];
+  const rawList = (window.problemsData && window.problemsData.length > 0)
+    ? window.problemsData
+    : ((typeof problemsData !== 'undefined' && Array.isArray(problemsData) && problemsData.length > 0) ? problemsData : []);
+  if ((!problemsData || problemsData.length === 0) && rawList.length > 0) problemsData = rawList;
+  if ((!window.problemsData || window.problemsData.length === 0) && rawList.length > 0) window.problemsData = rawList;
 
   // Filter problems data by active KPI filters
   ppaFilteredProblems = rawList.filter(p => {
@@ -24048,19 +24147,23 @@ function renderPpaExecTable() {
   const pageItems = ppaFilteredSwaps.slice(startIdx, endIdx);
 
   pageItems.forEach((s, i) => {
-    const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
+    const isNonSch = isSwapNonScheduled(s);
     const schTime = getSwapScheduleTime(s);
     const diffCalc = (s.jamIn && schTime && schTime !== '-') ? calculateMinutesDifference(s.jamIn, schTime) : null;
-    const isLate = !isNonSch && (
+    const ket = String(s.keterangan || '').toLowerCase();
+    const isEarly = !isNonSch && (ket.includes('awal') || (diffCalc !== null && diffCalc < 0));
+    const isLate = !isNonSch && !isEarly && (
       String(s.statusRemark || '').toLowerCase().includes('out') || 
       String(s.statusRemark || '').toLowerCase().includes('late') ||
-      (diffCalc !== null && (diffCalc < 0 || diffCalc > 55))
+      (diffCalc !== null && diffCalc > 55)
     );
     
     // Status pill HTML (EV Intelligence style)
     let statusPill = '';
     if (isNonSch) {
       statusPill = '<span class="status-pill pill-cyan">NON-SCHEDULE</span>';
+    } else if (isEarly) {
+      statusPill = '<span class="status-pill pill-cyan" style="background:#E0F2FE;color:#0284C7;border-color:rgba(2,132,199,0.3);">DATANG AWAL</span>';
     } else if (isLate) {
       statusPill = '<span class="status-pill pill-red">OUT OFF TIME</span>';
     } else {
@@ -24076,7 +24179,7 @@ function renderPpaExecTable() {
       <td style="font-family: 'JetBrains Mono', monospace; color: #2563EB; font-weight: 600;">${getSwapScheduleTime(s)}</td>
       <td style="font-family: 'JetBrains Mono', monospace; font-weight: 500;">${s.jamIn ? s.jamIn.substring(0, 5) : '-'}</td>
       <td>${statusPill}</td>
-      <td style="font-size: 11.5px; color: ${isLate ? '#D64545' : '#344054'}; font-weight: ${isLate ? '600' : '400'};">
+      <td style="font-size: 11.5px; color: ${isLate ? '#D64545' : (isEarly ? '#0284C7' : '#344054')}; font-weight: ${(isLate || isEarly) ? '600' : '400'};">
         ${(function() {
           const rawKet = (s.keterangan && s.keterangan !== '-' && s.keterangan !== 'null') ? String(s.keterangan).trim() : '';
           const rawProb = (s.problemRemark && s.problemRemark !== '-' && s.problemRemark !== 'null') ? String(s.problemRemark).trim() : '';
@@ -24085,13 +24188,20 @@ function renderPpaExecTable() {
           }
           if (rawKet && rawKet !== '13.NO PROBLEM') return rawKet;
           if (rawProb && rawProb !== '13.NO PROBLEM') return rawProb;
+          if (isEarly) {
+            const schTime = getSwapScheduleTime(s);
+            if (schTime && schTime !== '-' && s.jamIn) {
+              const diff = calculateMinutesDifference(s.jamIn, schTime);
+              if (diff !== null && diff < 0) {
+                return `Datang lebih awal (${Math.abs(diff)} mnt)`;
+              }
+            }
+            return 'Datang lebih awal';
+          }
           if (isLate) {
             const schTime = getSwapScheduleTime(s);
             if (schTime && schTime !== '-' && s.jamIn) {
               const diff = calculateMinutesDifference(s.jamIn, schTime);
-              if (diff < 0) {
-                return 'Datang awal';
-              }
               const diffText = diff > 0 ? `+${diff} mnt` : `${diff} mnt`;
               return `Out Off Schedule (${diffText})`;
             }
@@ -24210,16 +24320,28 @@ function buildVisualKpiPdfReportHtml() {
     tableRowsHtml = '<tr><td colspan="8" style="text-align:center; padding: 10px; color:#667085;">Tidak ada transaksi swap sesuai filter yang dipilih</td></tr>';
   } else {
     sampleSwaps.forEach(s => {
-      const isNonSch = String(s.statusRemark || '').toLowerCase().includes('non') || (s.timeSch === '-' || s.timeSch === 'NON-SCH');
+      const isNonSch = isSwapNonScheduled(s);
       const schTime = getSwapScheduleTime(s);
       const diffCalc = (s.jamIn && schTime && schTime !== '-') ? calculateMinutesDifference(s.jamIn, schTime) : null;
-      const isLate = !isNonSch && (
+      const ket = String(s.keterangan || '').toLowerCase();
+      const isEarly = !isNonSch && (ket.includes('awal') || (diffCalc !== null && diffCalc < 0));
+      const isLate = !isNonSch && !isEarly && (
         String(s.statusRemark || '').toLowerCase().includes('out') || 
         String(s.statusRemark || '').toLowerCase().includes('late') ||
-        (diffCalc !== null && (diffCalc < 0 || diffCalc > 55))
+        (diffCalc !== null && diffCalc > 55)
       );
-      const statusText = isNonSch ? 'NON-SCHEDULE' : (isLate ? 'OUT OFF TIME' : 'ON SCHEDULE');
-      const statusColor = isNonSch ? '#287C8E' : (isLate ? '#D64545' : '#168A5B');
+      let statusText = 'ON SCHEDULE';
+      let statusColor = '#168A5B';
+      if (isNonSch) {
+        statusText = 'NON-SCHEDULE';
+        statusColor = '#287C8E';
+      } else if (isEarly) {
+        statusText = 'DATANG AWAL';
+        statusColor = '#0284C7';
+      } else if (isLate) {
+        statusText = 'OUT OFF TIME';
+        statusColor = '#D64545';
+      }
 
       tableRowsHtml += `
         <tr style="border-bottom: 1px solid #E4E7EC; font-size: 8px;">
@@ -25015,17 +25137,17 @@ window.shareVisualKpiToWhatsApp = async function() {
     const totalSwaps = (window.ppaFilteredSwaps || []).length;
     const units = new Set((window.ppaFilteredSwaps || []).map(s => s.unit).filter(Boolean)).size;
     const totalEnergy = (window.ppaFilteredSwaps || []).reduce((acc, s) => acc + (parseFloat(s.energyKwh) || 0), 0);
-    const avgMins = (window.ppaFilteredSwaps || []).length > 0 
-      ? Math.round((window.ppaFilteredSwaps || []).reduce((acc, s) => acc + (parseFloat(s.durationMins || s.durasi) || 0), 0) / window.ppaFilteredSwaps.length) 
-      : 0;
+    const validDurations = (window.ppaFilteredSwaps || []).map(s => parseFloat(s.durationMin || s.chargingDurationMin || s.duration || s.durasi)).filter(v => !isNaN(v) && v > 0);
+    const avgMins = validDurations.length > 0 
+      ? (validDurations.reduce((a, b) => a + b, 0) / validDurations.length).toFixed(1) 
+      : '0.0';
 
     const probCount = (window.ppaFilteredProblems || []).length;
-    let probDowntimeMins = 0;
+    let probDowntimeSecs = 0;
     (window.ppaFilteredProblems || []).forEach(p => {
-      const dur = String(p.duration || '').trim();
-      const match = dur.match(/^(\d{1,2}):(\d{2})$/);
-      if (match) probDowntimeMins += (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
+      probDowntimeSecs += (typeof getProblemSeconds === 'function') ? getProblemSeconds(p) : 0;
     });
+    const probDowntimeMins = Math.round(probDowntimeSecs / 60);
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -25708,32 +25830,49 @@ function updateAutoKeteranganNote(skippedList, isEarly) {
 
 function getSwapScheduleTime(s) {
   if (!s) return '-';
-  if (String(s.statusRemark || '').toLowerCase().includes('non') || s.timeSch === '-' || s.timeSch === 'NON-SCH') return '-';
-  if (s && s.timeSch && s.timeSch !== '-' && s.timeSch !== 'null' && s.timeSch !== 'undefined') {
+  if (String(s.statusRemark || '').toLowerCase().includes('non')) return '-';
+  if (s && s.timeSch && s.timeSch !== '-' && s.timeSch !== 'NON-SCH' && s.timeSch !== 'null' && s.timeSch !== 'undefined') {
     return s.timeSch;
   }
-  if (typeof schedulesData !== 'undefined' && Array.isArray(schedulesData) && s && s.unit) {
+  const sourceSchedules = (typeof schedulesData !== 'undefined' && Array.isArray(schedulesData) && schedulesData.length > 0)
+    ? schedulesData
+    : ((window.INITIAL_DATA && Array.isArray(window.INITIAL_DATA.schedules)) ? window.INITIAL_DATA.schedules : []);
+
+  if (sourceSchedules.length > 0 && s && s.unit) {
     const cleanUnit = String(s.unit || '').replace(/^DT[- ]?/i, '').trim();
     const cleanShift = String(s.shift || '').replace(/[^0-9]/g, '') || '1';
     const sDateComp = (typeof parseDateComparable === 'function' && s.date) ? parseDateComparable(s.date) : null;
+    const jamInMin = (typeof parseTimeMinutes === 'function') ? parseTimeMinutes(s.jamIn) : null;
 
-    const match = schedulesData.find(sc => {
+    const unitMatches = sourceSchedules.filter(sc => {
       const scUnit = String(sc.unit || '').replace(/^DT[- ]?/i, '').trim();
       const scShift = String(sc.shift || '').replace(/[^0-9]/g, '') || '1';
       if (scUnit !== cleanUnit || scShift !== cleanShift) return false;
 
       if (sDateComp) {
-        const scDate = sc.tanggal || sc.date;
-        if (!scDate) return false;
-        if (typeof parseDateComparable === 'function') {
-          const scComp = parseDateComparable(scDate);
-          if (scComp !== sDateComp) return false;
-        }
+        const scDate = (typeof parseDateComparable === 'function') ? parseDateComparable(sc.tanggal || sc.date) : (sc.tanggal || sc.date);
+        if (scDate && scDate !== sDateComp) return false;
       }
       return true;
     });
-    if (match && match.timeSch) {
-      return match.timeSch;
+
+    if (unitMatches.length > 0) {
+      if (jamInMin !== null) {
+        let bestDiff = 99999;
+        let bestSch = unitMatches[0].timeSch;
+        unitMatches.forEach(sc => {
+          const scMin = (typeof parseTimeMinutes === 'function') ? parseTimeMinutes(sc.timeSch) : null;
+          if (scMin !== null) {
+            const diff = Math.abs(jamInMin - scMin);
+            if (diff < bestDiff) {
+              bestDiff = diff;
+              bestSch = sc.timeSch;
+            }
+          }
+        });
+        return bestSch || '-';
+      }
+      return unitMatches[0].timeSch || '-';
     }
   }
   return '-';
@@ -30822,6 +30961,7 @@ window.handleFirestoreProblemsUpdate = function(remoteProblems) {
 
   if (typeof renderProblemTable === 'function') renderProblemTable();
   if (typeof renderDbProblemsTable === 'function') renderDbProblemsTable();
+  if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
   if (typeof updateDbSummaryMetrics === 'function') updateDbSummaryMetrics();
   if (typeof recalculateBackupDataPreview === 'function') recalculateBackupDataPreview();
 };
@@ -30933,6 +31073,43 @@ window.downloadVisualKpiPdf = downloadVisualKpiPdf;
 window.printVisualKpiReport = printVisualKpiReport;
 window.openModal = openModal;
 window.closeModal = closeModal;
+window.syncVisualKpiData = function() {
+  const btn = document.getElementById('btnSyncVisualKpi');
+  let origText = '';
+  if (btn) {
+    origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="ppa-dot-pulse-green" style="display:inline-block; margin-right:4px;"></span> Menyinkronkan...';
+  }
+  if (typeof gasSync !== 'undefined' && typeof gasSync.loadAll === 'function') {
+    if (typeof showToast === 'function') showToast('⏳ Menyinkronkan seluruh grafik Visual KPI dengan Google Sheets...', 'info');
+    gasSync.loadAll(function(success) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+      if (success) {
+        if (typeof populatePpaDashboardFilters === 'function') populatePpaDashboardFilters();
+        if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
+        if (typeof showToast === 'function') showToast('✅ Seluruh grafik Visual KPI berhasil disinkronkan dengan Database!', 'success');
+      } else {
+        if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
+        if (typeof showToast === 'function') showToast('⚠️ Gagal terhubung ke Database Google Sheets. Menggunakan data tersimpan.', 'warn');
+      }
+    });
+  } else {
+    if (btn) {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }, 500);
+    }
+    if (typeof populatePpaDashboardFilters === 'function') populatePpaDashboardFilters();
+    if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
+    if (typeof showToast === 'function') showToast('✅ Seluruh grafik Visual KPI telah diperbarui!', 'success');
+  }
+};
+
 window.logoutUserSession = logoutUserSession;
 
 // Inisialisasi tampilan target storage saat aplikasi dimuat
