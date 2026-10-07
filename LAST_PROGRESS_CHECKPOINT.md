@@ -1,6 +1,37 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 06:50 WITA  
-**Status Sesi:** Penataan Ulang Menyeluruh Filter EV Intelligence (Charging Station, Ketahanan Battery, Swab Cycle Time) Menjadi Compact Two-Tier Horizontal Toolbar (Status: Sukses & Teruji 100%, Sintaks Valid, Zero Operational Disruption, Build v58, PWA Live di GitHub `main`)
+**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 08:30 WITA  
+**Status Sesi:** Perbaikan Tuntas Grafik EV Intelligence (Charging Station, Ketahanan Battery, Swab Cycle Time) yang Sempat Tidak Muncul Akibat Script Parsing Token Conflict & Penambahan Dependency Preload Chart.js (Status: Sukses & Terverifikasi 100% via CDP Headless, Zero Operational Disruption, Build v59, PWA Live di GitHub `main`)
+
+---
+
+### 📋 Ringkasan Pekerjaan Sesi Ini (07 Oktober 2026 - Pukul 08:30 WITA - Build v59):
+
+#### 1. 🔍 Investigasi Akar Masalah (*Root Cause Analysis*):
+- **Akar Masalah Utama (HTML Script Parsing Conflict):**
+  - Pada saat sinkronisasi `window.INTELLIGENCE_HTML_SOURCE` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html), string HTML diekspor menggunakan `JSON.stringify` tanpa *escaping* karakter tag `</script>`.
+  - Akibatnya, saat browser mem-parsing inline `<script>` di `index.html`, parser HTML menganggap tag `</script>` di dalam string sebagai penutup tag `<script>` utama lebih awal.
+  - Hal ini memicu `SyntaxError: Invalid or unexpected token` sehingga variabel `window.INTELLIGENCE_HTML_SOURCE` gagal terdefinisi.
+  - Dampaknya, ketika pengguna mengklik sub-menu **Charging Station**, **Ketahanan Battery**, atau **Swab Cycle Time**, fungsi `window.initIntelligenceIframe()` langsung *abort/return* karena sumber HTML tidak tersedia, sehingga iframe tetap kosong dan grafik tidak muncul sama sekali.
+- **Dependency Loading & Auth Inspection:**
+  - Menambahkan tag CDN `<script src="...chart.umd.min.js">` dan `<script src="...chartjs-plugin-datalabels.min.js">` secara langsung pada `<head>` [intelligence.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/intelligence.html) guna memastikan pustaka Chart.js selalu siap sebelum inisialisasi dijalankan.
+  - Menyempurnakan pengecekan autentikasi di `switchAppView` pada [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) agar mengenali `window.currentAuthUser` secara konsisten di semua lingkungan.
+
+#### 2. 🛠️ Solusi & Perbaikan yang Diterapkan:
+1. **Pencegahan Terminasi Tag Script:**
+   - Memperbaiki skrip sinkronisasi [scratch/sync_intel_to_index.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/scratch/sync_intel_to_index.js) dengan menambahkan *safe escaping*: `.replace(/<\/script/gi, '<\\/script')`.
+   - Menjamin bahwa `window.INTELLIGENCE_HTML_SOURCE` ter-parse 100% valid tanpa token conflict di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+2. **Chart.js CDN Injection di `<head>`:**
+   - Menambahkan deklarasi pustaka Chart.js v4.4.7 dan plugin DataLabels di `<head>` [intelligence.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/intelligence.html) untuk *synchronous loading* yang andal baik saat diakses mandiri maupun di dalam iframe Blob.
+3. **Penyempurnaan Autentikasi Pengguna:**
+   - Menambahkan `window.currentAuthUser` ke dalam rantai pengecekan hak akses di `switchAppView('intel-*')` dan `switchAppView('database')`.
+
+#### 3. 🧪 Verifikasi Headless Otomatis (Non-Live Preview):
+- Dilakukan verifikasi headless CDP melalui skrip [scratch/verify_all_intel_charts.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/scratch/verify_all_intel_charts.js) (tanpa live preview sesuai batasan):
+  - **Charging Station (7 Grafik):** `energyTrendChart`, `socTrendChart`, `romTrendChart`, `romDonutChart`, `durationChart`, `hourlyChart`, `portChart` (Status: **ALL RENDERED, PASS**).
+  - **Ketahanan Battery (6 Grafik):** `batteryEnduranceTrendChart`, `batteryStatusChart`, `batteryUnitChart`, `batteryRomChart`, `batterySocRateChart`, `batteryDistributionChart` (Status: **ALL RENDERED, PASS**).
+  - **Swab Cycle Time (6 Grafik):** `cycleTrendChart`, `cycleStatusChart`, `cycleUnitChart`, `cycleCompartmentChart`, `cycleHourlyChart`, `cycleDistributionChart` (Status: **ALL RENDERED, PASS**).
+  - **Console Errors:** 0 (Bersih tanpa exception).
+- Bump versi aplikasi ke `APP_BUILD_ID = '2026.10.07.v59'` dan Service Worker cache `charging-ev-v59` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
 ---
 
