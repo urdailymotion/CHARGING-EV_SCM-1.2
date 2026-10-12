@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.07.v62';
+      var APP_BUILD_ID = '2026.10.12.v65';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -11902,13 +11902,19 @@ html, body {
               </div>
             </div>
 
-            <!-- Chart 8: Pareto Analisis Problem Log -->
+            <!-- Chart 8: Analisis Problem Remark & Ontime (Sesuai Filter Aktif) -->
             <div class="ppa-chart-card-box">
               <div class="ppa-chart-header-row">
-                <span class="ppa-chart-title-modern">Analisis Kendala &amp; Problem Log</span>
-                <span class="ppa-chart-badge-tag">ROOT CAUSE</span>
+                <span class="ppa-chart-title-modern">Analisis Kendala &amp; Problem Remark</span>
+                <span class="ppa-chart-badge-tag" id="ppaChartProblemBadge">PROBLEM REMARK</span>
               </div>
-              <div class="ppa-canvas-wrapper">
+              <!-- Stat Summary Ribbon: Total & Ontime -->
+              <div id="ppaChartProbStatRow" style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 4px 10px; margin-bottom: 8px; font-size: 11px; font-weight: 600;">
+                <span style="color: #64748B;">Total: <strong id="ppaChartProbTotalText" style="color: #2563EB;">0 Sesi</strong></span>
+                <span style="color: #64748B;">On Time: <strong id="ppaChartProbOnTimeText" style="color: #10B981;">0 Sesi</strong></span>
+                <span style="color: #64748B;">Kendala: <strong id="ppaChartProbIssuesText" style="color: #DC2626;">0 Kasus</strong></span>
+              </div>
+              <div class="ppa-canvas-wrapper" style="height: 165px;">
                 <canvas id="ppaChartProblemBreakdown"></canvas>
               </div>
             </div>
@@ -14985,8 +14991,8 @@ html, body {
 <script>
 // Master Data
 window.INITIAL_DATA = {
-  schedules: [],
-  problems: [],
+  schedules: [{"tanggal":"05/10/2026","shift":"2","unit":"1648","timeSch":"23.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1636","timeSch":"23.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1625","timeSch":"23.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1655","timeSch":"23.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1612","timeSch":"23.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1648","timeSch":"03.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1636","timeSch":"03.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1625","timeSch":"03.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1655","timeSch":"03.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1612","timeSch":"03.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1635","timeSch":"19.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1649","timeSch":"19.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1602","timeSch":"19.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1619","timeSch":"19.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1617","timeSch":"19.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1635","timeSch":"22.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1649","timeSch":"22.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1602","timeSch":"22.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1619","timeSch":"22.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1617","timeSch":"22.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1635","timeSch":"02.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1649","timeSch":"02.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1602","timeSch":"02.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1619","timeSch":"02.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1617","timeSch":"02.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1635","timeSch":"05.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1649","timeSch":"05.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1602","timeSch":"05.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1619","timeSch":"05.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1617","timeSch":"05.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1622","timeSch":"21.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1620","timeSch":"21.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1611","timeSch":"21.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1601","timeSch":"21.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1629","timeSch":"21.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1622","timeSch":"01.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1620","timeSch":"01.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1611","timeSch":"01.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1601","timeSch":"01.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1629","timeSch":"01.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1622","timeSch":"04.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1620","timeSch":"04.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1611","timeSch":"04.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1601","timeSch":"04.00.00"},{"tanggal":"05/10/2026","shift":"2","unit":"1629","timeSch":"04.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1623","timeSch":"07.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1656","timeSch":"07.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1638","timeSch":"07.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1650","timeSch":"07.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1610","timeSch":"07.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1623","timeSch":"10.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1656","timeSch":"10.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1638","timeSch":"10.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1650","timeSch":"10.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1610","timeSch":"10.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1623","timeSch":"14.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1656","timeSch":"14.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1638","timeSch":"14.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1650","timeSch":"14.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1610","timeSch":"14.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1623","timeSch":"17.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1656","timeSch":"17.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1638","timeSch":"17.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1650","timeSch":"17.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1610","timeSch":"17.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1621","timeSch":"08.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1636","timeSch":"08.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1617","timeSch":"08.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1622","timeSch":"08.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1620","timeSch":"08.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1621","timeSch":"11.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1636","timeSch":"11.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1617","timeSch":"11.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1622","timeSch":"11.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1620","timeSch":"11.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1621","timeSch":"15.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1636","timeSch":"15.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1617","timeSch":"15.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1622","timeSch":"15.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1620","timeSch":"15.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1621","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1636","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1617","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1622","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1620","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1629","timeSch":"09.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1655","timeSch":"09.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1612","timeSch":"09.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1619","timeSch":"09.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1635","timeSch":"09.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1629","timeSch":"13.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1655","timeSch":"13.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1612","timeSch":"13.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1619","timeSch":"13.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1635","timeSch":"13.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1629","timeSch":"16.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1655","timeSch":"16.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1612","timeSch":"16.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1619","timeSch":"16.00.00"},{"tanggal":"06/10/2026","shift":"1","unit":"1635","timeSch":"16.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1648","timeSch":"20.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1636","timeSch":"20.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1625","timeSch":"20.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1655","timeSch":"20.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1612","timeSch":"20.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1648","timeSch":"23.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1636","timeSch":"23.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1625","timeSch":"23.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1655","timeSch":"23.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1612","timeSch":"23.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1648","timeSch":"03.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1636","timeSch":"03.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1625","timeSch":"03.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1655","timeSch":"03.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1612","timeSch":"03.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1635","timeSch":"19.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1649","timeSch":"19.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1602","timeSch":"19.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1619","timeSch":"19.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1617","timeSch":"19.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1635","timeSch":"22.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1649","timeSch":"22.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1602","timeSch":"22.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1619","timeSch":"22.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1617","timeSch":"22.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1635","timeSch":"02.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1649","timeSch":"02.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1602","timeSch":"02.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1619","timeSch":"02.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1617","timeSch":"02.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1635","timeSch":"05.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1649","timeSch":"05.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1602","timeSch":"05.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1619","timeSch":"05.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1617","timeSch":"05.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1622","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1620","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1611","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1601","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1629","timeSch":"18.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1622","timeSch":"21.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1620","timeSch":"21.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1611","timeSch":"21.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1601","timeSch":"21.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1629","timeSch":"21.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1622","timeSch":"01.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1620","timeSch":"01.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1611","timeSch":"01.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1601","timeSch":"01.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1629","timeSch":"01.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1622","timeSch":"04.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1620","timeSch":"04.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1611","timeSch":"04.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1601","timeSch":"04.00.00"},{"tanggal":"06/10/2026","shift":"2","unit":"1629","timeSch":"04.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1621","timeSch":"07.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1617","timeSch":"07.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1636","timeSch":"07.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1656","timeSch":"07.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1650","timeSch":"07.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1621","timeSch":"10.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1617","timeSch":"10.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1636","timeSch":"10.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1656","timeSch":"10.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1650","timeSch":"10.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1621","timeSch":"14.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1617","timeSch":"14.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1636","timeSch":"14.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1656","timeSch":"14.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1650","timeSch":"14.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1621","timeSch":"17.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1617","timeSch":"17.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1636","timeSch":"17.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1656","timeSch":"17.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1650","timeSch":"17.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1620","timeSch":"08.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1630","timeSch":"08.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1629","timeSch":"08.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1612","timeSch":"08.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1618","timeSch":"08.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1620","timeSch":"11.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1630","timeSch":"11.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1629","timeSch":"11.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1612","timeSch":"11.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1618","timeSch":"11.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1620","timeSch":"15.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1630","timeSch":"15.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1629","timeSch":"15.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1612","timeSch":"15.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1618","timeSch":"15.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1620","timeSch":"18.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1630","timeSch":"18.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1629","timeSch":"18.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1612","timeSch":"18.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1618","timeSch":"18.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1619","timeSch":"09.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1635","timeSch":"09.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1622","timeSch":"09.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1602","timeSch":"09.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1625","timeSch":"09.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1619","timeSch":"13.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1635","timeSch":"13.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1622","timeSch":"13.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1602","timeSch":"13.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1625","timeSch":"13.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1619","timeSch":"16.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1635","timeSch":"16.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1622","timeSch":"16.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1602","timeSch":"16.00.00"},{"tanggal":"07/10/2026","shift":"1","unit":"1625","timeSch":"16.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1602","timeSch":"20.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1622","timeSch":"20.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1619","timeSch":"20.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1629","timeSch":"20.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1656","timeSch":"20.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1602","timeSch":"23.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1622","timeSch":"23.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1619","timeSch":"23.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1629","timeSch":"23.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1656","timeSch":"23.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1602","timeSch":"03.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1622","timeSch":"03.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1619","timeSch":"03.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1629","timeSch":"03.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1656","timeSch":"03.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1612","timeSch":"19.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1620","timeSch":"19.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1621","timeSch":"19.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1650","timeSch":"19.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1636","timeSch":"19.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1612","timeSch":"22.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1620","timeSch":"22.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1621","timeSch":"22.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1650","timeSch":"22.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1636","timeSch":"22.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1612","timeSch":"02.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1620","timeSch":"02.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1621","timeSch":"02.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1650","timeSch":"02.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1636","timeSch":"02.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1612","timeSch":"05.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1620","timeSch":"05.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1621","timeSch":"05.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1650","timeSch":"05.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1636","timeSch":"05.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1638","timeSch":"21.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1617","timeSch":"21.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1625","timeSch":"21.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1635","timeSch":"21.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1618","timeSch":"21.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1638","timeSch":"01.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1617","timeSch":"01.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1625","timeSch":"01.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1635","timeSch":"01.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1618","timeSch":"01.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1638","timeSch":"04.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1617","timeSch":"04.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1625","timeSch":"04.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1635","timeSch":"04.00.00"},{"tanggal":"07/10/2026","shift":"2","unit":"1618","timeSch":"04.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1602","timeSch":"07.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1610","timeSch":"07.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1619","timeSch":"07.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1629","timeSch":"07.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1656","timeSch":"07.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1602","timeSch":"10.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1610","timeSch":"10.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1619","timeSch":"10.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1629","timeSch":"10.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1656","timeSch":"10.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1602","timeSch":"14.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1610","timeSch":"14.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1619","timeSch":"14.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1629","timeSch":"14.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1656","timeSch":"14.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1602","timeSch":"17.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1610","timeSch":"17.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1619","timeSch":"17.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1629","timeSch":"17.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1656","timeSch":"17.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1638","timeSch":"08.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1617","timeSch":"08.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1625","timeSch":"08.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1635","timeSch":"08.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1623","timeSch":"08.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1638","timeSch":"11.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1617","timeSch":"11.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1625","timeSch":"11.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1635","timeSch":"11.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1623","timeSch":"11.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1638","timeSch":"15.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1617","timeSch":"15.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1625","timeSch":"15.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1635","timeSch":"15.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1623","timeSch":"15.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1638","timeSch":"18.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1617","timeSch":"18.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1625","timeSch":"18.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1635","timeSch":"18.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1623","timeSch":"18.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1612","timeSch":"09.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1620","timeSch":"09.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1636","timeSch":"09.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1650","timeSch":"09.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1621","timeSch":"09.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1612","timeSch":"13.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1620","timeSch":"13.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1636","timeSch":"13.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1650","timeSch":"13.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1621","timeSch":"13.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1612","timeSch":"16.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1620","timeSch":"16.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1636","timeSch":"16.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1650","timeSch":"16.00.00"},{"tanggal":"08/10/2026","shift":"1","unit":"1621","timeSch":"16.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1629","timeSch":"20.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"20.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1656","timeSch":"20.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1617","timeSch":"20.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1650","timeSch":"20.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1629","timeSch":"23.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"23.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1656","timeSch":"23.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1617","timeSch":"23.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1650","timeSch":"23.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1629","timeSch":"03.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"03.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1656","timeSch":"03.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1617","timeSch":"03.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1650","timeSch":"03.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1648","timeSch":"19.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1602","timeSch":"19.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1620","timeSch":"19.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1638","timeSch":"19.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1619","timeSch":"19.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1648","timeSch":"22.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1602","timeSch":"22.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1620","timeSch":"22.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1638","timeSch":"22.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1619","timeSch":"22.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1648","timeSch":"02.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1602","timeSch":"02.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1620","timeSch":"02.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1638","timeSch":"02.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1619","timeSch":"02.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1648","timeSch":"05.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1602","timeSch":"05.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1620","timeSch":"05.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1638","timeSch":"05.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1619","timeSch":"05.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1655","timeSch":"21.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"21.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1610","timeSch":"21.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1612","timeSch":"21.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1625","timeSch":"21.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1655","timeSch":"01.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"01.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1610","timeSch":"01.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1612","timeSch":"01.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1625","timeSch":"01.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1655","timeSch":"04.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1622","timeSch":"04.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1610","timeSch":"04.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1612","timeSch":"04.00.00"},{"tanggal":"08/10/2026","shift":"2","unit":"1625","timeSch":"04.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1649","timeSch":"20.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1610","timeSch":"20.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1629","timeSch":"20.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1619","timeSch":"20.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1634","timeSch":"20.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1649","timeSch":"23.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1610","timeSch":"23.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1629","timeSch":"23.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1619","timeSch":"23.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1634","timeSch":"23.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1649","timeSch":"03.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1610","timeSch":"03.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1629","timeSch":"03.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1619","timeSch":"03.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1634","timeSch":"03.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1655","timeSch":"19.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1622","timeSch":"19.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1617","timeSch":"19.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1620","timeSch":"19.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1625","timeSch":"19.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1655","timeSch":"22.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1622","timeSch":"22.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1617","timeSch":"22.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1620","timeSch":"22.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1625","timeSch":"22.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1655","timeSch":"02.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1622","timeSch":"02.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1617","timeSch":"02.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1620","timeSch":"02.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1625","timeSch":"02.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1655","timeSch":"05.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1622","timeSch":"05.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1617","timeSch":"05.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1620","timeSch":"05.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1625","timeSch":"05.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1648","timeSch":"21.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1640","timeSch":"21.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1656","timeSch":"21.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1616","timeSch":"21.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1612","timeSch":"21.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1648","timeSch":"01.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1640","timeSch":"01.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1656","timeSch":"01.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1616","timeSch":"01.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1612","timeSch":"01.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1648","timeSch":"04.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1640","timeSch":"04.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1656","timeSch":"04.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1616","timeSch":"04.00.00"},{"tanggal":"09/10/2026","shift":"2","unit":"1612","timeSch":"04.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1649","timeSch":"07.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1610","timeSch":"07.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1629","timeSch":"07.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1619","timeSch":"07.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1634","timeSch":"07.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1649","timeSch":"10.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1610","timeSch":"10.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1629","timeSch":"10.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1619","timeSch":"10.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1634","timeSch":"10.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1649","timeSch":"14.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1610","timeSch":"14.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1629","timeSch":"14.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1619","timeSch":"14.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1634","timeSch":"14.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1649","timeSch":"17.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1610","timeSch":"17.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1629","timeSch":"17.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1619","timeSch":"17.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1634","timeSch":"17.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1648","timeSch":"08.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1640","timeSch":"08.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1656","timeSch":"08.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1616","timeSch":"08.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1612","timeSch":"08.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1648","timeSch":"11.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1640","timeSch":"11.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1656","timeSch":"11.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1616","timeSch":"11.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1612","timeSch":"11.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1648","timeSch":"15.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1640","timeSch":"15.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1656","timeSch":"15.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1616","timeSch":"15.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1612","timeSch":"15.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1648","timeSch":"18.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1640","timeSch":"18.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1656","timeSch":"18.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1616","timeSch":"18.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1612","timeSch":"18.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1655","timeSch":"09.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1622","timeSch":"09.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1617","timeSch":"09.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1620","timeSch":"09.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1625","timeSch":"09.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1655","timeSch":"13.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1622","timeSch":"13.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1617","timeSch":"13.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1620","timeSch":"13.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1625","timeSch":"13.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1655","timeSch":"16.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1622","timeSch":"16.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1617","timeSch":"16.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1620","timeSch":"16.00.00"},{"tanggal":"10/10/2026","shift":"1","unit":"1625","timeSch":"16.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"20.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1620","timeSch":"20.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1650","timeSch":"20.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"20.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1610","timeSch":"20.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"23.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1620","timeSch":"23.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1650","timeSch":"23.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"23.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1610","timeSch":"23.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"03.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1620","timeSch":"03.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1650","timeSch":"03.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1634","timeSch":"03.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1610","timeSch":"03.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1655","timeSch":"19.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1623","timeSch":"19.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1611","timeSch":"19.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1636","timeSch":"19.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1640","timeSch":"19.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1655","timeSch":"22.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1623","timeSch":"22.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1611","timeSch":"22.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1636","timeSch":"22.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1640","timeSch":"22.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1655","timeSch":"02.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1623","timeSch":"02.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1611","timeSch":"02.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1636","timeSch":"02.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1640","timeSch":"02.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1655","timeSch":"05.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1623","timeSch":"05.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1611","timeSch":"05.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1636","timeSch":"05.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1640","timeSch":"05.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1625","timeSch":"21.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1635","timeSch":"21.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1601","timeSch":"21.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1648","timeSch":"21.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1649","timeSch":"21.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1625","timeSch":"01.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1635","timeSch":"01.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1601","timeSch":"01.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1648","timeSch":"01.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1649","timeSch":"01.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1625","timeSch":"04.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1635","timeSch":"04.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1601","timeSch":"04.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1648","timeSch":"04.00.00"},{"tanggal":"10/10/2026","shift":"2","unit":"1649","timeSch":"04.00.00"}],
+  problems: [{"id":"PRB-07775","no":"1","date":"03/10/2026","shift":"2","unit":"Pemadaman listrik swab 01","problem":"Pemadaman listrik","timeOpen":"01.23.00","timeClose":"03.56.00","duration":"02.33.00"},{"id":"PRB-28339","no":"2","date":"03/10/2026","shift":"2","unit":"1619","problem":"Look baterai terkunci tidak bisa kebuka","timeOpen":"03.56.00","timeClose":"07.25.00","duration":"03.29.00"},{"id":"PRB-06527","no":"3","date":"03/10/2026","shift":"1","unit":"Unit SWB 01","problem":"Crane OHC miring dan seling terurai","timeOpen":"07.50.00","timeClose":"11.00.00","duration":"03.10.00"},{"id":"PRB-62351","no":"4","date":"04/10/2026","shift":"1","unit":"Pemadaman listrik swal 02 dan 03","problem":"Pemadaman listrik unit swap 02 dan 03","timeOpen":"08.21.00","timeClose":"10.48.00","duration":"02.27.00"},{"id":"PRB-10577","no":"5","date":"04/10/2026","shift":"1","unit":"Pemadaman listrik swap 02 dan 03","problem":"Pemadaman listrik swap 02 dan 03","timeOpen":"11.09.00","timeClose":"16.38.00","duration":"05.29.00"},{"id":"PRB-02666","no":"6","date":"05/10/2026","shift":"1","unit":"SWB02-03","problem":"Pemadaman listrik","timeOpen":"11.09.00","timeClose":"11.30.00","duration":"00.21.00"},{"id":"PRB-65270","no":"7","date":"06/10/2026","shift":"1","unit":"Charging swap 01","problem":"Seling terurai ada batu bara di atas batre.","timeOpen":"09.55.00","timeClose":"10.30.00","duration":"00.35.00"},{"id":"PRB-56463","no":"8","date":"06/10/2026","shift":"1","unit":"SWB 02","problem":"Pemadaman unschedule SWB 02","timeOpen":"10.45.00","timeClose":"11.27.00","duration":"00.42.00"},{"id":"PRB-55200","no":"9","date":"07/10/2026","shift":"1","unit":"Swap 01","problem":"Pengecekan module lambat + progres pergantian module charging swap A1","timeOpen":"10.25.00","timeClose":"15.12.00","duration":"04.47.00"},{"id":"PRB-45362","no":"10","date":"11/10/2026","shift":"1","unit":"charging swap 02","problem":"mati listrik","timeOpen":"14.14.00","timeClose":"18.10.00","duration":"03.56.00"},{"id":"PRB-00087","no":"11","date":"11/10/2026","shift":"1","unit":"Swp03","problem":"Pemadaman listrik","timeOpen":"14.14.00","timeClose":"17.26.00","duration":"03.12.00"},{"id":"PRB-18970","no":"12","date":"11/10/2026","shift":"2","unit":"SWB03","problem":"SWB03 Stuck tidak bisa beroprasi","timeOpen":"17.40.00","timeClose":"18.45.00","duration":"01.05.00"},{"id":"PRB-87043","no":"13","date":"11/10/2026","shift":"2","unit":"Pemadaman Listrik SWB02-03","problem":"Pemadaman","timeOpen":"18.42.00","timeClose":"19.05.00","duration":"00.23.00"},{"id":"PRB-13757","no":"14","date":"11/10/2026","shift":"2","unit":"SWB03","problem":"Panel Stuck tidak bisa beroprasi buat mindah otomatis/semi otomatis","timeOpen":"19.04.00","timeClose":"21.04.00","duration":"02.00.00"}],
   populasi: [
   "1601",
   "1602",
@@ -16542,12 +16548,19 @@ const gasSync = {
   _processResult: function(result) {
     if (!result) return;
     if (Array.isArray(result.swaps)) {
-      swapsData = result.swaps.filter(s => s && (s.unit || s.date)).map((s, idx) => ({
-        ...s,
-        id: (typeof canonicalSwapId === 'function') ? canonicalSwapId(s.id) : (s.id || ''),
-        energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(s.energyKwh) : (parseFloat(s.energyKwh) || 0),
-        _sheetRow: idx + 2
-      }));
+      swapsData = result.swaps.filter(s => s && (s.unit || s.date)).map((s, idx) => {
+        const rawSch = s.timeSch || '-';
+        const rawSt = String(s.statusRemark || '').toLowerCase();
+        const isNon = rawSt.includes('non') || rawSch === '-';
+        const opMode = s.operationalMode || (isNon ? 'NON SCHEDULE' : 'SCHEDULE');
+        return {
+          ...s,
+          id: (typeof canonicalSwapId === 'function') ? canonicalSwapId(s.id) : (s.id || ''),
+          operationalMode: opMode,
+          energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(s.energyKwh) : (parseFloat(s.energyKwh) || 0),
+          _sheetRow: idx + 2
+        };
+      });
       if (typeof sortTransactionsLatestFirst === 'function') {
         swapsData.sort(sortTransactionsLatestFirst);
       }
@@ -17219,9 +17232,14 @@ function initDataState() {
   // Normalisasi seluruh ID swap ke format resmi DA01/CHG/2026/SWAP/XXXX dan perbaiki jika ada kWh tanpa koma
   swapsData = swapsData.map(s => {
     const cid = canonicalSwapId(s.id);
+    const rawSch = s.timeSch || '-';
+    const rawSt = String(s.statusRemark || '').toLowerCase();
+    const isNon = rawSt.includes('non') || rawSch === '-';
+    const opMode = s.operationalMode || (isNon ? 'NON SCHEDULE' : 'SCHEDULE');
     return {
       ...s,
       id: cid,
+      operationalMode: opMode,
       energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(s.energyKwh) : (parseFloat(s.energyKwh) || 0)
     };
   });
@@ -19201,6 +19219,11 @@ function initTableControls() {
             return true;
           });
           return m ? m.timeSch : '-';
+        })(),
+        operationalMode: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (statusVal === 'Non-Schedule') return 'NON SCHEDULE';
+          return isSchOn ? 'SCHEDULE' : 'NON SCHEDULE';
         })()
       };
 
@@ -19286,6 +19309,7 @@ function initTableControls() {
         rec.batteryAfter = formatBatteryPercentage(document.getElementById('editBatOut').value);
         rec.statusRemark = document.getElementById('editStatus').value;
         rec.problemRemark = document.getElementById('editRemark').value;
+        rec.operationalMode = (rec.timeSch && rec.timeSch !== '-' && rec.statusRemark !== 'Non-Schedule') ? 'SCHEDULE' : 'NON SCHEDULE';
 
         persistData();
         if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
@@ -20198,6 +20222,8 @@ function mapSwapToDbInputRow(s) {
   const timeSchVal = String(s.timeSch || '-').trim();
   const stationVal = String(s.swapStation || (locVal.toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim();
 
+  const opModeVal = String(s.operationalMode || ((timeSchVal !== '-' && !statusVal.toLowerCase().includes('non')) ? 'SCHEDULE' : 'NON SCHEDULE')).trim().toUpperCase();
+
   return [
     txId,           // 1. TRANSACTION ID
     dateVal,        // 2. DATE
@@ -20214,11 +20240,12 @@ function mapSwapToDbInputRow(s) {
     energyVal,      // 13. ENERGY (KWH)
     statusVal,      // 14. STATUS REMARK
     problemVal,     // 15. PROBLEM REMARK
-    operatorVal,    // 16. MANPOWER
-    operatorNikVal, // 17. NIK
-    ketVal,         // 18. KETERANGAN
-    timeSchVal,     // 19. TIME SCH
-    stationVal      // 20. SWAP STATION
+    ketVal,         // 16. KETERANGAN
+    timeSchVal,     // 17. TIME SCH
+    stationVal,     // 18. SWAP STATION
+    opModeVal,      // 19. OPERATIONAL MODE
+    operatorVal,    // 20. MANPOWER
+    operatorNikVal  // 21. NIK
   ];
 }
 window.mapSwapToDbInputRow = mapSwapToDbInputRow;
@@ -20239,11 +20266,12 @@ const DB_INPUT_HEADERS = [
   'ENERGY (KWH)',
   'STATUS REMARK',
   'PROBLEM REMARK',
-  'MANPOWER',
-  'NIK',
   'KETERANGAN',
   'TIME SCH',
-  'SWAP STATION'
+  'SWAP STATION',
+  'OPERATIONAL MODE',
+  'MANPOWER',
+  'NIK'
 ];
 window.DB_INPUT_HEADERS = DB_INPUT_HEADERS;
 
@@ -20263,11 +20291,12 @@ const DB_INPUT_COLS = [
   { wch: 16 }, // 13. ENERGY (KWH)
   { wch: 18 }, // 14. STATUS REMARK
   { wch: 22 }, // 15. PROBLEM REMARK
-  { wch: 26 }, // 16. MANPOWER
-  { wch: 14 }, // 17. NIK
-  { wch: 24 }, // 18. KETERANGAN
-  { wch: 12 }, // 19. TIME SCH
-  { wch: 16 }  // 20. SWAP STATION
+  { wch: 24 }, // 16. KETERANGAN
+  { wch: 12 }, // 17. TIME SCH
+  { wch: 16 }, // 18. SWAP STATION
+  { wch: 20 }, // 19. OPERATIONAL MODE
+  { wch: 26 }, // 20. MANPOWER
+  { wch: 14 }  // 21. NIK
 ];
 window.DB_INPUT_COLS = DB_INPUT_COLS;
 
@@ -20289,19 +20318,19 @@ function executeExportDataInputExcel(records, customFilename) {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws['!cols'] = DB_INPUT_COLS;
-    // Auto-filter on Row 1 across all 20 columns
-    ws['!autofilter'] = { ref: `A1:T${aoa.length}` };
+    // Auto-filter on Row 1 across all 21 columns (A1:U)
+    ws['!autofilter'] = { ref: `A1:U${aoa.length}` };
     // Freeze header row
     ws['!views'] = [{ state: 'frozen', ySplit: 1 }];
 
     XLSX.utils.book_append_sheet(wb, ws, "DATA INPUT");
     XLSX.writeFile(wb, finalFilename);
-    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.xlsx) sama persis dengan sheet DATA INPUT!`, "success");
+    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.xlsx) 21 kolom sama persis dengan sheet DATA INPUT!`, "success");
   } else {
     const csvContent = aoa.map(row => row.map(v => `"${String(v !== undefined && v !== null ? v : '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const csvFilename = finalFilename.replace(/\.xlsx$/i, '.csv');
     downloadCSV(csvContent, csvFilename);
-    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.csv) 20 kolom database!`, "success");
+    showToast(`Berhasil mengekspor ${records.length.toLocaleString('id-ID')} transaksi (.csv) 21 kolom database!`, "success");
   }
 }
 window.executeExportDataInputExcel = executeExportDataInputExcel;
@@ -21049,6 +21078,11 @@ function initDedicatedInputForm() {
             return true;
           });
           return m ? m.timeSch : '-';
+        })(),
+        operationalMode: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (statusVal === 'Non-Schedule') return 'NON SCHEDULE';
+          return isSchOn ? 'SCHEDULE' : 'NON SCHEDULE';
         })()
       };
 
@@ -22200,6 +22234,10 @@ window.parseBatteryPercent = parseBatteryPercent;
 // Helper Global: Penentuan Cerdas Status Operasional (Schedule vs Non-Schedule / On-Demand)
 function isSwapNonScheduled(s) {
   if (!s) return true;
+  if (s.operationalMode) {
+    const m = String(s.operationalMode).trim().toUpperCase();
+    return m === 'NON SCHEDULE' || m === 'NON-SCHEDULE' || m === 'ON_DEMAND' || m === 'ON-DEMAND';
+  }
   const st = String(s.statusRemark || '').trim().toLowerCase();
   if (st.includes('non')) return true;
   if (st.includes('on') || st.includes('out') || st.includes('late')) return false;
@@ -23658,82 +23696,133 @@ function renderChartEnergyDaily() {
   window.chartPpaEnergyDaily = chartPpaEnergyDaily;
 }
 
-// 8. Pareto Analisis Problem Log (EV Palette Root Cause)
+// 8. Analisis Status Swap, On Time & Problem Remark dari Database (Sesuai Filter Aktif)
 function renderChartProblemBreakdown() {
   const canvas = document.getElementById('ppaChartProblemBreakdown');
   if (!canvas) return;
   if (chartPpaProblemBreakdown) chartPpaProblemBreakdown.destroy();
 
-  // Prefer filtered problems from ppaFilteredProblems
-  const sourceProblems = (typeof ppaFilteredProblems !== 'undefined' && Array.isArray(ppaFilteredProblems))
-    ? ppaFilteredProblems
-    : ((window.ppaFilteredProblems && Array.isArray(window.ppaFilteredProblems)) ? window.ppaFilteredProblems : null);
+  // Ambil data transaksi yang terfilter sesuai filter dashboard aktif
+  const sourceSwaps = (typeof ppaFilteredSwaps !== 'undefined' && Array.isArray(ppaFilteredSwaps))
+    ? ppaFilteredSwaps
+    : ((window.ppaFilteredSwaps && Array.isArray(window.ppaFilteredSwaps)) ? window.ppaFilteredSwaps : (window.swapsData || []));
 
-  let labels = [];
-  let values = [];
-  let bgColors = [];
+  const totalSwaps = sourceSwaps.length;
+  let onTimeCount = 0;
+  let issueCount = 0;
+  const probMap = {};
 
-  if (sourceProblems && sourceProblems.length > 0) {
-    const probCountMap = {};
-    sourceProblems.forEach(p => {
-      let desc = (p.problem || '').trim();
-      if (!desc || desc === '-') desc = (p.unit || 'Kendala Teknis').trim();
+  sourceSwaps.forEach(s => {
+    const st = String(s.statusRemark || '').toLowerCase();
+    const ket = String(s.keterangan || '').toLowerCase();
+    if (st.includes('on time') || ket.includes('tepat') || ket.includes('on time')) {
+      onTimeCount++;
+    }
 
-      // Kelompokkan kategori Root Cause kendala secara rapi & ringkas agar muat di chart
-      const u = desc.toUpperCase();
-      let label = desc;
-      if (u.includes('PEMADAMAN') || u.includes('MATI LAMPU') || u.includes('LISTRIK')) {
-        label = 'Pemadaman Listrik';
-      } else if (u.includes('CRANE') || u.includes('SELING') || u.includes('HOIST')) {
-        label = 'Crane & Hoist SWB';
-      } else if (u.includes('LOCK') || u.includes('LOOK BATERAI') || u.includes('TERKUNCI')) {
-        label = 'Lock Baterai Truk';
-      } else if (u.includes('BATTERY') || u.includes('LOW BAT')) {
-        label = 'Baterai Low Volt';
-      } else if (u.includes('CONNECTOR') || u.includes('PLUG')) {
-        label = 'Connector Error';
-      } else if (label.length > 20) {
-        label = label.slice(0, 18) + '...';
-      }
+    let pr = (s.problemRemark || '').trim();
+    if (!pr || pr === '-') {
+      const uKet = ket.toUpperCase();
+      if (uKet.includes('PEMADAMAN') || uKet.includes('LISTRIK')) pr = '04.PEMADAMAN LISTRIK';
+      else if (uKet.includes('SELING') || uKet.includes('CRANE') || uKet.includes('HOIST')) pr = '17.CRANE OHC DELAY';
+      else if (uKet.includes('LOOK') || uKet.includes('LOCK')) pr = 'Kendala Lock Baterai';
+      else if (uKet.includes('WAITING') || uKet.includes('WAIT BT') || uKet.includes('WAITTING')) pr = 'Waiting Baterai';
+      else if (uKet.includes('PILE') || uKet.includes('CHARGING PILE')) pr = '16.CHARGER ISSUE';
+      else pr = '13.NO PROBLEM';
+    }
 
-      probCountMap[label] = (probCountMap[label] || 0) + 1;
+    if (pr !== '13.NO PROBLEM') {
+      issueCount++;
+    }
+    probMap[pr] = (probMap[pr] || 0) + 1;
+  });
+
+  // Update Teks Ringkasan Stat Ribbon
+  const elTotal = document.getElementById('ppaChartProbTotalText');
+  const elOnTime = document.getElementById('ppaChartProbOnTimeText');
+  const elIssues = document.getElementById('ppaChartProbIssuesText');
+  if (elTotal) elTotal.textContent = `${totalSwaps} Sesi`;
+  if (elOnTime) elOnTime.textContent = `${onTimeCount} Sesi (${totalSwaps > 0 ? Math.round((onTimeCount / totalSwaps) * 100) : 0}%)`;
+  if (elIssues) elIssues.textContent = `${issueCount} Kasus`;
+
+  // Jika tidak ada transaksi sama sekali pada filter aktif
+  if (totalSwaps === 0) {
+    chartPpaProblemBreakdown = new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: { datasets: [{ data: [] }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      },
+      plugins: [{
+        id: 'zeroSwapBanner',
+        afterDraw(chart) {
+          const { ctx, width, height } = chart;
+          ctx.save();
+          const cardX = 12, cardY = 14, cardW = width - 24, cardH = height - 28;
+          ctx.fillStyle = '#F8FAFC';
+          ctx.strokeStyle = '#E2E8F0';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 10);
+          else ctx.rect(cardX, cardY, cardW, cardH);
+          ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = '#64748B';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('TIDAK ADA DATA TRANSAKSI', width / 2, height / 2 - 8);
+          ctx.font = '500 10.5px Inter, sans-serif';
+          ctx.fillText('Tidak ada sesi swap sesuai filter aktif', width / 2, height / 2 + 10);
+          ctx.restore();
+        }
+      }]
     });
-    const sorted = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]).slice(0, 6);
-    labels = sorted.length > 0 ? sorted : ['TIDAK ADA KENDALA'];
-    values = labels.map(l => probCountMap[l] || 0);
-    const colorPalette = ['#D99000', '#D64545', '#2563EB', '#287C8E', '#5284AC', '#94A3B8'];
-    bgColors = labels.map((l, idx) => colorPalette[idx % colorPalette.length]);
-  } else if (sourceProblems && sourceProblems.length === 0) {
-    // Kondisi optimal: 0 kendala pada filter yang aktif
-    labels = ['TIDAK ADA KENDALA'];
-    values = [0];
-    bgColors = ['#10B981'];
-  } else {
-    const probCountMap = {};
-    ppaFilteredSwaps.forEach(s => {
-      const p = (s.problemRemark || '13.NO PROBLEM').trim();
-      probCountMap[p] = (probCountMap[p] || 0) + 1;
-    });
-    const sortedProblems = Object.keys(probCountMap).sort((a, b) => probCountMap[b] - probCountMap[a]);
-    labels = sortedProblems.length > 0 ? sortedProblems : ['13.NO PROBLEM'];
-    values = labels.map(l => probCountMap[l] || 0);
-    bgColors = labels.map(l => {
-      const u = l.toUpperCase();
-      if (u.includes('NO PROBLEM')) return EV_COLORS.slate;
-      if (u.includes('BATTERY') || u.includes('LOW')) return EV_COLORS.amber;
-      if (u.includes('ERROR') || u.includes('BROKEN')) return EV_COLORS.red;
-      return EV_COLORS.cyan;
-    });
+    window.chartPpaProblemBreakdown = chartPpaProblemBreakdown;
+    return;
   }
+
+  // Susun Labels, Values, Colors
+  const labels = ['Total Swap', 'On Time'];
+  const values = [totalSwaps, onTimeCount];
+  const bgColors = ['#2563EB', '#10B981'];
+  const badgeColors = ['#1E40AF', '#047857'];
+
+  // Urutkan problem remark: 13.NO PROBLEM dulu, lalu problem lainnya dari frekuensi terbesar
+  const otherProbs = Object.keys(probMap).sort((a, b) => {
+    if (a.includes('NO PROBLEM')) return -1;
+    if (b.includes('NO PROBLEM')) return 1;
+    return probMap[b] - probMap[a];
+  });
+
+  otherProbs.forEach(pr => {
+    let displayLabel = pr;
+    if (displayLabel.length > 22) displayLabel = displayLabel.slice(0, 20) + '...';
+    labels.push(displayLabel);
+    values.push(probMap[pr]);
+
+    const u = pr.toUpperCase();
+    if (u.includes('NO PROBLEM')) {
+      bgColors.push('#64748B');
+      badgeColors.push('#334155');
+    } else if (u.includes('PEMADAMAN') || u.includes('LISTRIK')) {
+      bgColors.push('#D97706');
+      badgeColors.push('#B45309');
+    } else {
+      bgColors.push('#DC2626');
+      badgeColors.push('#991B1B');
+    }
+  });
 
   chartPpaProblemBreakdown = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [{
-        label: 'Frekuensi Akar Masalah',
+        label: 'Jumlah Sesi',
         data: values,
         backgroundColor: bgColors,
+        badgeColors: badgeColors,
         borderRadius: 4,
         barPercentage: 0.55,
         badgeColor: EV_COLORS.navy
@@ -23751,11 +23840,11 @@ function renderChartProblemBreakdown() {
         x: {
           grid: { color: '#F2F4F7' },
           ticks: { font: { size: 8.5 }, color: '#667085', stepSize: 1 },
-          suggestedMax: Math.max(...values, 4) * 1.25
+          suggestedMax: Math.max(...values, 5) * 1.2
         },
         y: {
           grid: { display: false },
-          ticks: { font: { size: 8, weight: '700' }, color: '#172033' }
+          ticks: { font: { size: 8.5, weight: '700' }, color: '#172033' }
         }
       }
     },
@@ -23975,43 +24064,90 @@ function renderPpaProblemAnalytics() {
     if (chartPpaProbFreq) chartPpaProbFreq.destroy();
 
     const sortedUnits = Object.keys(unitCountMap).sort((a, b) => unitCountMap[b] - unitCountMap[a]).slice(0, 6);
-    const labelsFreq = sortedUnits.length > 0 ? sortedUnits : ['TIDAK ADA GANGGUAN'];
-    const valuesFreq = sortedUnits.length > 0 ? labelsFreq.map(u => unitCountMap[u] || 0) : [0];
-    const paletteFreq = ['#2563EB', '#287C8E', '#5284AC', '#D99000', '#D64545', '#94A3B8'];
+    if (sortedUnits.length === 0) {
+      chartPpaProbFreq = new Chart(canvasFreq.getContext('2d'), {
+        type: 'doughnut',
+        data: { datasets: [{ data: [] }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        },
+        plugins: [{
+          id: 'zeroProbFreqBanner',
+          afterDraw(chart) {
+            const { ctx, width, height } = chart;
+            ctx.save();
+            const cardX = 12, cardY = 14, cardW = width - 24, cardH = height - 28;
+            ctx.fillStyle = '#F8FDFB';
+            ctx.strokeStyle = '#D1FADF';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 10);
+            else ctx.rect(cardX, cardY, cardW, cardH);
+            ctx.fill(); ctx.stroke();
 
-    chartPpaProbFreq = new Chart(canvasFreq.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: labelsFreq,
-        datasets: [{
-          label: 'Jumlah Insiden',
-          data: valuesFreq,
-          backgroundColor: labelsFreq.map((_, i) => paletteFreq[i % paletteFreq.length]),
-          borderRadius: 4,
-          barPercentage: 0.55,
-          badgeColor: '#0F2747'
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            grid: { color: '#F2F4F7' },
-            ticks: { font: { size: 9 }, color: '#667085', stepSize: 1 },
-            suggestedMax: Math.max(...valuesFreq, 4) * 1.25
-          },
-          y: {
-            grid: { display: false },
-            ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+            const iconY = cardY + cardH / 2 - 20;
+            ctx.beginPath();
+            ctx.arc(width / 2, iconY, 16, 0, Math.PI * 2);
+            ctx.fillStyle = '#ECFDF3'; ctx.fill();
+            ctx.strokeStyle = '#A6F4C5'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            ctx.fillStyle = '#12B76A';
+            ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('✓', width / 2, iconY + 1);
+
+            ctx.fillStyle = '#027A48';
+            ctx.font = 'bold 12px Inter, -apple-system, sans-serif';
+            ctx.fillText('SELURUH FASILITAS BEBAS GANGGUAN', width / 2, iconY + 28);
+            ctx.fillStyle = '#475467';
+            ctx.font = '500 10.5px Inter, -apple-system, sans-serif';
+            ctx.fillText('0 Insiden Stasiun Swap & Armada', width / 2, iconY + 44);
+            ctx.restore();
           }
-        }
-      },
-      plugins: [ppaBadgePlugin]
-    });
-    window.chartPpaProbFreq = chartPpaProbFreq;
+        }]
+      });
+      window.chartPpaProbFreq = chartPpaProbFreq;
+    } else {
+      const labelsFreq = sortedUnits;
+      const valuesFreq = labelsFreq.map(u => unitCountMap[u] || 0);
+      const paletteFreq = ['#2563EB', '#287C8E', '#5284AC', '#D99000', '#D64545', '#94A3B8'];
+
+      chartPpaProbFreq = new Chart(canvasFreq.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labelsFreq,
+          datasets: [{
+            label: 'Jumlah Insiden',
+            data: valuesFreq,
+            backgroundColor: labelsFreq.map((_, i) => paletteFreq[i % paletteFreq.length]),
+            borderRadius: 4,
+            barPercentage: 0.55,
+            badgeColor: '#0F2747'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { color: '#F2F4F7' },
+              ticks: { font: { size: 9 }, color: '#667085', stepSize: 1 },
+              suggestedMax: Math.max(...valuesFreq, 4) * 1.25
+            },
+            y: {
+              grid: { display: false },
+              ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+            }
+          }
+        },
+        plugins: [ppaBadgePlugin]
+      });
+      window.chartPpaProbFreq = chartPpaProbFreq;
+    }
   }
 
   // 4. Render Chart B: Distribusi Durasi Downtime (Menit Terbuang)
@@ -24020,43 +24156,90 @@ function renderPpaProblemAnalytics() {
     if (chartPpaProbDuration) chartPpaProbDuration.destroy();
 
     const sortedByDur = Object.keys(unitDurationMap).sort((a, b) => unitDurationMap[b] - unitDurationMap[a]).slice(0, 6);
-    const labelsDur = sortedByDur.length > 0 ? sortedByDur : ['TIDAK ADA DOWNTIME'];
-    const valuesDur = sortedByDur.length > 0 ? labelsDur.map(u => unitDurationMap[u] || 0) : [0];
-    const paletteDur = ['#D64545', '#E05D5D', '#D99000', '#F59E0B', '#3B82F6', '#94A3B8'];
+    if (sortedByDur.length === 0 || totalMinutes === 0) {
+      chartPpaProbDuration = new Chart(canvasDuration.getContext('2d'), {
+        type: 'doughnut',
+        data: { datasets: [{ data: [] }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        },
+        plugins: [{
+          id: 'zeroProbDurBanner',
+          afterDraw(chart) {
+            const { ctx, width, height } = chart;
+            ctx.save();
+            const cardX = 12, cardY = 14, cardW = width - 24, cardH = height - 28;
+            ctx.fillStyle = '#F8FDFB';
+            ctx.strokeStyle = '#D1FADF';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(cardX, cardY, cardW, cardH, 10);
+            else ctx.rect(cardX, cardY, cardW, cardH);
+            ctx.fill(); ctx.stroke();
 
-    chartPpaProbDuration = new Chart(canvasDuration.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: labelsDur,
-        datasets: [{
-          label: 'Downtime (Menit)',
-          data: valuesDur,
-          backgroundColor: labelsDur.map((_, i) => paletteDur[i % paletteDur.length]),
-          borderRadius: 4,
-          barPercentage: 0.55,
-          badgeColor: '#D64545'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: {
-            grid: { color: '#F2F4F7' },
-            ticks: { font: { size: 9 }, color: '#667085' },
-            title: { display: true, text: 'Menit Downtime', font: { size: 9.5, weight: '600' }, color: '#667085' },
-            suggestedMax: Math.max(...valuesDur, 30) * 1.25
-          },
-          x: {
-            grid: { display: false },
-            ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+            const iconY = cardY + cardH / 2 - 20;
+            ctx.beginPath();
+            ctx.arc(width / 2, iconY, 16, 0, Math.PI * 2);
+            ctx.fillStyle = '#ECFDF3'; ctx.fill();
+            ctx.strokeStyle = '#A6F4C5'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            ctx.fillStyle = '#12B76A';
+            ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('✓', width / 2, iconY + 1);
+
+            ctx.fillStyle = '#027A48';
+            ctx.font = 'bold 12px Inter, -apple-system, sans-serif';
+            ctx.fillText('ZERO DOWNTIME OPERASIONAL', width / 2, iconY + 28);
+            ctx.fillStyle = '#475467';
+            ctx.font = '500 10.5px Inter, -apple-system, sans-serif';
+            ctx.fillText('0 Menit Waktu Terbuang (100% On-Time)', width / 2, iconY + 44);
+            ctx.restore();
           }
-        }
-      },
-      plugins: [ppaBadgePlugin]
-    });
-    window.chartPpaProbDuration = chartPpaProbDuration;
+        }]
+      });
+      window.chartPpaProbDuration = chartPpaProbDuration;
+    } else {
+      const labelsDur = sortedByDur;
+      const valuesDur = labelsDur.map(u => unitDurationMap[u] || 0);
+      const paletteDur = ['#D64545', '#E05D5D', '#D99000', '#F59E0B', '#3B82F6', '#94A3B8'];
+
+      chartPpaProbDuration = new Chart(canvasDuration.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labelsDur,
+          datasets: [{
+            label: 'Downtime (Menit)',
+            data: valuesDur,
+            backgroundColor: labelsDur.map((_, i) => paletteDur[i % paletteDur.length]),
+            borderRadius: 4,
+            barPercentage: 0.55,
+            badgeColor: '#D64545'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: '#F2F4F7' },
+              ticks: { font: { size: 9 }, color: '#667085' },
+              title: { display: true, text: 'Menit Downtime', font: { size: 9.5, weight: '600' }, color: '#667085' },
+              suggestedMax: Math.max(...valuesDur, 30) * 1.25
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 9.5, weight: '700' }, color: '#172033' }
+            }
+          }
+        },
+        plugins: [ppaBadgePlugin]
+      });
+      window.chartPpaProbDuration = chartPpaProbDuration;
+    }
   }
 
   // 5. Render Incident Log Table

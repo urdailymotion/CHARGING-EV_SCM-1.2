@@ -47,6 +47,12 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (body.action === 'migrate_21_cols') {
+      const result = apiMigrateDataInputTo21Cols();
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Direct HTTP API Endpoints for PWA / Netlify External Clients
     if (body.action === 'save_swap' || body.action === 'push_transaction') {
       const rec = body.record || body.payload || body.data || body;
@@ -306,12 +312,13 @@ function ensureDatabaseStructure_(ss, forceFormat) {
     alignment: 'center'
   };
 
-  // 1. DATA INPUT (Transaksi Swap - 19 Kolom Standar Operasional)
+  // 1. DATA INPUT (Transaksi Swap - 21 Kolom Standar Operasional)
   const inputHeaders = [
     'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION',
     'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN SWAP', 'BATTERY AFTER',
     'JAM OUT SWAP', 'CHARGING TIME (MENIT)', 'ENERGY (KWH)', 'STATUS REMARK',
-    'PROBLEM REMARK', 'MANPOWER', 'NIK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION'
+    'PROBLEM REMARK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION', 'OPERATIONAL MODE',
+    'MANPOWER', 'NIK'
   ];
   let sheetInput = ss.getSheetByName('DATA INPUT');
   if (!sheetInput) {
@@ -1237,33 +1244,78 @@ function apiReadTransactions_(ss) {
   if (!sheet) return swaps;
 
   const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return swaps;
+
+  // Deteksi apakah sheet sudah dalam format 21 kolom baru
+  const headerRow = rows[0].map(h => String(h || '').trim().toUpperCase());
+  const isMigrated21 = headerRow.includes('OPERATIONAL MODE') || headerRow[18] === 'OPERATIONAL MODE';
+
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r[0]) continue; // skip baris kosong
     // Skip baris hantu (ghost row) jika tanggal dan unit sama sekali kosong
     if (!r[1] && !r[5]) continue;
-    swaps.push({
-      id:            String(r[0]).trim(),
-      date:          formatDateCell(r[1]),
-      shift:         String(r[2] || '1').trim(),
-      category:      String(r[3] || 'CHARGING SWAP').trim(),
-      location:      String(r[4] || 'ROOM A1').trim(),
-      unit:          String(r[5] || '').trim(),
-      hm:            String(r[6] || '-').trim(),
-      batteryBefore: String(r[7] || '-').trim(),
-      jamIn:         formatTimeHHMM(r[8]),
-      batteryAfter:  String(r[9] || '-').trim(),
-      jamOut:        formatTimeHHMM(r[10]),
-      durationMin:   parseFloat(r[11]) || 6,
-      energyKwh:     cleanEnergyKwh_(r[12]),
-      statusRemark:  String(r[13] || 'On Time').trim(),
-      problemRemark: String(r[14] || '13.NO PROBLEM').trim(),
-      operator:      String(r[15] || '-').trim(),
-      operatorNik:   String(r[16] || '-').trim(),
-      keterangan:    String(r[17] || '-').trim(),
-      timeSch:       formatTimeCell(r[18]) || '-',
-      swapStation:   String(r[19] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim()
-    });
+
+    if (isMigrated21) {
+      // Format 21 Kolom: 15=Keterangan, 16=TimeSch, 17=SwapStation, 18=OperationalMode, 19=Manpower, 20=NIK
+      const rawSch = formatTimeCell(r[16]) || '-';
+      const rawStatus = String(r[13] || 'On Time').trim();
+      const rawMode = String(r[18] || '').trim().toUpperCase();
+      const opMode = rawMode || ((rawSch !== '-' && !rawStatus.toLowerCase().includes('non')) ? 'SCHEDULE' : 'NON SCHEDULE');
+
+      swaps.push({
+        id:              String(r[0]).trim(),
+        date:            formatDateCell(r[1]),
+        shift:           String(r[2] || '1').trim(),
+        category:        String(r[3] || 'CHARGING SWAP').trim(),
+        location:        String(r[4] || 'ROOM A1').trim(),
+        unit:            String(r[5] || '').trim(),
+        hm:              String(r[6] || '-').trim(),
+        batteryBefore:   String(r[7] || '-').trim(),
+        jamIn:           formatTimeHHMM(r[8]),
+        batteryAfter:    String(r[9] || '-').trim(),
+        jamOut:          formatTimeHHMM(r[10]),
+        durationMin:     parseFloat(r[11]) || 6,
+        energyKwh:       cleanEnergyKwh_(r[12]),
+        statusRemark:    rawStatus,
+        problemRemark:   String(r[14] || '13.NO PROBLEM').trim(),
+        keterangan:      String(r[15] || '-').trim(),
+        timeSch:         rawSch,
+        swapStation:     String(r[17] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim(),
+        operationalMode: opMode,
+        operator:        String(r[19] || '-').trim(),
+        operatorNik:     String(r[20] || '-').trim()
+      });
+    } else {
+      // Format Lama 20 Kolom (Fallback Kompatibel: 15=Manpower, 16=NIK, 17=Keterangan, 18=TimeSch, 19=SwapStation)
+      const rawSch = formatTimeCell(r[18]) || '-';
+      const rawStatus = String(r[13] || 'On Time').trim();
+      const isNon = rawStatus.toLowerCase().includes('non') || rawSch === '-';
+
+      swaps.push({
+        id:              String(r[0]).trim(),
+        date:            formatDateCell(r[1]),
+        shift:           String(r[2] || '1').trim(),
+        category:        String(r[3] || 'CHARGING SWAP').trim(),
+        location:        String(r[4] || 'ROOM A1').trim(),
+        unit:            String(r[5] || '').trim(),
+        hm:              String(r[6] || '-').trim(),
+        batteryBefore:   String(r[7] || '-').trim(),
+        jamIn:           formatTimeHHMM(r[8]),
+        batteryAfter:    String(r[9] || '-').trim(),
+        jamOut:          formatTimeHHMM(r[10]),
+        durationMin:     parseFloat(r[11]) || 6,
+        energyKwh:       cleanEnergyKwh_(r[12]),
+        statusRemark:    rawStatus,
+        problemRemark:   String(r[14] || '13.NO PROBLEM').trim(),
+        keterangan:      String(r[17] || '-').trim(),
+        timeSch:         rawSch,
+        swapStation:     String(r[19] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim(),
+        operationalMode: isNon ? 'NON SCHEDULE' : 'SCHEDULE',
+        operator:        String(r[15] || '-').trim(),
+        operatorNik:     String(r[16] || '-').trim()
+      });
+    }
   }
   return swaps;
 }
@@ -1896,35 +1948,69 @@ function apiSaveSwapTransaction(rec) {
 
     const targetRow = getFirstEmptySwapRow_(sheet);
     const finalStation = rec.swapStation || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
+    const finalMode = (rec.operationalMode || ((rec.timeSch && rec.timeSch !== '-' && String(rec.statusRemark || '').toLowerCase() !== 'non-schedule') ? 'SCHEDULE' : 'NON SCHEDULE')).trim().toUpperCase();
 
-    const row = [
-      finalId,
-      rec.date          || '',
-      rec.shift         || '1',
-      rec.category      || 'CHARGING SWAP',
-      rec.location      || 'ROOM A1',
-      rec.unit          || '',
-      rec.hm            || '',
-      rec.batteryBefore || '',
-      rec.jamIn         || '',
-      rec.batteryAfter  || '',
-      rec.jamOut        || '',
-      rec.durationMin   || 6,
-      cleanEnergyKwh_(rec.energyKwh),
-      rec.statusRemark  || 'On Time',
-      rec.problemRemark || '13.NO PROBLEM',
-      rec.operator      || '',
-      rec.operatorNik   || '',
-      rec.keterangan    || '-',
-      rec.timeSch       || '-',
-      finalStation
-    ];
+    // Deteksi apakah sheet sudah dalam format 21 kolom baru
+    const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 21)).getValues()[0].map(h => String(h || '').trim().toUpperCase());
+    const isMigrated21 = headerRow.includes('OPERATIONAL MODE') || headerRow[18] === 'OPERATIONAL MODE' || sheet.getLastColumn() >= 21;
 
-    // Tulis langsung ke targetRow secara presisi (20 Kolom lengkap)
-    sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
+    let row;
+    if (isMigrated21) {
+      // 21 Kolom: 15=Keterangan, 16=TimeSch, 17=SwapStation, 18=OperationalMode, 19=Manpower, 20=NIK
+      row = [
+        finalId,
+        rec.date          || '',
+        rec.shift         || '1',
+        rec.category      || 'CHARGING SWAP',
+        rec.location      || 'ROOM A1',
+        rec.unit          || '',
+        rec.hm            || '',
+        rec.batteryBefore || '',
+        rec.jamIn         || '',
+        rec.batteryAfter  || '',
+        rec.jamOut        || '',
+        rec.durationMin   || 6,
+        cleanEnergyKwh_(rec.energyKwh),
+        rec.statusRemark  || 'On Time',
+        rec.problemRemark || '13.NO PROBLEM',
+        rec.keterangan    || '-',
+        rec.timeSch       || '-',
+        finalStation,
+        finalMode,
+        rec.operator      || '',
+        rec.operatorNik   || ''
+      ];
+      sheet.getRange(targetRow, 1, 1, 21).setValues([row]);
+    } else {
+      // Fallback 20 Kolom lama jika sheet belum dimigrasi
+      row = [
+        finalId,
+        rec.date          || '',
+        rec.shift         || '1',
+        rec.category      || 'CHARGING SWAP',
+        rec.location      || 'ROOM A1',
+        rec.unit          || '',
+        rec.hm            || '',
+        rec.batteryBefore || '',
+        rec.jamIn         || '',
+        rec.batteryAfter  || '',
+        rec.jamOut        || '',
+        rec.durationMin   || 6,
+        cleanEnergyKwh_(rec.energyKwh),
+        rec.statusRemark  || 'On Time',
+        rec.problemRemark || '13.NO PROBLEM',
+        rec.operator      || '',
+        rec.operatorNik   || '',
+        rec.keterangan    || '-',
+        rec.timeSch       || '-',
+        finalStation
+      ];
+      sheet.getRange(targetRow, 1, 1, 20).setValues([row]);
+    }
 
     // Update rec.id agar sync ke Firestore menggunakan ID resmi yang sama
     rec.id = finalId;
+    rec.operationalMode = finalMode;
 
     // Kirim juga langsung ke Firebase Firestore via server backend GAS (100% bebas kendala CORS / iframe)
     try {
@@ -1938,6 +2024,7 @@ function apiSaveSwapTransaction(rec) {
       message: 'Transaksi berhasil disimpan ke Google Sheets & Firebase', 
       row: targetRow, 
       id: finalId,
+      operationalMode: finalMode,
       originalRequestedId: reqId,
       reconciled: (finalId !== reqId)
     };
@@ -1960,32 +2047,65 @@ function apiUpdateTransaction(rec) {
     const rows = sheet.getDataRange().getValues();
     let updated = false;
 
+    // Deteksi apakah sheet sudah dalam format 21 kolom baru
+    const headerRow = rows[0].map(h => String(h || '').trim().toUpperCase());
+    const isMigrated21 = headerRow.includes('OPERATIONAL MODE') || headerRow[18] === 'OPERATIONAL MODE' || sheet.getLastColumn() >= 21;
+
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]).trim() === cleanId) {
-        const finalStation = rec.swapStation || rows[i][19] || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
-        const row = [
-          cleanId,
-          rec.date          || '',
-          rec.shift         || '1',
-          rec.category      || 'CHARGING SWAP',
-          rec.location      || 'ROOM A1',
-          rec.unit          || '',
-          rec.hm            || '',
-          rec.batteryBefore || '',
-          rec.jamIn         || '',
-          rec.batteryAfter  || '',
-          rec.jamOut        || '',
-          rec.durationMin   || 6,
-          cleanEnergyKwh_(rec.energyKwh),
-          rec.statusRemark  || 'On Time',
-          rec.problemRemark || '13.NO PROBLEM',
-          rec.operator      || '',
-          rec.operatorNik   || '',
-          rec.keterangan    || '-',
-          rec.timeSch       || '-',
-          finalStation
-        ];
-        sheet.getRange(i + 1, 1, 1, 20).setValues([row]);
+        const finalStation = rec.swapStation || (isMigrated21 ? rows[i][17] : rows[i][19]) || (String(rec.location || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
+        const finalMode = (rec.operationalMode || ((rec.timeSch && rec.timeSch !== '-' && String(rec.statusRemark || '').toLowerCase() !== 'non-schedule') ? 'SCHEDULE' : 'NON SCHEDULE')).trim().toUpperCase();
+
+        if (isMigrated21) {
+          const row = [
+            cleanId,
+            rec.date          || '',
+            rec.shift         || '1',
+            rec.category      || 'CHARGING SWAP',
+            rec.location      || 'ROOM A1',
+            rec.unit          || '',
+            rec.hm            || '',
+            rec.batteryBefore || '',
+            rec.jamIn         || '',
+            rec.batteryAfter  || '',
+            rec.jamOut        || '',
+            rec.durationMin   || 6,
+            cleanEnergyKwh_(rec.energyKwh),
+            rec.statusRemark  || 'On Time',
+            rec.problemRemark || '13.NO PROBLEM',
+            rec.keterangan    || '-',
+            rec.timeSch       || '-',
+            finalStation,
+            finalMode,
+            rec.operator      || '',
+            rec.operatorNik   || ''
+          ];
+          sheet.getRange(i + 1, 1, 1, 21).setValues([row]);
+        } else {
+          const row = [
+            cleanId,
+            rec.date          || '',
+            rec.shift         || '1',
+            rec.category      || 'CHARGING SWAP',
+            rec.location      || 'ROOM A1',
+            rec.unit          || '',
+            rec.hm            || '',
+            rec.batteryBefore || '',
+            rec.jamIn         || '',
+            rec.batteryAfter  || '',
+            rec.jamOut        || '',
+            rec.durationMin   || 6,
+            cleanEnergyKwh_(rec.energyKwh),
+            rec.statusRemark  || 'On Time',
+            rec.problemRemark || '13.NO PROBLEM',
+            rec.operator      || '',
+            rec.operatorNik   || '',
+            rec.keterangan    || '-',
+            rec.timeSch       || '-',
+            finalStation
+          ];
+          sheet.getRange(i + 1, 1, 1, 20).setValues([row]);
+        }
         updated = true;
         break;
       }
@@ -1995,6 +2115,133 @@ function apiUpdateTransaction(rec) {
     return { status: 'success', updated: updated };
   } catch (err) {
     return { status: 'error', message: err.toString() };
+  }
+}
+
+// =============================================================================
+// FUNGSI MIGRASI MANDIRI KE FORMAT 21 KOLOM (DENGAN AUTO-BACKUP RESMI)
+// =============================================================================
+function apiMigrateDataInputTo21Cols() {
+  const lock = LockService.getScriptLock();
+  try {
+    const hasLock = lock.tryLock(35000);
+    if (!hasLock) return { status: 'error', message: 'Database sedang sibuk, silakan coba sebentar lagi.' };
+
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName('DATA INPUT');
+    if (!sheet) return { status: 'error', message: 'Sheet DATA INPUT tidak ditemukan!' };
+
+    // 1. Buat backup otomatis sheet DATA INPUT terlebih dahulu
+    const timeStampStr = Utilities.formatDate(new Date(), 'Asia/Makassar', 'yyyyMMdd_HHmm');
+    const backupName = 'BACKUP_DATA_INPUT_' + timeStampStr;
+    let backupSheet = ss.getSheetByName(backupName);
+    if (!backupSheet) {
+      backupSheet = sheet.copyTo(ss).setName(backupName);
+    }
+
+    const dataRange = sheet.getDataRange();
+    const rows = dataRange.getValues();
+    if (rows.length <= 1) {
+      return { status: 'success', message: 'Sheet DATA INPUT kosong, tidak ada baris yang dimigrasikan.' };
+    }
+
+    const header = rows[0].map(h => String(h || '').trim().toUpperCase());
+    const isAlreadyMigrated = header.includes('OPERATIONAL MODE') && header[18] === 'OPERATIONAL MODE' && header[19] === 'MANPOWER';
+    if (isAlreadyMigrated) {
+      return { 
+        status: 'success', 
+        alreadyMigrated: true,
+        message: 'Sheet DATA INPUT sudah dalam format 21 kolom resmi!', 
+        rowCount: rows.length - 1,
+        backupCreated: backupName
+      };
+    }
+
+    // 2. Format 21 Headers Baru
+    const newHeaders = [
+      'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION',
+      'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN SWAP', 'BATTERY AFTER',
+      'JAM OUT SWAP', 'CHARGING TIME (MENIT)', 'ENERGY (KWH)', 'STATUS REMARK',
+      'PROBLEM REMARK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION', 'OPERATIONAL MODE',
+      'MANPOWER', 'NIK'
+    ];
+
+    // 3. Konversi semua baris data lama (20 kolom -> 21 kolom)
+    const newRows = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r[0] && !r[1] && !r[5]) continue; // Skip ghost row
+
+      // Nilai posisi lama (20 Kolom):
+      // 0..14: SAMA (ID s/d Problem Remark)
+      // 15: MANPOWER (LAMA)
+      // 16: NIK (LAMA)
+      // 17: KETERANGAN (LAMA)
+      // 18: TIME SCH (LAMA)
+      // 19: SWAP STATION (LAMA)
+      const oldManpower   = r[15] !== undefined ? String(r[15]).trim() : '';
+      const oldNik        = r[16] !== undefined ? String(r[16]).trim() : '';
+      const oldKeterangan = r[17] !== undefined ? String(r[17]).trim() : '-';
+      const oldTimeSch    = r[18] !== undefined ? formatTimeCell(r[18]) : '-';
+      const oldStation    = r[19] !== undefined && String(r[19]).trim() ? String(r[19]).trim() : (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01');
+
+      const isNonSch = String(r[13] || '').toLowerCase().includes('non') || String(oldTimeSch || '-').trim() === '-';
+      const opMode = isNonSch ? 'NON SCHEDULE' : 'SCHEDULE';
+
+      const newRow = [
+        r[0] || '', // 1. ID
+        formatDateCell(r[1]), // 2. Date
+        r[2] || '1', // 3. Shift
+        r[3] || 'CHARGING SWAP', // 4. Category
+        r[4] || 'ROOM A1', // 5. Location
+        r[5] || '', // 6. Unit
+        r[6] || '', // 7. HM
+        r[7] || '', // 8. Battery Before
+        formatTimeHHMM(r[8]), // 9. Jam In
+        r[9] || '', // 10. Battery After
+        formatTimeHHMM(r[10]), // 11. Jam Out
+        parseFloat(r[11]) || 6, // 12. Duration Min
+        cleanEnergyKwh_(r[12]), // 13. Energy kWh
+        r[13] || 'On Time', // 14. Status Remark
+        r[15] && r[14] ? String(r[14]).trim() : '13.NO PROBLEM', // 15. Problem Remark
+        oldKeterangan || '-', // 16. KETERANGAN
+        oldTimeSch || '-',    // 17. TIME SCH
+        oldStation,           // 18. SWAP STATION
+        opMode,               // 19. OPERATIONAL MODE
+        oldManpower,          // 20. MANPOWER
+        oldNik                // 21. NIK
+      ];
+      newRows.push(newRow);
+    }
+
+    // 4. Bersihkan range lama dan tulis struktur baru 21 kolom
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, 21).setValues([newHeaders]);
+    if (newRows.length > 0) {
+      sheet.getRange(2, 1, newRows.length, 21).setValues(newRows);
+    }
+
+    // 5. Beri style header
+    const headerStyle = {
+      bg: '#1e293b',
+      fg: '#ffffff',
+      fontSize: 10,
+      bold: true
+    };
+    setupSheetHeaders_(sheet, newHeaders, headerStyle, true);
+
+    return {
+      status: 'success',
+      backupCreated: backupName,
+      totalRowsMigrated: newRows.length,
+      message: `Sukses memigrasikan ${newRows.length} transaksi ke format 21 kolom resmi!`
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
   }
 }
 

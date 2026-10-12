@@ -1,6 +1,94 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 07 Oktober 2026, Pukul 17:00 WITA  
-**Status Sesi:** Sinkronisasi Penuh Visual KPI dengan Database Google Sheets & Firestore, Penanganan Isolasi Scope Data Dua Arah, Perbaikan Urutan Eksekusi Render Chart 8 vs Filter Problem Aktif, Eliminasi Data Dummy pada Chart 5, dan Penambahan Tombol Aksi Sync Database (Status: Sukses & Terverifikasi 100% via CDP Headless, Build v62, PWA Live)
+**Tanggal Pencatatan:** 12 Oktober 2026, Pukul 11:50 WITA  
+**Status Sesi:** Persiapan Matang 4 Poin Revisi Database 21 Kolom (Penambahan Kolom `OPERATIONAL MODE`, Pemindahan Kolom `MANPOWER` & `NIK` ke Ujung Kanan, Pemeliharaan 100% UI/UX Operasional, dan Integrasi Bersih ke Visual KPI). Seluruh Kode Backend & Frontend Telah Disiapkan dan Teruji Sintaksisnya (Build v65). Eksekusi Dijadwalkan Pukul 12:00 WITA.
+
+---
+
+### 📋 Ringkasan Persiapan Rollout 4 Poin (12 Oktober 2026 - Pukul 11:50 WITA - Build v65):
+
+#### 1. 🎯 4 Poin Kesepakatan Revisi:
+1. **Poin 1 (Database Standard)**: Penambahan kolom eksplisit **`OPERATIONAL MODE`** (berisi nilai `SCHEDULE` vs `NON SCHEDULE`) pada sheet `DATA INPUT`.
+2. **Poin 2 (Struktur Kolom Audit)**: Pemindahan kolom identitas pelaksana **`MANPOWER`** (kolom 20) dan **`NIK`** (kolom 21) ke ujung paling kanan database.
+3. **Poin 3 (UI/UX Integrity)**: Tampilan visual, formulir input dedicated, alur kerja operator, dan dashboard Visual KPI **100% dipertahankan seperti yang sedang berjalan** tanpa perubahan layout yang mengganggu operator.
+4. **Poin 4 (Visual KPI Integration)**: Menghubungkan kolom `OPERATIONAL MODE` secara langsung ke engine Visual KPI (`isSwapNonScheduled`) sehingga filtering, perhitungan rasio On-Time, dan grafik berjalan instan tanpa rumus tebak-tebakan string.
+
+#### 2. 🛡️ Kode yang Telah Disiapkan di File Lokal:
+1. **[Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs)**:
+   - Header `inputHeaders` diperbarui ke 21 kolom standar operasional.
+   - `apiReadTransactions_` dilengkapi *dual support* (membaca format 21 kolom baru DAN fallback mulus ke 20 kolom lama).
+   - `apiSaveSwapTransaction` & `apiUpdateTransaction` menulis data 21 kolom lengkap dengan auto-detection `operationalMode`.
+   - Fungsi mandiri `apiMigrateDataInputTo21Cols()` disiapkan dengan pembuatan sheet backup otomatis (`BACKUP_DATA_INPUT_yyyyMMdd_HHmm`).
+   - Action endpoint `'migrate_21_cols'` didaftarkan pada handler `doPost(e)`.
+2. **[index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html)**:
+   - `mapSwapToDbInputRow`, `DB_INPUT_HEADERS`, dan `DB_INPUT_COLS` diperbarui ke 21 kolom (Manpower & NIK di paling kanan, autofilter `A1:U`).
+   - `isSwapNonScheduled(s)` mengecek `s.operationalMode` secara langsung dan presisi.
+   - Form simpan transaksi (`modalAddSwap` & `dedicatedSwapForm`) dan edit transaksi mengirimkan `operationalMode`.
+   - Bump versi `APP_BUILD_ID = '2026.10.12.v65'`.
+3. **[sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js)**:
+   - Bump cache ke `CACHE_NAME = 'charging-ev-v65'`.
+4. **[scratch/execute_rollout_1200.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/scratch/execute_rollout_1200.js)**:
+   - Skrip otomasi satu-langkah untuk jam 12:00: push GAS via clasp, jalankan migrasi 21 kolom, verifikasi live data, dan commit/push ke Netlify.
+5. **Validasi Sintaksis**:
+   - 16 script tags di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dan seluruh kode di [Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) lolos uji sintaksis dengan 0 error.
+
+---
+
+### 📋 Ringkasan Pekerjaan Sesi Ini (12 Oktober 2026 - Pukul 07:50 WITA - Build v64):
+
+#### 1. 🔍 Investigasi & Rekonstruksi Chart 8 Berdasarkan Kebutuhan Pengguna:
+- **Koreksi Kebutuhan (*User Alignment*):**
+  - Pengguna mengklarifikasi bahwa pada bagian Chart 8 (halaman 1 Visual KPI), yang seharusnya ditampilkan **bukanlah** data dari tabel pemeliharaan fasilitas (`DATA PROBLEM`), melainkan:
+    1. **Total Sesi Swap** yang sedang terfilter.
+    2. **Berapa Sesi yang On Time (Ontiem)** dari jadwal.
+    3. **Breakdown Kolom PROBLEM REMARK** yang ada di database transaksi swap (`swapsData` / `ppaFilteredSwaps`) sesuai dengan filter aktif (misal `13.NO PROBLEM`, `04.PEMADAMAN LISTRIK`, `18.COAL SPILL OVER BATTERY`, `Waiting Baterai`, dll.).
+
+- **Solusi yang Diterapkan:**
+  1. **Quick Stat Ribbon pada Header Kartu 8:**
+     - Menambahkan baris ringkasan cepat tepat di bawah header kartu:
+       - **Total:** Menampilkan total transaksi swap yang terfilter (`ppaChartProbTotalText`, misal `2,036 Sesi`).
+       - **On Time:** Menampilkan jumlah sesi swap tepat waktu beserta persentasenya (`ppaChartProbOnTimeText`, misal `221 Sesi (11%)`).
+       - **Kendala:** Menampilkan jumlah kasus transaksi dengan remark kendala (`ppaChartProbIssuesText`, misal `30 Kasus`).
+  2. **Grafik Batang Horizontal Komprehensif (Chart 8):**
+     - Batang 1: **`Total Swap`** (Warna biru navy `#2563EB`).
+     - Batang 2: **`On Time`** (Warna hijau emerald `#10B981`).
+     - Batang 3+: **`Problem Remarks` dari Database:**
+       - `13.NO PROBLEM` (Warna slate `#64748B`).
+       - Kendala operasional riil dari database (misal `04.PEMADAMAN LISTRIK`, `18.COAL SPILL OVER BATTERY`, `16.CHARGER ISSUE`, `Waiting Baterai`, `Kendala Lock Baterai`, dll.) dengan warna tegas amber (`#D97706`) dan merah (`#DC2626`).
+     - Seluruh batang dilengkapi badge angka otomatis via `ppaBadgePlugin`.
+  3. **Responsif Terhadap Seluruh Filter Aktif:**
+     - Ketika pengguna mengganti filter Unit (misal `DT 1601` -> Total 33, On Time 9, 13.NO PROBLEM 33; `DT 1619` -> Total 42, On Time 10, Kendala Lock 1, Waiting Baterai 2), Shift, Tanggal, atau Mode Schedule/Non-Schedule, angka dan grafik langsung terupdate 100% akurat.
+  4. **Pembaruan Versi & Cache PWA:**
+     - `APP_BUILD_ID = '2026.10.12.v64'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dan `CACHE_NAME = 'charging-ev-v64'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
+---
+
+### 📋 Ringkasan Pekerjaan Sesi Ini (12 Oktober 2026 - Pukul 07:35 WITA - Build v63):
+
+#### 1. 🔍 Investigasi & Solusi Visual KPI "Analisis Kendala & Problem Log":
+- **Akar Masalah (*Root Cause*):**
+  1. **Visual Canggung pada Nol Kasus:** Ketika filter aktif menghasilkan 0 kasus kendala (misal pada unit tertentu seperti DT 1601 atau saat filter tanggal hari ini), Chart 8 sebelumnya merender grafik batang horizontal Chart.js dengan data dummy `labels = ['TIDAK ADA KENDALA']` dan `values = [0]`. Akibatnya, grafik menampilkan sumbu X dengan angka skala `0, 1, 2, 3, 4, 5`, teks sumbu Y `"TIDAK ADA KENDALA"`, badge kotak navy `[0]` yang menempel di garis sumbu kiri, dan area kanvas kosong bergaris-garis putih. Tampilan ini tampak seperti chart error / bug grafis alih-alih kondisi operasional normal.
+  2. **Data Awal In-Memory Kosong (*Unseeded INITIAL_DATA*):** Array `window.INITIAL_DATA.problems` dan `schedules` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) sebelumnya diinisialisasi kosong `[]`. Jika pengguna membuka aplikasi sebelum API Google Sheets selesai merespons, Chart 8 langsung jatuh ke kondisi 0 kendala.
+  3. **Penambahan Data Riil Baru per 11 Oktober 2026 (14 Kasus):** Database Google Sheets telah diperbarui dengan total 14 data insiden (termasuk kasus baru tanggal 11/10/2026 seperti `mati listrik`, `SWB03 Stuck`, `Panel Stuck`). Kategori kendala mekanikal panel/stuck belum dipetakan ke root cause yang rapi di fungsi `renderChartProblemBreakdown()`.
+
+- **Solusi yang Diterapkan:**
+  1. **Desain Zero-Downtime State Eksekutif (Bebas Sumbu Dummy 0-5):**
+     - Jika filter menghasilkan 0 kendala, Chart 8 tidak lagi menggambar batang dummy dengan sumbu 0–5 dan badge `[0]`.
+     - Sebagai gantinya, kanvas menampilkan kartu banner eksekutif berlatar hijau lembut (`#F8FDFB` / border `#D1FADF`), ikon lingkaran centang emerald `✓` (`#12B76A`), judul jelas **`TIDAK ADA KENDALA OPERASIONAL`**, dan subjudul **`0 Kasus Insiden • 100% Zero Downtime`**.
+     - Tampilan ini 100% kompatibel dengan ekspor PDF resolusi tinggi via `getChartImageWithWhiteBackground(canvas)`.
+  2. **Konsistensi Zero-Incident State pada Page 2:**
+     - Menerapkan banner Zero-Incident serupa pada **Chart A** (`ppaChartProbFreq` -> `SELURUH FASILITAS BEBAS GANGGUAN`) dan **Chart B** (`ppaChartProbDuration` -> `ZERO DOWNTIME OPERASIONAL (0 Menit Waktu Terbuang)`) saat 0 kasus, sehingga seluruh halaman Visual KPI seragam dan bebas grafik canggung.
+  3. **Pre-Seeding Data Riil Database ke Master In-Memory:**
+     - Menanamkan seluruh 14 rekaman problem aktual dan 520 jadwal dari Google Sheets langsung ke `window.INITIAL_DATA.problems` dan `window.INITIAL_DATA.schedules`.
+     - Saat aplikasi dibuka pertama kali atau saat offline, seluruh metriks dan grafik langsung menampilkan data aktual tanpa jeda.
+  4. **Kategori Root Cause Komprehensif:**
+     - Memetakan 14 kasus ke 5 kategori teknis pertambangan/EV yang rapi:
+       - `Pemadaman Listrik` (8 kasus)
+       - `Crane & Hoist SWB` (2 kasus)
+       - `Mekanikal & Panel Stuck` (2 kasus)
+       - `Lock Baterai Truk` (1 kasus)
+       - `Modul Charger SWB` (1 kasus)
+  5. **Pembaruan Versi Aplikasi & Cache PWA:**
+     - `APP_BUILD_ID = '2026.10.12.v63'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dan cache `charging-ev-v63`.
 
 ---
 
