@@ -1,6 +1,24 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 14 Oktober 2026, Pukul 19:05 WITA  
-**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI LIVE 100% (Build v66, Backend GAS @112, Netlify Live). Perbaikan Masalah Data Transaksi Muncul Kembali Pasca Refresh Selesai Tuntas (Filter-Safe Universal Row Deletion, Multi-Tier ID Matching, Sync Frontend & Firestore, Zero Impact terhadap 3-Way Strict Schedule Matching, EV Intelligence, dan Database 21 Kolom).
+**Tanggal Pencatatan:** 14 Oktober 2026, Pukul 23:45 WITA  
+**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v68, Service Worker Cache `charging-ev-v68`). Perbaikan Masalah Pemilihan Jam (*Time Picker Bug*) pada Perangkat Mobile (HP) Selesai Tuntas (Arsitektur DOM Spacers 56px, Penghapusan Ketergantungan CSS Padding-Bottom Mobile WebKit/Chromium, Overscroll Contain, Dual-Layer Scrollend + Debounce Event, Zero Visual Layout Change).
+
+---
+
+### 📋 Ringkasan Perbaikan Modul Pemilihan Jam / Time Picker Mobile (14 Oktober 2026 - Build v68):
+
+#### 1. 🔍 Investigasi & Pembuktian Akar Masalah (*Root Cause* pada HP):
+- **Problem:** Pada pengujian di smartphone / HP (layar sentuh), saat operator memilih jam (terutama jam 21, 22, 23), jam tetap mental kembali ke jam 20:00.
+- **Akar Masalah Utama:**
+  1. **Mobile WebKit/Chromium `padding-bottom` Scroll Bug:** Pada browser smartphone (Chrome Android, Safari iOS), CSS `padding-bottom` pada container `overflow-y: auto` dengan `box-sizing: border-box` tidak dihitung sebagai ruang scroll overflow. Akibatnya batas scroll fisik maksimum kontainer tetap terpotong di `912 - 150 = 762px`. Nilai `Math.round(762 / 38) = 20.05` yang selalu dibulatkan ke **jam 20:00**!
+  2. **Inertia/Momentum Scrolling Mobile:** Saat di-swipe di HP, momentum scrolling berjalan lebih lama (300-500ms). Timeout guard 300ms terlepas sebelum momentum berhenti, sehingga posisi peralihan (yang melintas di jam 20) terbaca oleh listener scroll.
+  3. **Belum Terdeploy ke Netlify / Cache HP:** Perubahan sebelumnya belum di-commit dan di-push ke GitHub master, sehingga server Netlify masih menyajikan Build lama (v66).
+
+#### 2. 🛡️ Solusi Terapan & Zero Layout Impact:
+1. **DOM Spacers 56px (`tp-wheel-spacer`):** Mengganti CSS `padding` dengan elemen spacer DOM fisik (`<div class="tp-wheel-spacer"></div>`) di awal dan akhir daftar jam (00-23) dan menit (00-59). Seluruh browser mobile wajib menghitung elemen DOM sebagai `scrollHeight` penuh (1024px), sehingga jam 21, 22, dan 23 dapat dicapai 100% presisi tanpa hambatan browser bug.
+2. **Touch Optimization:** Menambahkan `touch-action: pan-y !important;` dan `overscroll-behavior-y: contain !important;` agar scroll roda di HP tidak memicu bounce layar atau gesture browser liar.
+3. **Dual-Layer Scroll Listener (`scrollend` + Debounce 90ms):** Mendukung event `scrollend` modern yang langsung sinkron begitu roda berhenti, dengan fallback debounce untuk browser versi lama.
+4. **Extended Guard Timer (600ms + `scrollend`):** Mencegah interupsi momentum scrolling terhadap jam yang sengaja ditekan atau dipilih operator.
+5. **Bump Versi & Auto Cache Bust:** `APP_BUILD_ID = '2026.10.14.v68'` di `index.html` dan `CACHE_NAME = 'charging-ev-v68'` di `sw.js`.
 
 ---
 
