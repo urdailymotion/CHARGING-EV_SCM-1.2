@@ -1,6 +1,40 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 12 Oktober 2026, Pukul 13:55 WITA  
-**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI LIVE 100% (Build v65, Backend GAS @105, Netlify Live). Migrasi Struktur Database 21 Kolom Sheet `DATA INPUT` Selesai (Penambahan Kolom 19 `OPERATIONAL MODE`, Pemindahan Kolom 20 `MANPOWER` & 21 `NIK` ke Paling Kanan, Auto-Backup Sheet `BACKUP_DATA_INPUT_20261012_1154` Terbuat, 2.070 Baris Utuh Tanpa Data Hilang, UI/UX Familiar Terjaga 100%, Integrasi Visual KPI Presisi, Ekspor Excel 21 Kolom A1:U Aktif).
+**Tanggal Pencatatan:** 14 Oktober 2026, Pukul 19:05 WITA  
+**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI LIVE 100% (Build v66, Backend GAS @112, Netlify Live). Perbaikan Masalah Data Transaksi Muncul Kembali Pasca Refresh Selesai Tuntas (Filter-Safe Universal Row Deletion, Multi-Tier ID Matching, Sync Frontend & Firestore, Zero Impact terhadap 3-Way Strict Schedule Matching, EV Intelligence, dan Database 21 Kolom).
+
+---
+
+### 📋 Ringkasan Eksekusi Rollout & Verifikasi Live (14 Oktober 2026 - Build v66 / GAS @112):
+
+#### 1. 🔍 Investigasi & Pembuktian Akar Masalah (*Root Cause*):
+- **Problem:** Data transaksi swap yang telah dihapus melalui menu Charging Swap atau Database Manager muncul kembali setelah halaman di-refresh (*F5*).
+- **Akar Masalah Utama:**
+  1. Sheet `DATA INPUT` di Google Spreadsheet memiliki Google Sheets `BasicFilter` aktif (rentang `A1:U`). Pada runtime V8 Google Apps Script, pemanggilan `sheet.deleteRow(targetRow)` saat sheet memiliki filter aktif **gagal secara senyap (*fails silently*)** tanpa memunculkan error, sehingga baris data fisik tidak pernah terhapus dari spreadsheet master.
+  2. Saat halaman di-refresh, frontend memanggil `get_all` dari Google Sheets master, sehingga transaksi yang tidak pernah terhapus tersebut kembali ditarik ke aplikasi.
+
+#### 2. 🛡️ Solusi Terapan & Arsitektur Zero-Impact:
+1. **Helper Filter-Safe Universal pada [Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) (`deleteSheetRowWithFilterSafe_`):**
+   - Sebelum penghapusan baris, filter aktif sheet dideteksi dan dilepas sementara (`filter.remove()`).
+   - Eksekusi penghapusan baris fisik secara presisi: `sheet.deleteRow(targetRow)` dan dipaksa simpan seketika (`SpreadsheetApp.flush()`).
+   - Filter Google Sheets dipasang kembali secara otomatis pada rentang baris baru (`sheet.getRange(1, 1, newLastRow, 21).createFilter()`).
+   - Sinkronisasi penghapusan ke Firebase Firestore: `deleteFromFirestoreFromGas_('swaps', deletedId)`.
+2. **Multi-Tier Robust Matching pada `apiDeleteTransaction`:**
+   - **Tier 1 (Exact, Normalized, & Numeric Sequence Match):** Mencocokkan `cleanId` persis, normalisasi karakter slash/underscore (`/` vs `_`), dan pencocokan angka urut suffix (`#2518`, `SWAP/2518`, dll.).
+   - **Tier 2 (Metadata Fallback):** Jika ID tidak cocok karena perbedaan penamaan, backend mencocokkan metadata kunci: `Unit + Tanggal + Jam Masuk / Shift`.
+3. **Penyempurnaan Frontend ([index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) & [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js)):**
+   - Bump versi aplikasi: `APP_BUILD_ID = '2026.10.14.v66'` dan `CACHE_NAME = 'charging-ev-v66'`.
+   - `gasSync.deleteTransaction(id, meta, callback)` mengirimkan objek transaksi lengkap sebagai payload cadangan.
+   - `btnDoDelete` & `confirmDeleteDbSwap`: Menampilkan indikator loading tombol (`⏳ Menghapus dari database...`), menghapus data seketika dari in-memory state (`swapsData` & `window.swapsData`), menghapus dokumen dari Firebase Firestore, dan menunggu respons konfirmasi server Google Sheets sebelum menutup modal dan me-render ulang antarmuka.
+
+#### 3. 🧪 Pembuktian Pengujian Otomatis End-to-End:
+- **Simulasi Live Penuh:**
+  1. Input transaksi dummy `DA01/CHG/2026/SWAP/9999` (Unit `9999`) -> Tersimpan di row 2515.
+  2. Verifikasi transaksi ada via `get_all` -> `found: true`.
+  3. Eksekusi `delete_swap` filter-safe -> Status `success`, row berkurang ke 2514.
+  4. Verifikasi setelah refresh (`get_all`) -> `found: false`.
+  - **Hasil:** Data terhapus permanen dari Google Sheets & Firestore dan **TIDAK MUNCUL LAGI** setelah refresh (100% SUKSES).
+- **Pembersihan Baris Uji Coba:**
+  - Baris test `DA01/CHG/2026/SWAP/2519` (unit `9999`), `2520` (unit `8888`), dan `2521` (unit `7777`) telah dibersihkan sepenuhnya. Data transaksi lapangan riil (misal unit `1648`, `1620`, `1645`, `1641`) berjalan normal tanpa interupsi.
 
 ---
 

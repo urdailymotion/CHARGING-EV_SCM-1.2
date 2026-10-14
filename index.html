@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.12.v65';
+      var APP_BUILD_ID = '2026.10.14.v66';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -16725,19 +16725,22 @@ const gasSync = {
       .apiUpdateTransaction(rec);
   },
 
-  deleteTransaction: function(id, callback) {
+  deleteTransaction: function(id, metaOrCallback, maybeCallback) {
     if (!gasSync.autoSyncPerTransaction) return;
     gasSync._showSyncBadge('⏳ Menghapus transaksi di Google Sheets...', 'loading');
 
+    const meta = (typeof metaOrCallback === 'object' && metaOrCallback !== null) ? metaOrCallback : {};
+    const callback = typeof metaOrCallback === 'function' ? metaOrCallback : maybeCallback;
+
     // 1. Jalur PWA Netlify (HTTP API)
     if (!IS_GAS_ENV) {
-      gasSync._callGasApi('delete_swap', { id: id }, function(res) {
+      gasSync._callGasApi('delete_swap', { id: id, meta: meta }, function(res) {
         gasSync._showSyncBadge('Transaksi dihapus dari Google Sheets', 'success');
-        showToast(`️ Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
+        showToast(`Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
         if (typeof callback === 'function') callback(res);
       }, function(errMsg) {
         gasSync._showSyncBadge('Gagal hapus di Sheets', 'warn');
-        showToast(`️ Gagal hapus di Sheets: ${errMsg}`, 'warning');
+        showToast(`Gagal hapus di Sheets: ${errMsg}`, 'warning');
         if (typeof callback === 'function') callback({ status: 'error', message: errMsg });
       });
       return;
@@ -16748,7 +16751,7 @@ const gasSync = {
       .withSuccessHandler(function(res) {
         if (res && res.status === 'success') {
           gasSync._showSyncBadge('Transaksi dihapus dari Google Sheets', 'success');
-          showToast(`️ Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
+          showToast(`Transaksi ${id} berhasil dihapus dari Google Sheets!`, 'success');
         } else {
           gasSync._showSyncBadge('Gagal hapus di Sheets', 'warn');
         }
@@ -16758,7 +16761,7 @@ const gasSync = {
         showToast('GAS Error: ' + err, 'danger');
         if (typeof callback === 'function') callback({ status: 'error', message: String(err) });
       })
-      .apiDeleteTransaction(id);
+      .apiDeleteTransaction(id, meta);
   },
 
   pushProblem: function(prob) {
@@ -19333,19 +19336,48 @@ function initTableControls() {
     btnDelete.addEventListener('click', () => {
       if (deleteRecordTargetId) {
         const idToDelete = deleteRecordTargetId;
-        swapsData = swapsData.filter(s => s.id !== idToDelete);
+        const targetRec = deleteRecordTargetObj || (swapsData || []).find(s => s && String(s.id).trim() === String(idToDelete).trim()) || null;
+        const originalBtnHtml = btnDelete.innerHTML;
+
+        btnDelete.disabled = true;
+        btnDelete.innerHTML = '⏳ Menghapus dari database...';
+
+        // 1. Optimistic local in-memory filter
+        swapsData = (swapsData || []).filter(s => String(s.id).trim() !== String(idToDelete).trim());
+        window.swapsData = swapsData;
         persistData();
-        if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
-          VoltFirebase.deleteSwap(idToDelete);
-        }
-        if (typeof gasSync !== 'undefined' && typeof gasSync.deleteTransaction === 'function') {
-          gasSync.deleteTransaction(idToDelete);
-        }
-        closeModal('modalDelete');
         renderMainTable();
         updateSummaryCard();
         if (typeof updatePpaExecutiveDashboard === 'function') updatePpaExecutiveDashboard();
-        showToast(`Transaksi ${idToDelete} telah dihapus.`, 'warning');
+
+        // 2. Hapus dari Firebase Firestore
+        if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
+          VoltFirebase.deleteSwap(idToDelete);
+        }
+
+        // 3. Hapus permanen dari Google Sheets
+        if (typeof gasSync !== 'undefined' && typeof gasSync.deleteTransaction === 'function') {
+          gasSync.deleteTransaction(idToDelete, targetRec, function(res) {
+            btnDelete.disabled = false;
+            btnDelete.innerHTML = originalBtnHtml;
+            closeModal('modalDelete');
+            deleteRecordTargetId = null;
+            deleteRecordTargetObj = null;
+
+            if (res && res.status === 'success') {
+              showToast(`Transaksi ${idToDelete} telah dihapus permanen dari Google Sheets & Cloud.`, 'success');
+            } else {
+              showToast(`Peringatan: Gagal hapus di Sheets (${res ? res.message : 'Unknown'}). Coba lagi.`, 'warning');
+            }
+          });
+        } else {
+          btnDelete.disabled = false;
+          btnDelete.innerHTML = originalBtnHtml;
+          closeModal('modalDelete');
+          deleteRecordTargetId = null;
+          deleteRecordTargetObj = null;
+          showToast(`Transaksi ${idToDelete} telah dihapus dari memori lokal.`, 'warning');
+        }
       }
     });
   }
@@ -19788,8 +19820,10 @@ window.editRecord = function(id) {
   }
 };
 
+let deleteRecordTargetObj = null;
 window.deletePrompt = function(id) {
   deleteRecordTargetId = id;
+  deleteRecordTargetObj = (swapsData || []).find(s => s && String(s.id).trim() === String(id).trim()) || null;
   const formattedTxId = id.includes('DA01') ? id : `DA01/CHG/2026/SWAP/${id.replace('SWP-', '')}`;
   document.getElementById('delIdText').textContent = formattedTxId;
   openModal('modalDelete');
@@ -29340,12 +29374,18 @@ window.confirmDeleteDbSwap = function(id) {
     `Hapus Transaksi ${id}?`,
     `Transaksi <strong>${id}</strong> akan dihapus permanen dari sistem dan Google Sheets jika terhubung.`,
     () => {
+      const targetRec = (swapsData || []).find(s => s && String(s.id).trim() === String(id).trim()) || null;
       swapsData = (swapsData || []).filter(s => String(s.id).trim() !== String(id).trim());
+      window.swapsData = swapsData;
+
       if (typeof VoltFirebase !== 'undefined' && VoltFirebase.isConfigured()) {
         VoltFirebase.deleteSwap(id);
       }
+      if (typeof gasSync !== 'undefined' && typeof gasSync.deleteTransaction === 'function') {
+        gasSync.deleteTransaction(id, targetRec);
+      }
 
-      showToast(`Transaksi ${id} berhasil dihapus dari Firebase.`, 'success');
+      showToast(`Transaksi ${id} berhasil dihapus dari Firebase & Google Sheets.`, 'success');
       updateDbSummaryMetrics();
       renderDbSwapsTable();
       if (typeof renderMainTable === 'function') renderMainTable();

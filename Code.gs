@@ -70,7 +70,8 @@ function doPost(e) {
 
     if (body.action === 'delete_swap' || body.action === 'delete_transaction') {
       const txId = body.id || body.txId;
-      const result = apiDeleteTransaction(txId);
+      const meta = body.meta || body.record || body.payload || {};
+      const result = apiDeleteTransaction(txId, meta);
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
     }
@@ -2434,33 +2435,123 @@ function apiSaveUploadedSchedules(schedulesList, importMode) {
 }
 
 // =============================================================================
+// HELPER: FILTER-SAFE ROW DELETION
+// =============================================================================
+function deleteSheetRowWithFilterSafe_(sheet, targetRow) {
+  try {
+    const filter = sheet.getFilter();
+    if (filter) {
+      filter.remove();
+    }
+    sheet.deleteRow(targetRow);
+    SpreadsheetApp.flush();
+    const newLastRow = Math.max(sheet.getLastRow(), 1);
+    const newCols = Math.max(sheet.getLastColumn(), 21);
+    if (newLastRow > 1) {
+      sheet.getRange(1, 1, newLastRow, newCols).createFilter();
+    }
+    return true;
+  } catch (e) {
+    try {
+      sheet.deleteRow(targetRow);
+      SpreadsheetApp.flush();
+    } catch (e2) {}
+    return true;
+  }
+}
+
+// =============================================================================
 // 5. DELETE TRANSACTION FROM Sheet DATA INPUT & FIREBASE
 // =============================================================================
-function apiDeleteTransaction(txId) {
+function apiDeleteTransaction(txId, fallbackMeta) {
   try {
     const ss = getSpreadsheet();
     const sheet = ss.getSheetByName('DATA INPUT');
     if (!sheet) return { status: 'error', message: 'Sheet DATA INPUT tidak ditemukan' };
 
-    const cleanId = String(txId).trim();
+    const cleanId = String(txId || '').trim();
     const rows = sheet.getDataRange().getValues();
     let deleted = false;
+    let deletedId = cleanId;
 
+    // Helper untuk mengekstrak angka ID sekuensial (misal: "DA01/CHG/2026/SWAP/2518" -> 2518, "SWP-2518" -> 2518)
+    const extractNum = function(str) {
+      const m = String(str || '').match(/SWAP\/0*(\d{1,5})$/i) || String(str || '').match(/^SWP-0*(\d{1,5})$/i) || String(str || '').match(/(\d{1,5})$/);
+      return m ? parseInt(m[1], 10) : null;
+    };
+    const targetNum = extractNum(cleanId);
+    const cleanIdNorm = cleanId.replace(/[\/\\]/g, '_').toUpperCase();
+
+    // 1. Prioritas 1: Exact Match, Normalized Match, dan Numeric Sequence Match (Cari dari baris paling bawah/terbaru ke atas)
     for (let i = rows.length - 1; i >= 1; i--) {
-      const rowId = String(rows[i][0]).trim();
-      if (rowId === cleanId) {
-        sheet.deleteRow(i + 1);
+      const rowId = String(rows[i][0] || '').trim();
+      if (!rowId) continue;
+      const rowIdNorm = rowId.replace(/[\/\\]/g, '_').toUpperCase();
+      const rowNum = extractNum(rowId);
+
+      const isExact = (rowId === cleanId);
+      const isNormMatch = (cleanIdNorm && rowIdNorm === cleanIdNorm);
+      const isNumMatch = (targetNum !== null && rowNum !== null && targetNum === rowNum);
+
+      if (isExact || isNormMatch || isNumMatch) {
+        deletedId = rowId;
+        const targetRow = i + 1;
+        deleteSheetRowWithFilterSafe_(sheet, targetRow);
         deleted = true;
+        break;
+      }
+    }
+
+    // 2. Prioritas 2: Fallback Match berdasarkan Metadata Transaksi (Unit + Tanggal + Jam Masuk / Shift)
+    if (!deleted && fallbackMeta && typeof fallbackMeta === 'object') {
+      const fUnit = String(fallbackMeta.unit || '').replace(/^DT[- ]?/i, '').trim();
+      const fDate = String(fallbackMeta.date || '').replace(/[\/\-]/g, '').trim();
+      const fJamIn = String(fallbackMeta.jamIn || '').replace(/[:.]/g, '').trim();
+      const fShift = String(fallbackMeta.shift || '').replace(/[^0-9]/g, '').trim();
+
+      if (fUnit) {
+        const freshRows = sheet.getDataRange().getValues();
+        for (let i = freshRows.length - 1; i >= 1; i--) {
+          const r = freshRows[i];
+          const rUnit = String(r[5] || '').replace(/^DT[- ]?/i, '').trim();
+          const rDate = String(formatDateCell(r[1]) || '').replace(/[\/\-]/g, '').trim();
+          const rJamIn = String(formatTimeHHMM(r[8]) || '').replace(/[:.]/g, '').trim();
+          const rShift = String(r[2] || '').replace(/[^0-9]/g, '').trim();
+
+          const matchUnit = (rUnit === fUnit);
+          const matchDate = (!fDate || rDate === fDate || String(r[1]).replace(/[\/\-]/g, '').includes(fDate));
+          const matchTime = (!fJamIn || rJamIn === fJamIn);
+          const matchShift = (!fShift || rShift === fShift);
+
+          if (matchUnit && matchDate && (matchTime || matchShift)) {
+            deletedId = String(r[0] || cleanId);
+            const targetRow = i + 1;
+            deleteSheetRowWithFilterSafe_(sheet, targetRow);
+            deleted = true;
+            break;
+          }
+        }
       }
     }
 
     // Hapus juga dari Firebase Firestore
-    deleteFromFirestoreFromGas_('swaps', cleanId);
+    deleteFromFirestoreFromGas_('swaps', deletedId);
+    if (deletedId !== cleanId && cleanId) {
+      deleteFromFirestoreFromGas_('swaps', cleanId);
+    }
 
     if (deleted) {
-      return { status: 'success', message: `Transaksi ${cleanId} berhasil dihapus dari Google Sheets & Firebase` };
+      return { 
+        status: 'success', 
+        deletedId: deletedId, 
+        lastRowAfter: sheet.getLastRow(),
+        message: `Transaksi ${deletedId} berhasil dihapus dari Google Sheets & Firebase` 
+      };
     } else {
-      return { status: 'error', message: `Transaksi ${cleanId} tidak ditemukan di Google Sheets` };
+      return { 
+        status: 'error', 
+        message: `Transaksi ${cleanId} tidak ditemukan di Google Sheets` 
+      };
     }
   } catch (err) {
     return { status: 'error', message: err.toString() };
