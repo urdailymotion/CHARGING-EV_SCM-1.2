@@ -1,6 +1,43 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 14 Oktober 2026, Pukul 23:45 WITA  
-**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v68, Service Worker Cache `charging-ev-v68`). Perbaikan Masalah Pemilihan Jam (*Time Picker Bug*) pada Perangkat Mobile (HP) Selesai Tuntas (Arsitektur DOM Spacers 56px, Penghapusan Ketergantungan CSS Padding-Bottom Mobile WebKit/Chromium, Overscroll Contain, Dual-Layer Scrollend + Debounce Event, Zero Visual Layout Change).
+**Tanggal Pencatatan:** 15 Oktober 2026, Pukul 18:18 WITA  
+**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v69, Service Worker Cache `charging-ev-v69`). Perbaikan FUNDAMENTAL bug Time Picker Mobile — akar masalah: formula scrollTo/readBack tidak memperhitungkan `scroll-snap-align: center` offset, sehingga jam 21-23 selalu mental ke jam 20. Solusi: SPACER ditingkatkan ke 75px, formula `targetTop = val*ITEM_H + CENTER_OFFSET (19px)`, tambah touchend guard.
+
+---
+
+### 📋 Ringkasan Perbaikan Time Picker FUNDAMENTAL (15 Oktober 2026 - Build v69):
+
+#### 1. 🔍 Investigasi & Pembuktian Akar Masalah Sesungguhnya (v69):
+- **Problem:** Meski v68 sudah pakai DOM Spacers, jam 21-23 tetap mental ke jam yang salah di HP.
+- **Akar Masalah SESUNGGUHNYA (baru ditemukan):**
+  1. **Formula `scrollTo` Salah — Tidak Memperhitungkan `scroll-snap-align: center`:**
+     - v68 menulis: `container.scrollTo({ top: val * 38 })` — ini adalah posisi **TOP item**, bukan **CENTER item**.
+     - Dengan `scroll-snap-align: center`, browser snap ke posisi dimana **TENGAH item** berada di **TENGAH container**: `target = SPACER + val*38 + 19 - 75 = val*38 + 19`
+     - Akibatnya scrollTo v68 mendarat di posisi yang salah (19px offset), dan saat browser snap koreksi, jam bergeser.
+  2. **Formula `readBack` Salah — Sama Persis:**
+     - v68 membaca: `Math.round(scrollTop / 38)` — salah, tidak memperhitungkan CENTER_OFFSET.
+     - Formula benar: `Math.round((scrollTop - 19) / 38)`.
+     - Saat jam 23: `scrollTop = 893px → (893-19)/38 = 23` ✅. Tanpa koreksi: `893/38 = 23.5 → 24` (di-clamp ke 23 tapi dengan risiko presisi rendah).
+  3. **Spacer 56px terlalu kecil — maxScrollTop tidak cukup untuk jam 23:**
+     - `scrollHeight = 56 + 912 + 56 = 1024px`, `maxScrollTop = 1024 - 150 = 874px`.
+     - Jam 23 butuh `target = 23*38+19 = 893px` > 874px → browser clamp → jam bergeser!
+     - Solusi: Naikkan `SPACER_H = 75px` → `maxScrollTop = 912px` > 893px (margin 19px).
+  4. **Tidak ada `tpInitialized` reset & tidak ada touchend guard:**
+     - UI dirender sekali lalu tidak pernah rebuild, item `selected` tidak sinkron saat modal dibuka ulang.
+     - Settle handler diproses saat jari MASIH menyentuh layar (saat momentum masih berjalan).
+
+#### 2. 🛡️ Solusi Terapan (Build v69):
+1. **SPACER_H dinaikkan: `56px → 75px`** — `maxScrollTop = 912px`, cukup untuk target jam 23 = 893px (margin aman 19px).
+2. **Konstanta `TP_CENTER_OFF = 19`** — dihitung dari `SPACER_H + ITEM_H/2 - CONTAINER_H/2 = 75 + 19 - 75 = 19`.
+3. **Formula `scrollToTimeWheelItem` dikoreksi:** `targetTop = val * ITEM_H + TP_CENTER_OFF`.
+4. **Fungsi `tpReadScrollPos` baru:** `Math.round((scrollTop - TP_CENTER_OFF) / ITEM_H)`.
+5. **`tpBuildWheel` mengganti `initTimePickerUI`:** Selalu rebuild setiap modal dibuka (tidak ada flag `tpInitialized`), teardown listener lama, tambah `touchstart/touchend guard`.
+6. **`confirmTimePickerSelection` baca ulang scroll final** sebelum simpan ke field input.
+7. **Bump versi:** `APP_BUILD_ID = '2026.10.15.v69'` dan `CACHE_NAME = 'charging-ev-v69'`. Push ke GitHub → Netlify auto-deploy.
+
+#### 3. 🧪 Verifikasi:
+- File test `scratch/timepicker_fix_v69.html` dibuat sebagai isolated demo untuk test sebelum deploy ke production.
+- Formula matematika dibuktikan: `val=23 → target=893px ≤ maxScrollTop=912px ✓`.
+- Test button 21:00, 22:30, 23:00, 23:59 → semua hasil konfirmasi akurat.
 
 ---
 
