@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.14.v68';
+      var APP_BUILD_ID = '2026.10.15.v69';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -7042,9 +7042,9 @@ html.needs-login .sidebar-backdrop {
 }
 
 .tp-wheel-spacer {
-  height: 56px !important;
-  min-height: 56px !important;
-  max-height: 56px !important;
+  height: 75px !important;
+  min-height: 75px !important;
+  max-height: 75px !important;
   flex-shrink: 0 !important;
   pointer-events: none !important;
 }
@@ -28142,6 +28142,18 @@ window.quickInputSwapForUnit = function(unit, shift, targetTime) {
 // =============================================================================
 // 14. DUAL-MODE TIME PICKER ENGINE (ANALOG CLOCK & DIGITAL SCROLL WHEEL)
 // =============================================================================
+// FIX v69c: Formula scrollTo/readBack diperbaiki untuk scroll-snap-align: center
+//   ITEM_H=38, SPACER_H=75, CONTAINER_H=150
+//   CENTER_OFFSET = SPACER_H + ITEM_H/2 - CONTAINER_H/2 = 75 + 19 - 75 = 19
+//   scrollTo: targetTop = val * ITEM_H + CENTER_OFFSET = val*38 + 19
+//   readBack: index = round((scrollTop - CENTER_OFFSET) / ITEM_H)
+//   Jam 23 target = 23*38+19 = 893px, maxScrollTop = 75+24*38+75-150 = 912px (margin 19px OK)
+// =============================================================================
+
+const TP_ITEM_H      = 38;
+const TP_SPACER_H    = 75;
+const TP_CONTAINER_H = 150;
+const TP_CENTER_OFF  = TP_SPACER_H + (TP_ITEM_H / 2) - (TP_CONTAINER_H / 2); // = 19
 
 let tpTargetFieldId = null;
 let tpCurrentHour = 8;
@@ -28149,9 +28161,12 @@ let tpCurrentMinute = 0;
 let tpActiveMode = 'digital'; // 'digital' | 'analog'
 let tpActiveFocusPart = 'hour'; // 'hour' | 'minute'
 let tpAnalogSubMode = 'hour'; // 'hour' | 'minute'
-let tpInitialized = false;
 let tpIsProgrammaticScroll = false;
 let tpProgrammaticScrollTimer = null;
+const tpWheelState = {
+  hour:   { scrollTimer: null, touching: false, cleanup: null },
+  minute: { scrollTimer: null, touching: false, cleanup: null }
+};
 
 window.openTimePickerModal = function(targetFieldId, fieldLabel) {
   tpTargetFieldId = targetFieldId;
@@ -28187,16 +28202,15 @@ window.openTimePickerModal = function(targetFieldId, fieldLabel) {
 function scrollToTimeWheelItem(part, val, isSmooth = true) {
   const container = (part === 'hour') ? document.getElementById('tpHourScroll') : document.getElementById('tpMinuteScroll');
   if (!container) return;
-  const itemHeight = 38;
 
-  // Pasang flag pelindung agar event scroll browser tidak menimpa nilai yang sengaja dipilih pengguna
+  // FIX v69c: Formula benar untuk scroll-snap-align: center
+  // targetTop = val * ITEM_H + CENTER_OFFSET  (bukan val * ITEM_H saja!)
+  const targetTop = val * TP_ITEM_H + TP_CENTER_OFF;
+
   tpIsProgrammaticScroll = true;
   if (tpProgrammaticScrollTimer) clearTimeout(tpProgrammaticScrollTimer);
 
-  container.scrollTo({
-    top: val * itemHeight,
-    behavior: isSmooth ? 'smooth' : 'auto'
-  });
+  container.scrollTo({ top: targetTop, behavior: isSmooth ? 'smooth' : 'auto' });
 
   const onScrollEnd = () => {
     tpIsProgrammaticScroll = false;
@@ -28206,108 +28220,97 @@ function scrollToTimeWheelItem(part, val, isSmooth = true) {
 
   tpProgrammaticScrollTimer = setTimeout(() => {
     tpIsProgrammaticScroll = false;
-  }, isSmooth ? 600 : 100);
+  }, isSmooth ? 700 : 150);
+}
+
+function tpReadScrollPos(container) {
+  // FIX v69c: Kebalikan dari formula scrollTo — kurangi CENTER_OFFSET dulu
+  return Math.round((container.scrollTop - TP_CENTER_OFF) / TP_ITEM_H);
+}
+
+function tpBuildWheel(part, count, curVal) {
+  const scrollId = (part === 'hour') ? 'tpHourScroll' : 'tpMinuteScroll';
+  const container = document.getElementById(scrollId);
+  if (!container) return;
+  const state = tpWheelState[part];
+
+  // Teardown listener lama sebelum rebuild (FIX v69c: tidak ada tpInitialized flag)
+  if (state.cleanup) { state.cleanup(); state.cleanup = null; }
+  container.innerHTML = '';
+
+  const topSpacer = document.createElement('div');
+  topSpacer.className = 'tp-wheel-spacer';
+  container.appendChild(topSpacer);
+
+  for (let v = 0; v < count; v++) {
+    const item = document.createElement('div');
+    item.className = `tp-wheel-item${v === curVal ? ' selected' : ''}`;
+    item.dataset.value = v;
+    item.textContent = String(v).padStart(2, '0');
+    item.onclick = (e) => {
+      e.stopPropagation();
+      if (part === 'hour') tpCurrentHour = v;
+      else tpCurrentMinute = v;
+      updateTimePickerDisplay();
+      scrollToTimeWheelItem(part, v, true);
+    };
+    container.appendChild(item);
+  }
+
+  const botSpacer = document.createElement('div');
+  botSpacer.className = 'tp-wheel-spacer';
+  container.appendChild(botSpacer);
+
+  // FIX v69c: Settle handler dengan touchend guard
+  const handleSettle = () => {
+    if (tpIsProgrammaticScroll) return;
+    if (state.touching) return; // Tunggu sampai jari diangkat dari layar
+    const idx = tpReadScrollPos(container); // FIX: formula benar dengan CENTER_OFFSET
+    const clamped = Math.max(0, Math.min(count - 1, idx));
+    if (part === 'hour' && clamped !== tpCurrentHour) {
+      tpCurrentHour = clamped;
+      updateTimePickerDisplay();
+    } else if (part === 'minute' && clamped !== tpCurrentMinute) {
+      tpCurrentMinute = clamped;
+      updateTimePickerDisplay();
+    }
+  };
+
+  // FIX v69c: Track sentuhan jari untuk cegah false settle saat momentum masih jalan
+  const onTouchStart = () => { state.touching = true; };
+  const onTouchEnd   = () => {
+    state.touching = false;
+    clearTimeout(state.scrollTimer);
+    state.scrollTimer = setTimeout(handleSettle, 200);
+  };
+  const onScroll = () => {
+    if (tpIsProgrammaticScroll) return;
+    if (state.touching) return; // Skip settle selama jari masih menyentuh
+    clearTimeout(state.scrollTimer);
+    state.scrollTimer = setTimeout(handleSettle, 90);
+  };
+  const onScrollEnd = () => { if (!tpIsProgrammaticScroll) handleSettle(); };
+
+  container.addEventListener('touchstart',  onTouchStart,  { passive: true });
+  container.addEventListener('touchend',    onTouchEnd,    { passive: true });
+  container.addEventListener('touchcancel', onTouchEnd,    { passive: true });
+  container.addEventListener('scroll',      onScroll,      { passive: true });
+  container.addEventListener('scrollend',   onScrollEnd);
+
+  state.cleanup = () => {
+    clearTimeout(state.scrollTimer);
+    container.removeEventListener('touchstart',  onTouchStart);
+    container.removeEventListener('touchend',    onTouchEnd);
+    container.removeEventListener('touchcancel', onTouchEnd);
+    container.removeEventListener('scroll',      onScroll);
+    container.removeEventListener('scrollend',   onScrollEnd);
+  };
 }
 
 function initTimePickerUI() {
-  if (tpInitialized) return;
-  tpInitialized = true;
-
-  // Render Hour Scroll (00 - 23) dengan Top & Bottom Spacers untuk kestabilan mobile browser
-  const hourScroll = document.getElementById('tpHourScroll');
-  if (hourScroll) {
-    hourScroll.innerHTML = '';
-
-    const topSpacer = document.createElement('div');
-    topSpacer.className = 'tp-wheel-spacer';
-    hourScroll.appendChild(topSpacer);
-
-    for (let h = 0; h < 24; h++) {
-      const item = document.createElement('div');
-      item.className = `tp-wheel-item ${h === tpCurrentHour ? 'selected' : ''}`;
-      item.dataset.value = h;
-      item.textContent = String(h).padStart(2, '0');
-      item.onclick = (e) => {
-        e.stopPropagation();
-        tpCurrentHour = h;
-        updateTimePickerDisplay();
-        scrollToTimeWheelItem('hour', h, true);
-      };
-      hourScroll.appendChild(item);
-    }
-
-    const botSpacer = document.createElement('div');
-    botSpacer.className = 'tp-wheel-spacer';
-    hourScroll.appendChild(botSpacer);
-
-    const handleHourScrollSettle = () => {
-      if (tpIsProgrammaticScroll) return;
-      const itemHeight = 38;
-      const index = Math.round(hourScroll.scrollTop / itemHeight);
-      const clamped = Math.max(0, Math.min(23, index));
-      if (clamped !== tpCurrentHour) {
-        tpCurrentHour = clamped;
-        updateTimePickerDisplay();
-      }
-    };
-
-    let hourScrollTimer;
-    hourScroll.addEventListener('scroll', () => {
-      if (tpIsProgrammaticScroll) return;
-      clearTimeout(hourScrollTimer);
-      hourScrollTimer = setTimeout(handleHourScrollSettle, 90);
-    }, { passive: true });
-
-    hourScroll.addEventListener('scrollend', handleHourScrollSettle);
-  }
-
-  // Render Minute Scroll (00 - 59) dengan Top & Bottom Spacers untuk kestabilan mobile browser
-  const minuteScroll = document.getElementById('tpMinuteScroll');
-  if (minuteScroll) {
-    minuteScroll.innerHTML = '';
-
-    const topSpacer = document.createElement('div');
-    topSpacer.className = 'tp-wheel-spacer';
-    minuteScroll.appendChild(topSpacer);
-
-    for (let m = 0; m < 60; m++) {
-      const item = document.createElement('div');
-      item.className = `tp-wheel-item ${m === tpCurrentMinute ? 'selected' : ''}`;
-      item.dataset.value = m;
-      item.textContent = String(m).padStart(2, '0');
-      item.onclick = (e) => {
-        e.stopPropagation();
-        tpCurrentMinute = m;
-        updateTimePickerDisplay();
-        scrollToTimeWheelItem('minute', m, true);
-      };
-      minuteScroll.appendChild(item);
-    }
-
-    const botSpacer = document.createElement('div');
-    botSpacer.className = 'tp-wheel-spacer';
-    minuteScroll.appendChild(botSpacer);
-
-    const handleMinuteScrollSettle = () => {
-      if (tpIsProgrammaticScroll) return;
-      const itemHeight = 38;
-      const index = Math.round(minuteScroll.scrollTop / itemHeight);
-      const clamped = Math.max(0, Math.min(59, index));
-      if (clamped !== tpCurrentMinute) {
-        tpCurrentMinute = clamped;
-        updateTimePickerDisplay();
-      }
-    };
-
-    let minScrollTimer;
-    minuteScroll.addEventListener('scroll', () => {
-      if (tpIsProgrammaticScroll) return;
-      clearTimeout(minScrollTimer);
-      minScrollTimer = setTimeout(handleMinuteScrollSettle, 90);
-    }, { passive: true });
-
-    minuteScroll.addEventListener('scrollend', handleMinuteScrollSettle);
-  }
+  // FIX v69c: Selalu rebuild setiap modal dibuka (tidak ada flag tpInitialized)
+  tpBuildWheel('hour',   24, tpCurrentHour);
+  tpBuildWheel('minute', 60, tpCurrentMinute);
 }
 
 function updateTimePickerDisplay() {
@@ -28503,6 +28506,18 @@ window.confirmTimePickerSelection = function() {
   if (!tpTargetFieldId) {
     closeModal('modalTimePicker');
     return;
+  }
+
+  // FIX v69c: Baca ulang posisi scroll FINAL sebelum simpan
+  // Mencegah menyimpan nilai lama jika ada sisa momentum scroll
+  const hc = document.getElementById('tpHourScroll');
+  const mc = document.getElementById('tpMinuteScroll');
+  if (hc && mc) {
+    const finalHour   = Math.max(0, Math.min(23, tpReadScrollPos(hc)));
+    const finalMinute = Math.max(0, Math.min(59, tpReadScrollPos(mc)));
+    tpCurrentHour   = finalHour;
+    tpCurrentMinute = finalMinute;
+    updateTimePickerDisplay();
   }
 
   const timeStr = `${String(tpCurrentHour).padStart(2, '0')}:${String(tpCurrentMinute).padStart(2, '0')}`;
