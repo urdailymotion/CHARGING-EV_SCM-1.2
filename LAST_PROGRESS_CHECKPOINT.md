@@ -1,10 +1,46 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 17 Oktober 2026, Pukul 19:55 WITA  
-**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v70, Service Worker Cache `charging-ev-v70`). Pembaruan Filter Location / Station (SWAP 01, SWAP 02, SWAP 03), Search Engine Universal mencakup seluruh 17 kolom riwayat, dan Tabel Ringkasan Bawah (Distributed Energy) berbasis stasiun mesin swap (SWAP 01, SWAP 02, SWAP 03, TOTAL OPERASIONAL).
+**Tanggal Pencatatan:** 17 Oktober 2026, Pukul 21:50 WITA  
+**Status Sesi:** KESEPAKATAN FINAL BLUEPRINT LOGIKA REMARK, STATUS & KETERANGAN 2-ARAH (Persiapan Eksekusi Build v71).
 
 ---
 
-### 📋 Ringkasan Pembaruan Filter, Search Universal & Summary Stasiun Swap (17 Oktober 2026 - Build v70):
+### 📋 Blueprint Kesepakatan Final: Logika Remark, Status & Keterangan Sinkronisasi 2-Arah (Persiapan Build v71):
+
+#### 🎯 Matriks 4 Skenario Operasional Baru:
+
+1. **⚡ Mode On-Demand (Bebas Jadwal):**
+   - **Operational Mode (Kolom 19):** `NON SCHEDULE`
+   - **Status Ketepatan (Kolom 14):** `On Time` (Ditampilkan polos / netral tanpa background warna).
+   - **Problem Remark (Kolom 15):** Otomatis `13.NO PROBLEM` (atau kendala jika ada).
+   - **Keterangan (Kolom 16):** Otomatis ikut `13.NO PROBLEM` (opsional jika operator mengisi catatan bebas).
+   - **Target Waktu (`timeSch`):** `-` (Bar jadwal disembunyikan).
+
+2. **🟢 Mode Schedule (Unit Terdaftar & Sesuai Toleransi Jadwal 55 Menit):**
+   - **Operational Mode (Kolom 19):** `SCHEDULE`
+   - **Status Ketepatan (Kolom 14):** `On Time`
+   - **Problem Remark (Kolom 15):** Otomatis `13.NO PROBLEM`
+   - **Keterangan (Kolom 16):** Otomatis ikut `13.NO PROBLEM`
+   - **Target Waktu (`timeSch`):** Jam jadwal aktif (misal `19:00:00`).
+
+3. **🔴 Mode Schedule (Unit Terdaftar tapi Tidak Sesuai Rule / Lepas Toleransi 55 Menit):**
+   - **Operational Mode (Kolom 19):** `SCHEDULE`
+   - **Status Ketepatan (Kolom 14):** `Out Off Time`
+   - **Sinkronisasi 2-Arah (*Two-Way Sync*) Kolom Problem Remark & Keterangan:**
+     - **Jika diisi via dropdown *Problem Remark*** (misal operator memilih `16.CHARGER ISSUE`), maka kotak *Keterangan* secara otomatis seketika terisi teks yang sama: `16.CHARGER ISSUE`.
+     - **Jika diisi manual di kotak *Keterangan*** (misal operator mengetik alasan khusus: *"Antre hauling"*), maka nilai *Problem Remark* otomatis ikut sama persis dengan yang diketik di Keterangan, sehingga di database kedua kolom selalu selaras dan konsisten.
+
+4. **⚠️ Mode Schedule (Unit Di-input TAPI TIDAK TERDAFTAR di List Jadwal):**
+   - **Operational Mode (Kolom 19):** `SCHEDULE`
+   - **Target Waktu (`timeSch`):** `-`
+   - **Status Ketepatan (Kolom 14):** Otomatis dikunci ke **`Out Off Time`**
+   - **Problem Remark (Kolom 15):** Otomatis terisi **`Unit tidak ada di Schedule`**
+   - **Keterangan (Kolom 16):** Otomatis ikut terisi **`Unit tidak ada di Schedule`**
+   - **Notifikasi Form:** Muncul banner peringatan merah tegas di bawah input unit:  
+     `⚠️ Unit DT [unit] tidak ada di Schedule Shift [X]! Status: Out Off Time (Unit tidak ada di Schedule).`
+
+---
+
+### 📋 Progres Sebelumnya: Ringkasan Pembaruan Filter, Search Universal & Summary Stasiun Swap (17 Oktober 2026 - Build v70):
 
 #### 1. 🔍 Pembaruan Filter Dropdown (Location / Station):
 - Mengubah dropdown `Location` menjadi `Location / Station` dengan pilihan:
