@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.15.v69';
+      var APP_BUILD_ID = '2026.10.17.v70';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -11009,11 +11009,14 @@ html, body {
               </div>
 
               <div class="search-field-item">
-                <label class="search-field-label">Location</label>
-                <select id="filterLocationSelect" class="input-select-box" style="min-width: 110px;">
+                <label class="search-field-label">Location / Station</label>
+                <select id="filterLocationSelect" class="input-select-box" style="min-width: 125px;">
                   <option value="ALL">All</option>
-                  <option value="ROOM A1">ROOM A1</option>
-                  <option value="ROOM A2">ROOM A2</option>
+                  <option value="SWAP 01">SWAP 01 (ROOM A1)</option>
+                  <option value="SWAP 02">SWAP 02 (ROOM A2)</option>
+                  <option value="SWAP 03">SWAP 03 (ROOM A2)</option>
+                  <option value="ROOM A1">ROOM A1 (Semua Mesin)</option>
+                  <option value="ROOM A2">ROOM A2 (Semua Mesin)</option>
                 </select>
               </div>
 
@@ -11066,7 +11069,7 @@ html, body {
                 entries
               </div>
               <div>
-                Search: <input type="text" id="inputTableSearch" class="search-table-input" placeholder="Ketik unit / id...">
+                Search: <input type="text" id="inputTableSearch" class="search-table-input" placeholder="Cari apa saja (unit, id, manpower, stasiun, dll)...">
               </div>
             </div>
 
@@ -11139,7 +11142,7 @@ html, body {
               <table class="distributed-summary-table">
                 <thead>
                   <tr>
-                    <th>Location / Room</th>
+                    <th>Swap Station / Location</th>
                     <th>Total Swap</th>
                     <th>Total Energy (kWh)</th>
                     <th>On-Time Performance</th>
@@ -11147,16 +11150,22 @@ html, body {
                 </thead>
                 <tbody id="summaryTableBody">
                   <tr>
-                    <td><strong>ROOM A1</strong></td>
-                    <td id="sumA1Count">-</td>
-                    <td id="sumA1Energy">-</td>
-                    <td><span id="sumA1Otp" class="status-tag ontime">-</span></td>
+                    <td><strong>SWAP 01</strong> <span style="font-size: 11px; color: #64748b; font-weight: 500;">(ROOM A1)</span></td>
+                    <td id="sumSwap01Count">-</td>
+                    <td id="sumSwap01Energy">-</td>
+                    <td><span id="sumSwap01Otp" class="status-tag ontime">-</span></td>
                   </tr>
                   <tr>
-                    <td><strong>ROOM A2</strong></td>
-                    <td id="sumA2Count">-</td>
-                    <td id="sumA2Energy">-</td>
-                    <td><span id="sumA2Otp" class="status-tag ontime">-</span></td>
+                    <td><strong>SWAP 02</strong> <span style="font-size: 11px; color: #64748b; font-weight: 500;">(ROOM A2)</span></td>
+                    <td id="sumSwap02Count">-</td>
+                    <td id="sumSwap02Energy">-</td>
+                    <td><span id="sumSwap02Otp" class="status-tag ontime">-</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>SWAP 03</strong> <span style="font-size: 11px; color: #64748b; font-weight: 500;">(ROOM A2)</span></td>
+                    <td id="sumSwap03Count">-</td>
+                    <td id="sumSwap03Energy">-</td>
+                    <td><span id="sumSwap03Otp" class="status-tag ontime">-</span></td>
                   </tr>
                   <tr style="background: #f2f5f8; font-weight: 700;">
                     <td><strong>TOTAL OPERASIONAL</strong></td>
@@ -19465,16 +19474,78 @@ function renderMainTable() {
   const filterEnd = document.getElementById('filterEndDate')?.value || '';
 
   filteredList = swapsData.filter(item => {
-    const matchSearch = !searchQuery ||
-                        (item.unit || '').toLowerCase().includes(searchQuery) ||
-                        (item.id || '').toLowerCase().includes(searchQuery) ||
-                        (item.operator || '').toLowerCase().includes(searchQuery) ||
-                        (item.operatorNik || '').toLowerCase().includes(searchQuery) ||
-                        (item.problemRemark || '').toLowerCase().includes(searchQuery) ||
-                        (item.statusRemark || '').toLowerCase().includes(searchQuery);
+    // 1. Search All Fields yang tampil di riwayat transaksi
+    let matchSearch = true;
+    if (searchQuery) {
+      const displayStation = String(item.swapStation || (String(item.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')).toLowerCase();
+      const rawId = String(item.id || '').toLowerCase();
+      const formattedTxId = (rawId.includes('da01') ? rawId : ('da01/chg/2026/swap/' + rawId.replace('swp-', ''))).toLowerCase();
+      const unitStr = String(item.unit || '').toLowerCase();
+      const dtUnitStr = 'dt ' + unitStr;
+      const opName = String(item.operator || '').toLowerCase();
+      const opNik = String(item.operatorNik || '').toLowerCase();
+      const cat = String(item.category || '').toLowerCase();
+      const dtDate = String(item.date || '').toLowerCase();
+      const shiftStr = String(item.shift || '').toLowerCase();
+      const fullShiftStr = 'shift ' + shiftStr;
+      const tIn = String(item.jamIn || '').toLowerCase();
+      const tOut = String(item.jamOut || '').toLowerCase();
+      const dur = String(item.durationMin || '').toLowerCase();
+      const kwh = String(item.energyKwh || '').toLowerCase();
+      const hmVal = String(item.hm || '').toLowerCase();
+      const batIn = String(item.batteryBefore || '').toLowerCase();
+      const batOut = String(item.batteryAfter || '').toLowerCase();
+      const locStr = String(item.location || '').toLowerCase();
+      const statStr = String(item.statusRemark || '').toLowerCase();
+      const probStr = String(item.problemRemark || '').toLowerCase();
+      const ketStr = String(item.keterangan || '').toLowerCase();
+
+      matchSearch = rawId.includes(searchQuery) ||
+                    formattedTxId.includes(searchQuery) ||
+                    unitStr.includes(searchQuery) ||
+                    dtUnitStr.includes(searchQuery) ||
+                    opName.includes(searchQuery) ||
+                    opNik.includes(searchQuery) ||
+                    cat.includes(searchQuery) ||
+                    dtDate.includes(searchQuery) ||
+                    shiftStr === searchQuery ||
+                    fullShiftStr.includes(searchQuery) ||
+                    tIn.includes(searchQuery) ||
+                    tOut.includes(searchQuery) ||
+                    dur.includes(searchQuery) ||
+                    kwh.includes(searchQuery) ||
+                    hmVal.includes(searchQuery) ||
+                    batIn.includes(searchQuery) ||
+                    batOut.includes(searchQuery) ||
+                    locStr.includes(searchQuery) ||
+                    displayStation.includes(searchQuery) ||
+                    statStr.includes(searchQuery) ||
+                    probStr.includes(searchQuery) ||
+                    ketStr.includes(searchQuery);
+    }
 
     const matchShift = (filterShift === 'ALL') || (String(item.shift) === filterShift);
-    const matchLoc = (filterLoc === 'ALL') || (item.location === filterLoc);
+
+    // 2. Filter Location / Swap Station (SWAP 01, SWAP 02, SWAP 03, ROOM A1, ROOM A2)
+    let matchLoc = true;
+    if (filterLoc !== 'ALL') {
+      const itemStation = String(item.swapStation || (String(item.location || '').includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim().toUpperCase();
+      const itemLocation = String(item.location || '').trim().toUpperCase();
+
+      if (filterLoc === 'SWAP 01') {
+        matchLoc = (itemStation === 'SWAP 01') || (itemLocation === 'ROOM A1' && !item.swapStation);
+      } else if (filterLoc === 'SWAP 02') {
+        matchLoc = (itemStation === 'SWAP 02');
+      } else if (filterLoc === 'SWAP 03') {
+        matchLoc = (itemStation === 'SWAP 03');
+      } else if (filterLoc === 'ROOM A1') {
+        matchLoc = (itemLocation === 'ROOM A1') || (itemStation === 'SWAP 01');
+      } else if (filterLoc === 'ROOM A2') {
+        matchLoc = (itemLocation === 'ROOM A2') || (itemStation === 'SWAP 02') || (itemStation === 'SWAP 03');
+      } else {
+        matchLoc = (itemStation === filterLoc) || (itemLocation === filterLoc);
+      }
+    }
 
     let matchDate = true;
     if (filterStart || filterEnd) {
@@ -20154,60 +20225,87 @@ function updateSummaryCard(customList) {
     list = allSwaps;
   }
 
-  let a1Count = 0, a1Energy = 0, a1OnTime = 0;
-  let a2Count = 0, a2Energy = 0, a2OnTime = 0;
+  let s1Count = 0, s1Energy = 0, s1OnTime = 0;
+  let s2Count = 0, s2Energy = 0, s2OnTime = 0;
+  let s3Count = 0, s3Energy = 0, s3OnTime = 0;
 
   list.forEach(s => {
     const kwh = parseFloat(s.energyKwh) || 0;
+    const stn = String(s.swapStation || '').trim().toUpperCase();
     const loc = String(s.location || '').trim().toUpperCase();
     const isOt = String(s.statusRemark || '').trim().toLowerCase().includes('on') || s.statusRemark === 'On Time';
 
-    if (loc === 'ROOM A1') {
-      a1Count++;
-      a1Energy += kwh;
-      if (isOt) a1OnTime++;
+    if (stn === 'SWAP 03' || stn.includes('03')) {
+      s3Count++;
+      s3Energy += kwh;
+      if (isOt) s3OnTime++;
+    } else if (stn === 'SWAP 02' || stn.includes('02')) {
+      s2Count++;
+      s2Energy += kwh;
+      if (isOt) s2OnTime++;
+    } else if (stn === 'SWAP 01' || stn.includes('01') || loc === 'ROOM A1') {
+      s1Count++;
+      s1Energy += kwh;
+      if (isOt) s1OnTime++;
     } else if (loc === 'ROOM A2') {
-      a2Count++;
-      a2Energy += kwh;
-      if (isOt) a2OnTime++;
+      // Default fallback jika transaksi di ROOM A2 tanpa data stasiun eksplisit
+      s2Count++;
+      s2Energy += kwh;
+      if (isOt) s2OnTime++;
+    } else {
+      s1Count++;
+      s1Energy += kwh;
+      if (isOt) s1OnTime++;
     }
   });
 
-  const totalCount = a1Count + a2Count;
-  const totalEnergy = a1Energy + a2Energy;
-  const totalOnTime = a1OnTime + a2OnTime;
+  const totalCount = s1Count + s2Count + s3Count;
+  const totalEnergy = s1Energy + s2Energy + s3Energy;
+  const totalOnTime = s1OnTime + s2OnTime + s3OnTime;
 
-  const a1Otp = a1Count > 0 ? (a1OnTime / a1Count) * 100 : 0;
-  const a2Otp = a2Count > 0 ? (a2OnTime / a2Count) * 100 : 0;
+  const s1Otp = s1Count > 0 ? (s1OnTime / s1Count) * 100 : 0;
+  const s2Otp = s2Count > 0 ? (s2OnTime / s2Count) * 100 : 0;
+  const s3Otp = s3Count > 0 ? (s3OnTime / s3Count) * 100 : 0;
   const totalOtp = totalCount > 0 ? (totalOnTime / totalCount) * 100 : 0;
 
   // Format Helper: Comma thousands, 2 decimals for energy
   const fmtInt = (n) => Number(n || 0).toLocaleString('en-US');
   const fmtDec = (n) => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  if (document.getElementById('sumA1Count')) document.getElementById('sumA1Count').textContent = fmtInt(a1Count);
-  if (document.getElementById('sumA1Energy')) document.getElementById('sumA1Energy').textContent = fmtDec(a1Energy);
-  if (document.getElementById('sumA2Count')) document.getElementById('sumA2Count').textContent = fmtInt(a2Count);
-  if (document.getElementById('sumA2Energy')) document.getElementById('sumA2Energy').textContent = fmtDec(a2Energy);
+  // Update elemen SWAP 01, SWAP 02, SWAP 03
+  if (document.getElementById('sumSwap01Count')) document.getElementById('sumSwap01Count').textContent = fmtInt(s1Count);
+  if (document.getElementById('sumSwap01Energy')) document.getElementById('sumSwap01Energy').textContent = fmtDec(s1Energy);
+  if (document.getElementById('sumSwap02Count')) document.getElementById('sumSwap02Count').textContent = fmtInt(s2Count);
+  if (document.getElementById('sumSwap02Energy')) document.getElementById('sumSwap02Energy').textContent = fmtDec(s2Energy);
+  if (document.getElementById('sumSwap03Count')) document.getElementById('sumSwap03Count').textContent = fmtInt(s3Count);
+  if (document.getElementById('sumSwap03Energy')) document.getElementById('sumSwap03Energy').textContent = fmtDec(s3Energy);
+
+  // Backward compatibility untuk elemen lama (sumA1Count / sumA2Count)
+  if (document.getElementById('sumA1Count')) document.getElementById('sumA1Count').textContent = fmtInt(s1Count);
+  if (document.getElementById('sumA1Energy')) document.getElementById('sumA1Energy').textContent = fmtDec(s1Energy);
+  const a2TotalCount = s2Count + s3Count;
+  const a2TotalEnergy = s2Energy + s3Energy;
+  const a2TotalOnTime = s2OnTime + s3OnTime;
+  if (document.getElementById('sumA2Count')) document.getElementById('sumA2Count').textContent = fmtInt(a2TotalCount);
+  if (document.getElementById('sumA2Energy')) document.getElementById('sumA2Energy').textContent = fmtDec(a2TotalEnergy);
+
   if (document.getElementById('sumTotalCount')) document.getElementById('sumTotalCount').textContent = fmtInt(totalCount);
   if (document.getElementById('sumTotalEnergy')) document.getElementById('sumTotalEnergy').textContent = fmtDec(totalEnergy);
 
   // Update Real On-Time Performance Tags
-  const elA1Otp = document.getElementById('sumA1Otp');
-  if (elA1Otp) {
-    elA1Otp.textContent = `${a1Otp.toFixed(1)}%`;
-    elA1Otp.className = `status-tag ${a1Otp >= 95 ? 'ontime' : (a1Otp >= 80 ? 'warning' : 'outtime')}`;
-  }
-  const elA2Otp = document.getElementById('sumA2Otp');
-  if (elA2Otp) {
-    elA2Otp.textContent = `${a2Otp.toFixed(1)}%`;
-    elA2Otp.className = `status-tag ${a2Otp >= 95 ? 'ontime' : (a2Otp >= 80 ? 'warning' : 'outtime')}`;
-  }
-  const elTotalOtp = document.getElementById('sumTotalOtp');
-  if (elTotalOtp) {
-    elTotalOtp.textContent = `${totalOtp.toFixed(1)}%`;
-    elTotalOtp.className = `status-tag ${totalOtp >= 95 ? 'ontime' : (totalOtp >= 80 ? 'warning' : 'outtime')}`;
-  }
+  const updateOtpPill = (elId, otpVal) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = `${otpVal.toFixed(1)}%`;
+    el.className = `status-tag ${otpVal >= 95 ? 'ontime' : (otpVal >= 80 ? 'warning' : 'outtime')}`;
+  };
+
+  updateOtpPill('sumSwap01Otp', s1Otp);
+  updateOtpPill('sumSwap02Otp', s2Otp);
+  updateOtpPill('sumSwap03Otp', s3Otp);
+  updateOtpPill('sumA1Otp', s1Otp);
+  updateOtpPill('sumA2Otp', (a2TotalCount > 0 ? (a2TotalOnTime / a2TotalCount) * 100 : 0));
+  updateOtpPill('sumTotalOtp', totalOtp);
 
   // Update Data Scope Badge in Summary Header
   const badgeEl = document.getElementById('summaryDataScopeBadge');
@@ -31448,7 +31546,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=50')
+      navigator.serviceWorker.register('./sw.js?v=70')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka

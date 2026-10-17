@@ -1,6 +1,34 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 15 Oktober 2026, Pukul 18:18 WITA  
-**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v69, Service Worker Cache `charging-ev-v69`). Perbaikan FUNDAMENTAL bug Time Picker Mobile — akar masalah: formula scrollTo/readBack tidak memperhitungkan `scroll-snap-align: center` offset, sehingga jam 21-23 selalu mental ke jam 20. Solusi: SPACER ditingkatkan ke 75px, formula `targetTop = val*ITEM_H + CENTER_OFFSET (19px)`, tambah touchend guard.
+**Tanggal Pencatatan:** 17 Oktober 2026, Pukul 19:55 WITA  
+**Status Sesi:** SUKSES TOTAL & TERVERIFIKASI 100% (Build v70, Service Worker Cache `charging-ev-v70`). Pembaruan Filter Location / Station (SWAP 01, SWAP 02, SWAP 03), Search Engine Universal mencakup seluruh 17 kolom riwayat, dan Tabel Ringkasan Bawah (Distributed Energy) berbasis stasiun mesin swap (SWAP 01, SWAP 02, SWAP 03, TOTAL OPERASIONAL).
+
+---
+
+### 📋 Ringkasan Pembaruan Filter, Search Universal & Summary Stasiun Swap (17 Oktober 2026 - Build v70):
+
+#### 1. 🔍 Pembaruan Filter Dropdown (Location / Station):
+- Mengubah dropdown `Location` menjadi `Location / Station` dengan pilihan:
+  - `All` (Semua Lokasi & Mesin)
+  - `SWAP 01` (ROOM A1)
+  - `SWAP 02` (ROOM A2)
+  - `SWAP 03` (ROOM A2)
+  - `ROOM A1` (Semua Mesin)
+  - `ROOM A2` (Semua Mesin)
+- Logika pencocokan cerdas di `renderMainTable`: mencocokkan `item.swapStation` dengan fallback toleran untuk data lama (`ROOM A1` -> `SWAP 01`, `ROOM A2` -> `SWAP 02/03`).
+
+#### 2. ⚡ Search Engine Universal (Search All Data Riwayat):
+- Memperluas pencarian teks di baris riwayat transaksi agar mencakup seluruh data:
+  - Manpower (Nama & NIK), Transaction ID (raw & formatted `DA01/CHG/2026/SWAP/...`), Kategori, Kode Unit & `DT [unit]`, Tanggal, Shift, Jam In & Jam Out, Durasi (menit), Energi (kWh), HM/KM, Bat In & Bat Out (%), Lokasi, Swap Station (`SWAP 01`, `SWAP 02`, `SWAP 03`), Status (`On Time`, `Out Off Time`, `Non-Schedule`), serta Remark & Keterangan.
+- Placeholder input diperbarui menjadi: `Cari apa saja (unit, id, manpower, stasiun, dll)...`.
+
+#### 3. 📊 Tabel Ringkasan Bawah (Distributed Energy & Summary Stasiun):
+- Header kolom diubah menjadi: `Swap Station / Location` | `Total Swap` | `Total Energy (kWh)` | `On-Time Performance`.
+- Baris ringkasan dipecah menjadi:
+  - `SWAP 01` (ROOM A1)
+  - `SWAP 02` (ROOM A2)
+  - `SWAP 03` (ROOM A2)
+  - `TOTAL OPERASIONAL`
+- Perhitungan dinamis real-time via `updateSummaryCard(filteredList)` yang otomatis sinkron dengan filter dan pencarian aktif.
 
 ---
 
