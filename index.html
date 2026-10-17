@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.17.v70';
+      var APP_BUILD_ID = '2026.10.17.v71';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -10933,6 +10933,7 @@ html, body {
                   <label class="form-label-ent">Problem Remark</label>
                   <select id="dedSwapRemark2" class="form-control-ent">
                     <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
+                    <option value="Unit tidak ada di Schedule">Unit tidak ada di Schedule</option>
                     <option value="">- Kosong (Ketik di Keterangan) -</option>
                     <option value="15.BATTERY LOW POWER">15.BATTERY LOW POWER</option>
                     <option value="16.CHARGER ISSUE">16.CHARGER ISSUE</option>
@@ -13359,6 +13360,7 @@ html, body {
               <label class="form-label-ent">Problem Remark</label>
               <select id="newSwapRemark2" class="form-control-ent">
                 <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
+                <option value="Unit tidak ada di Schedule">Unit tidak ada di Schedule</option>
                 <option value="">- Kosong (Ketik di Keterangan) -</option>
                 <option value="15.BATTERY LOW POWER">15.BATTERY LOW POWER</option>
                 <option value="16.CHARGER ISSUE">16.CHARGER ISSUE</option>
@@ -18793,6 +18795,59 @@ function initTableControls() {
     if (hiddenDur) hiddenDur.value = String(diffMin);
   };
 
+  window.syncRemarkAndKeteranganTwoWay = function(remarkSelectId, keteranganInputId, statusSelectId) {
+    const rEl = document.getElementById(remarkSelectId);
+    const kEl = document.getElementById(keteranganInputId);
+    const sEl = statusSelectId ? document.getElementById(statusSelectId) : null;
+    if (!rEl || !kEl) return;
+
+    if (!rEl.dataset.twoWayBound) {
+      rEl.dataset.twoWayBound = 'true';
+      rEl.addEventListener('change', () => {
+        const selectedVal = rEl.value.trim();
+        if (selectedVal && selectedVal !== '-') {
+          kEl.value = selectedVal;
+        }
+        if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
+        if (typeof window.updateNewSwapKeteranganRequirement === 'function') window.updateNewSwapKeteranganRequirement();
+      });
+    }
+
+    if (!kEl.dataset.twoWayBound) {
+      kEl.dataset.twoWayBound = 'true';
+      kEl.addEventListener('input', () => {
+        const typedVal = kEl.value.trim();
+        if (!typedVal) {
+          if (sEl && sEl.value === 'On Time') {
+            rEl.value = '13.NO PROBLEM';
+          }
+        } else {
+          let matched = false;
+          for (let i = 0; i < rEl.options.length; i++) {
+            if (rEl.options[i].value.toLowerCase() === typedVal.toLowerCase()) {
+              rEl.selectedIndex = i;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            let customOpt = rEl.querySelector('option.opt-dynamic-sync');
+            if (!customOpt) {
+              customOpt = document.createElement('option');
+              customOpt.className = 'opt-dynamic-sync';
+              rEl.appendChild(customOpt);
+            }
+            customOpt.value = typedVal;
+            customOpt.textContent = typedVal;
+            rEl.value = typedVal;
+          }
+        }
+        if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
+        if (typeof window.updateNewSwapKeteranganRequirement === 'function') window.updateNewSwapKeteranganRequirement();
+      });
+    }
+  };
+
   window.updateNewSwapKeteranganRequirement = function() {
     const sEl = document.getElementById('newSwapStatus');
     const rEl = document.getElementById('newSwapRemark2');
@@ -18806,27 +18861,38 @@ function initTableControls() {
     if (statusVal === 'On Time' || statusVal === 'Non-Schedule') {
       badge.style.background = '#e2e8f0';
       badge.style.color = '#475569';
-      badge.innerHTML = (statusVal === 'Non-Schedule') ? 'Opsional (Non-Schedule)' : 'Opsional (On Time)';
-      input.placeholder = (statusVal === 'Non-Schedule') ? 'Catatan unit non-jadwal / ad-hoc (opsional)...' : 'Catatan / keterangan operasional (opsional jika On Time)...';
+      badge.innerHTML = 'Opsional (On Time)';
+      input.placeholder = 'Catatan / keterangan operasional (opsional jika On Time)...';
       input.style.borderColor = '#cbd5e1';
       input.style.boxShadow = 'none';
       return;
     }
 
-    const hasSpecificProblem = remarkVal && remarkVal !== '13.NO PROBLEM';
+    // Kasus Out Off Time:
+    if (remarkVal === 'Unit tidak ada di Schedule' || input.value.trim() === 'Unit tidak ada di Schedule') {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#dc2626';
+      badge.innerHTML = '⚠️ Unit tidak ada di Schedule';
+      input.placeholder = 'Unit tidak ada di Schedule...';
+      input.style.borderColor = '#fca5a5';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
+    const hasSpecificProblem = (remarkVal && remarkVal !== '13.NO PROBLEM') || input.value.trim() !== '';
 
     if (hasSpecificProblem) {
       badge.style.background = '#e0f2fe';
       badge.style.color = '#0369a1';
-      badge.innerHTML = `ℹ️  Opsional (${remarkVal})`;
-      input.placeholder = 'Keterangan tambahan (opsional, kendala sudah dipilih)...';
+      badge.innerHTML = `ℹ️  Tercatat (${remarkVal || input.value.trim()})`;
+      input.placeholder = 'Keterangan kendala sudah terisi...';
       input.style.borderColor = '#93c5fd';
       input.style.boxShadow = 'none';
     } else {
       badge.style.background = '#fef3c7';
       badge.style.color = '#b45309';
       badge.innerHTML = 'Wajib Diisi (Out Off Time)';
-      input.placeholder = 'Ketik manual alasan / kendala kenapa Out Off Time...';
+      input.placeholder = 'Pilih dropdown Remark atau ketik manual kendala...';
       input.style.borderColor = '#f59e0b';
       input.style.boxShadow = '0 0 0 2px rgba(245, 158, 11, 0.18)';
     }
@@ -18853,8 +18919,12 @@ function initTableControls() {
     if (!isScheduleOn) {
       if (groupSch) groupSch.style.display = 'none';
       if (schInput) schInput.value = '-';
-      if (statusSelect) statusSelect.value = 'Non-Schedule';
-      if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+      if (statusSelect) statusSelect.value = 'On Time';
+      if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+      const ketInput = document.getElementById('newSwapKeterangan');
+      if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Non-Schedule' || ketInput.value === 'Out Off Time')) {
+        ketInput.value = '13.NO PROBLEM';
+      }
       if (wrapStatus) wrapStatus.style.display = 'none';
       if (wrapProblem) wrapProblem.classList.add('form-full-width');
       window.updateNewSwapKeteranganRequirement();
@@ -18932,7 +19002,13 @@ function initTableControls() {
         }
 
         if (statusSelect) statusSelect.value = statusResult;
-        if (statusResult === 'On Time' && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+        if (statusResult === 'On Time') {
+          if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+          const ketInput = document.getElementById('newSwapKeterangan');
+          if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Out Off Time')) {
+            ketInput.value = '13.NO PROBLEM';
+          }
+        }
 
         // Auto update keterangan di modal regular swap jika datang awal
         const ketInput = document.getElementById('newSwapKeterangan');
@@ -18997,15 +19073,21 @@ function initTableControls() {
       if (schNotice) {
         if (otherShiftMatch) {
           const otherNum = String(otherShiftMatch.shift || '').replace(/[^0-9]/g, '') || '2';
-          schNotice.innerHTML = `ℹ️ Unit DT ${unitVal} <strong>tidak ada jadwal di Shift ${targetShift}</strong> (Jadwal terdaftar di <strong>Shift ${otherNum} pukul ${otherShiftMatch.timeSch} WIB</strong>) pada ${formatDateDisplay(dateVal) || 'tanggal ini'}`;
-          schNotice.style.color = '#d97706';
+          schNotice.innerHTML = `<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:11.5px; line-height:1.4;">
+            ⚠️ <strong>Unit DT ${unitVal} TIDAK ADA di Jadwal Shift ${targetShift}</strong> (Jadwal terdaftar di Shift ${otherNum} pukul ${otherShiftMatch.timeSch} WIB).<br>
+            <span style="font-weight:700;">Status otomatis: Out Off Time (Unit tidak ada di Schedule).</span>
+          </div>`;
         } else {
-          schNotice.innerHTML = `ℹ️ Unit DT ${unitVal} tidak memiliki jadwal swap pada Shift ${targetShift} (${formatDateDisplay(dateVal) || 'Hari Ini'})`;
-          schNotice.style.color = '#64748b';
+          schNotice.innerHTML = `<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:11.5px; line-height:1.4;">
+            ⚠️ <strong>Unit DT ${unitVal} TIDAK ADA di Jadwal Shift ${targetShift} (${formatDateDisplay(dateVal) || 'Hari Ini'})</strong>.<br>
+            <span style="font-weight:700;">Status otomatis: Out Off Time (Unit tidak ada di Schedule).</span>
+          </div>`;
         }
       }
-      if (statusSelect) statusSelect.value = 'On Time';
-      if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+      if (statusSelect) statusSelect.value = 'Out Off Time';
+      if (remarkSelect) remarkSelect.value = 'Unit tidak ada di Schedule';
+      const ketInput = document.getElementById('newSwapKeterangan');
+      if (ketInput) ketInput.value = 'Unit tidak ada di Schedule';
     }
     window.updateNewSwapKeteranganRequirement();
   };
@@ -19057,9 +19139,13 @@ function initTableControls() {
     if (statusEl && !statusEl.dataset.ketBound) {
       statusEl.dataset.ketBound = 'true';
       statusEl.addEventListener('change', () => {
-        if (statusEl.value === 'Out Off Time') {
-          if (remarkEl && !remarkEl.value) {
+        if (statusEl.value === 'On Time') {
+          if (remarkEl) remarkEl.value = '13.NO PROBLEM';
+          if (ketEl) ketEl.value = '13.NO PROBLEM';
+        } else if (statusEl.value === 'Out Off Time') {
+          if (remarkEl && (remarkEl.value === '13.NO PROBLEM' || !remarkEl.value)) {
             remarkEl.value = '15.BATTERY LOW POWER';
+            if (ketEl) ketEl.value = '15.BATTERY LOW POWER';
           }
           if (ketEl) ketEl.focus();
         }
@@ -19067,22 +19153,8 @@ function initTableControls() {
       });
     }
 
-    if (remarkEl && !remarkEl.dataset.ketBound) {
-      remarkEl.dataset.ketBound = 'true';
-      remarkEl.addEventListener('change', () => {
-        if (!remarkEl.value && ketEl) ketEl.focus();
-        window.updateNewSwapKeteranganRequirement();
-      });
-    }
-
-    if (ketEl && !ketEl.dataset.autoClearBound) {
-      ketEl.dataset.autoClearBound = 'true';
-      ketEl.addEventListener('input', () => {
-        if (ketEl.value.trim() !== '' && remarkEl && remarkEl.value !== '') {
-          remarkEl.value = '';
-          window.updateNewSwapKeteranganRequirement();
-        }
-      });
+    if (typeof window.syncRemarkAndKeteranganTwoWay === 'function') {
+      window.syncRemarkAndKeteranganTwoWay('newSwapRemark2', 'newSwapKeterangan', 'newSwapStatus');
     }
 
     // Reset and populate session values
@@ -19175,8 +19247,8 @@ function initTableControls() {
       const ketVal = ketInput ? ketInput.value.trim() : '';
 
       if (statusVal === 'Out Off Time') {
-        const hasSpecificProblem = remarkVal && remarkVal !== '13.NO PROBLEM';
-        if (!hasSpecificProblem && !ketVal) {
+        const hasSpecificProblem = (remarkVal && remarkVal !== '13.NO PROBLEM') || (ketVal && ketVal !== '13.NO PROBLEM');
+        if (!hasSpecificProblem) {
           showToast('Karena status "Out Off Time", silakan pilih Problem Remark atau ketik manual alasan pada kolom Keterangan!', 'warning');
           if (ketInput) {
             ketInput.focus();
@@ -19213,44 +19285,24 @@ function initTableControls() {
         durationMin: durationMinVal,
         energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(document.getElementById('newSwapEnergy')?.value) : (parseFloat(document.getElementById('newSwapEnergy')?.value) || 0),
         statusRemark: statusVal,
-        problemRemark: remarkVal ? remarkVal : (statusVal === 'On Time' ? '13.NO PROBLEM' : '-'),
+        problemRemark: (function() {
+          if (remarkVal && remarkVal !== '-') return remarkVal;
+          if (ketVal) return ketVal;
+          return (statusVal === 'On Time') ? '13.NO PROBLEM' : '-';
+        })(),
         keterangan: (function() {
           if (ketVal) return ketVal;
-          if (remarkVal && remarkVal !== '-' && remarkVal !== '13.NO PROBLEM') return remarkVal;
-          if (statusVal === 'Out Off Time') {
-            const dedTime = document.getElementById('newSwapTimeSch')?.value || document.getElementById('dedSwapTimeSch')?.value;
-            const jamInVal = document.getElementById('newSwapJamIn')?.value || document.getElementById('dedSwapJamIn')?.value;
-            if (dedTime && dedTime !== '-' && jamInVal) {
-              const diff = calculateMinutesDifference(jamInVal, dedTime);
-              return `Out Off Schedule (${diff > 0 ? '+' : ''}${diff} mnt)`;
-            }
-            return 'Out Off Schedule';
-          }
+          if (remarkVal && remarkVal !== '-') return remarkVal;
           return '13.NO PROBLEM';
         })(),
         operator: currentAuthUser ? currentAuthUser.name : 'OPERATOR',
         operatorNik: currentAuthUser ? currentAuthUser.nik : '-',
         timeSch: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (!isSchOn) return '-';
           const mTime = document.getElementById('newSwapTimeSch')?.value;
           if (mTime && mTime !== '-') return mTime;
-          if (statusVal === 'Non-Schedule') return '-';
-          const activeCompDate = (typeof parseDateComparable === 'function') ? parseDateComparable(document.getElementById('newSwapDate')?.value) : null;
-          const m = (schedulesData || []).find(sc => {
-            const scUnit = String(sc.unit).replace(/^DT[- ]?/i, '').trim();
-            const scShift = String(sc.shift).replace(/[^0-9]/g, '') || '1';
-            const targetShift = String(activeShiftVal).replace(/[^0-9]/g, '') || '1';
-            if (scUnit !== selectedUnit || scShift !== targetShift) return false;
-            if (activeCompDate) {
-              const scDate = sc.tanggal || sc.date || '';
-              if (!scDate) return false;
-              if (typeof parseDateComparable === 'function') {
-                const scComp = parseDateComparable(scDate);
-                if (scComp !== activeCompDate) return false;
-              }
-            }
-            return true;
-          });
-          return m ? m.timeSch : '-';
+          return '-';
         })(),
         operationalMode: (function() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
@@ -21032,28 +21084,38 @@ function initDedicatedInputForm() {
     if (statusVal === 'On Time' || statusVal === 'Non-Schedule') {
       badge.style.background = '#e2e8f0';
       badge.style.color = '#475569';
-      badge.innerHTML = (statusVal === 'Non-Schedule') ? 'Opsional (Non-Schedule)' : 'Opsional (On Time)';
-      input.placeholder = (statusVal === 'Non-Schedule') ? 'Catatan unit non-jadwal / ad-hoc (opsional)...' : 'Catatan / keterangan operasional (opsional jika On Time)...';
+      badge.innerHTML = 'Opsional (On Time)';
+      input.placeholder = 'Catatan / keterangan operasional (opsional jika On Time)...';
       input.style.borderColor = '#cbd5e1';
       input.style.boxShadow = 'none';
       return;
     }
 
     // Kasus Out Off Time:
-    const hasSpecificProblem = remarkVal && remarkVal !== '13.NO PROBLEM';
+    if (remarkVal === 'Unit tidak ada di Schedule' || input.value.trim() === 'Unit tidak ada di Schedule') {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#dc2626';
+      badge.innerHTML = '⚠️ Unit tidak ada di Schedule';
+      input.placeholder = 'Unit tidak ada di Schedule...';
+      input.style.borderColor = '#fca5a5';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
+    const hasSpecificProblem = (remarkVal && remarkVal !== '13.NO PROBLEM') || input.value.trim() !== '';
 
     if (hasSpecificProblem) {
       badge.style.background = '#e0f2fe';
       badge.style.color = '#0369a1';
-      badge.innerHTML = `ℹ️ Opsional (${remarkVal})`;
-      input.placeholder = 'Keterangan tambahan (opsional, kendala sudah dipilih)...';
+      badge.innerHTML = `ℹ️  Tercatat (${remarkVal || input.value.trim()})`;
+      input.placeholder = 'Keterangan kendala sudah terisi...';
       input.style.borderColor = '#93c5fd';
       input.style.boxShadow = 'none';
     } else {
       badge.style.background = '#fef3c7';
       badge.style.color = '#b45309';
       badge.innerHTML = 'Wajib Diisi (Out Off Time)';
-      input.placeholder = 'Ketik manual alasan / kendala kenapa Out Off Time...';
+      input.placeholder = 'Pilih dropdown Remark atau ketik manual kendala...';
       input.style.borderColor = '#f59e0b';
       input.style.boxShadow = '0 0 0 2px rgba(245, 158, 11, 0.18)';
     }
@@ -21085,38 +21147,20 @@ function initDedicatedInputForm() {
     sStatusEl.addEventListener('change', () => {
       if (sStatusEl.value === 'On Time') {
         if (sRemarkEl) sRemarkEl.value = '13.NO PROBLEM';
-      } else {
-        if (sRemarkEl && sRemarkEl.value === '13.NO PROBLEM') {
-          sRemarkEl.value = '';
+        if (sKetEl) sKetEl.value = '13.NO PROBLEM';
+      } else if (sStatusEl.value === 'Out Off Time') {
+        if (sRemarkEl && (sRemarkEl.value === '13.NO PROBLEM' || !sRemarkEl.value)) {
+          sRemarkEl.value = '15.BATTERY LOW POWER';
+          if (sKetEl) sKetEl.value = '15.BATTERY LOW POWER';
         }
-        if (sRemarkEl && !sRemarkEl.value && sKetEl) {
-          sKetEl.focus();
-        }
+        if (sKetEl) sKetEl.focus();
       }
       window.updateKeteranganRequirement();
     });
   }
 
-  if (sRemarkEl && !sRemarkEl.dataset.ketBound) {
-    sRemarkEl.dataset.ketBound = 'true';
-    sRemarkEl.addEventListener('change', () => {
-      if (!sRemarkEl.value && sKetEl) {
-        sKetEl.focus();
-      }
-      window.updateKeteranganRequirement();
-    });
-  }
-
-  if (sKetEl && !sKetEl.dataset.autoClearBound) {
-    sKetEl.dataset.autoClearBound = 'true';
-    sKetEl.addEventListener('input', () => {
-      if (sKetEl.value.trim() !== '') {
-        if (sRemarkEl && sRemarkEl.value !== '') {
-          sRemarkEl.value = '';
-          window.updateKeteranganRequirement();
-        }
-      }
-    });
+  if (typeof window.syncRemarkAndKeteranganTwoWay === 'function') {
+    window.syncRemarkAndKeteranganTwoWay('dedSwapRemark2', 'dedSwapKeterangan', 'dedSwapStatus');
   }
 
   updateDedSwapScheduleTarget();
@@ -21153,8 +21197,8 @@ function initDedicatedInputForm() {
       const ketVal = ketInput ? ketInput.value.trim() : '';
 
       if (statusVal === 'Out Off Time') {
-        const hasSpecificProblem = remarkVal && remarkVal !== '13.NO PROBLEM';
-        if (!hasSpecificProblem && !ketVal) {
+        const hasSpecificProblem = (remarkVal && remarkVal !== '13.NO PROBLEM') || (ketVal && ketVal !== '13.NO PROBLEM');
+        if (!hasSpecificProblem) {
           showToast('Karena status "Out Off Time", silakan pilih Problem Remark atau ketik manual alasan pada kolom Keterangan!', 'warning');
           if (ketInput) {
             ketInput.focus();
@@ -21192,44 +21236,24 @@ function initDedicatedInputForm() {
         durationMin: durationMinVal,
         energyKwh: (typeof normalizeEnergyKwh === 'function') ? normalizeEnergyKwh(document.getElementById('dedSwapEnergy').value) : (parseFloat(document.getElementById('dedSwapEnergy').value) || 0),
         statusRemark: statusVal,
-        problemRemark: remarkVal ? remarkVal : (statusVal === 'On Time' ? '13.NO PROBLEM' : '-'),
+        problemRemark: (function() {
+          if (remarkVal && remarkVal !== '-') return remarkVal;
+          if (ketVal) return ketVal;
+          return (statusVal === 'On Time') ? '13.NO PROBLEM' : '-';
+        })(),
         keterangan: (function() {
           if (ketVal) return ketVal;
-          if (remarkVal && remarkVal !== '-' && remarkVal !== '13.NO PROBLEM') return remarkVal;
-          if (statusVal === 'Out Off Time') {
-            const dedTime = document.getElementById('dedSwapTimeSch')?.value;
-            const jamInVal = document.getElementById('dedSwapJamIn')?.value;
-            if (dedTime && dedTime !== '-' && jamInVal) {
-              const diff = calculateMinutesDifference(jamInVal, dedTime);
-              return `Out Off Schedule (${diff > 0 ? '+' : ''}${diff} mnt)`;
-            }
-            return 'Out Off Schedule';
-          }
+          if (remarkVal && remarkVal !== '-') return remarkVal;
           return '13.NO PROBLEM';
         })(),
         operator: currentAuthUser ? currentAuthUser.name : 'OPERATOR',
         operatorNik: currentAuthUser ? currentAuthUser.nik : '-',
         timeSch: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (!isSchOn) return '-';
           const dedTime = document.getElementById('dedSwapTimeSch')?.value;
           if (dedTime && dedTime !== '-') return dedTime;
-          if (statusVal === 'Non-Schedule') return '-';
-          const activeCompDate = (typeof parseDateComparable === 'function') ? parseDateComparable(document.getElementById('dedSwapDate')?.value) : null;
-          const m = (schedulesData || []).find(sc => {
-            const scUnit = String(sc.unit).replace(/^DT[- ]?/i, '').trim();
-            const scShift = String(sc.shift).replace(/[^0-9]/g, '') || '1';
-            const targetShift = String(activeShiftVal).replace(/[^0-9]/g, '') || '1';
-            if (scUnit !== selectedUnit || scShift !== targetShift) return false;
-            if (activeCompDate) {
-              const scDate = sc.tanggal || sc.date || '';
-              if (!scDate) return false;
-              if (typeof parseDateComparable === 'function') {
-                const scComp = parseDateComparable(scDate);
-                if (scComp !== activeCompDate) return false;
-              }
-            }
-            return true;
-          });
-          return m ? m.timeSch : '-';
+          return '-';
         })(),
         operationalMode: (function() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
@@ -26235,8 +26259,12 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
   if (!isScheduleOn) {
     if (groupSch) groupSch.style.display = 'none';
     if (schInput) schInput.value = '-';
-    if (statusSelect) statusSelect.value = 'Non-Schedule';
-    if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+    if (statusSelect) statusSelect.value = 'On Time';
+    if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+    const ketInput = document.getElementById('dedSwapKeterangan');
+    if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Non-Schedule' || ketInput.value === 'Out Off Time')) {
+      ketInput.value = '13.NO PROBLEM';
+    }
     if (wrapStatus) wrapStatus.style.display = 'none';
     if (wrapProblem) wrapProblem.classList.add('form-full-width');
     if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
@@ -26305,15 +26333,30 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
     if (schNotice) {
       if (otherShiftMatch) {
         const otherNum = String(otherShiftMatch.shift || '').replace(/[^0-9]/g, '') || '2';
-        schNotice.innerHTML = `ℹ️ Unit DT ${unitVal} <strong>tidak ada jadwal di Shift ${targetShift}</strong> (Jadwal terdaftar di <strong>Shift ${otherNum} pukul ${otherShiftMatch.timeSch} WIB</strong>) pada ${formatDateDisplay(dateVal) || 'tanggal ini'}`;
-        schNotice.style.color = '#d97706';
+        schNotice.innerHTML = `<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:11.5px; line-height:1.4;">
+          ⚠️ <strong>Unit DT ${unitVal} TIDAK ADA di Jadwal Shift ${targetShift}</strong> (Jadwal terdaftar di Shift ${otherNum} pukul ${otherShiftMatch.timeSch} WIB).<br>
+          <span style="font-weight:700;">Status otomatis: Out Off Time (Unit tidak ada di Schedule).</span>
+        </div>`;
       } else {
-        schNotice.innerHTML = `ℹ️ Unit DT ${unitVal} tidak memiliki jadwal swap pada Shift ${targetShift} (${formatDateDisplay(dateVal) || 'Hari Ini'})`;
-        schNotice.style.color = '#64748b';
+        schNotice.innerHTML = `<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:11.5px; line-height:1.4;">
+          ⚠️ <strong>Unit DT ${unitVal} TIDAK ADA di Jadwal Shift ${targetShift} (${formatDateDisplay(dateVal) || 'Hari Ini'})</strong>.<br>
+          <span style="font-weight:700;">Status otomatis: Out Off Time (Unit tidak ada di Schedule).</span>
+        </div>`;
       }
     }
-    if (statusSelect) statusSelect.value = 'On Time';
-    if (remarkSelect && !remarkSelect.value) remarkSelect.value = '13.NO PROBLEM';
+    if (statusSelect) statusSelect.value = 'Out Off Time';
+    if (remarkSelect) {
+      let foundOpt = Array.from(remarkSelect.options).find(o => o.value === 'Unit tidak ada di Schedule');
+      if (!foundOpt) {
+        const opt = document.createElement('option');
+        opt.value = 'Unit tidak ada di Schedule';
+        opt.textContent = 'Unit tidak ada di Schedule';
+        remarkSelect.appendChild(opt);
+      }
+      remarkSelect.value = 'Unit tidak ada di Schedule';
+    }
+    const ketInput = document.getElementById('dedSwapKeterangan');
+    if (ketInput) ketInput.value = 'Unit tidak ada di Schedule';
     if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
     return;
   }
@@ -26390,10 +26433,20 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
     }
 
     if (statusSelect) statusSelect.value = statusResult;
-    if (statusResult === 'On Time' && remarkSelect) remarkSelect.value = '13.NO PROBLEM';
-
-    // Update kolom Keterangan secara otomatis
-    updateAutoKeteranganNote(skippedList, isEarly);
+    const ketInput = document.getElementById('dedSwapKeterangan');
+    if (statusResult === 'On Time') {
+      if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+      if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Out Off Time')) {
+        ketInput.value = '13.NO PROBLEM';
+      }
+    } else {
+      if (remarkSelect && (remarkSelect.value === '13.NO PROBLEM' || !remarkSelect.value)) {
+        remarkSelect.value = '15.BATTERY LOW POWER';
+        if (ketInput && (!ketInput.value || ketInput.value === '13.NO PROBLEM')) {
+          ketInput.value = '15.BATTERY LOW POWER';
+        }
+      }
+    }
 
     const diffAbs = Math.abs(diffMins);
     let diffInfoText = '';
@@ -26426,8 +26479,6 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
     }
   } else {
     // Jam In belum diisi
-    updateAutoKeteranganNote(skippedList, false);
-
     let skipBadgeHtml = '';
     if (skippedList.length > 0) {
       skipBadgeHtml = `<div style="margin-top: 5px; font-size: 11px; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
@@ -26440,6 +26491,13 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
       schNotice.style.color = '#0369a1';
     }
     if (statusSelect && !statusSelect.value) statusSelect.value = 'On Time';
+    if (statusSelect && statusSelect.value === 'On Time') {
+      if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
+      const ketInput = document.getElementById('dedSwapKeterangan');
+      if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule')) {
+        ketInput.value = '13.NO PROBLEM';
+      }
+    }
   }
 
   if (typeof window.updateKeteranganRequirement === 'function') {
