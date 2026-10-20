@@ -1,6 +1,17 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:33 WITA  
+**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:45 WITA  
 **Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v74.0) - Perbaikan Bug Verifikasi Password Login: Pencocokan Ketat Terhadap Database & Penolakan Password Salah.
+
+---
+
+### 🚨 MONITORING KUOTA GOOGLE APPS SCRIPT (REMINDER AMBANG 180):
+- **Posisi Versi Saat Ini:** Versi **@115** (dari batas maksimum **200** versi Apps Script).
+- **Sisa Kuota Versi:** Tersisa **85 versi**.
+- **Komitmen Pengingat (Reminder Threshold):** 
+  - Bila counter deploy Apps Script mencapai angka **180** (tersisa 20 versi), sistem otomatis dan asisten akan **langsung memberikan peringatan / reminder tegas** kepada user.
+  - Script [auto-deploy.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/auto-deploy.js) telah disuntikkan logika pendeteksi kuota otomatis: jika `currentVer >= 180`, banner peringatan merah akan muncul di terminal.
+  - **Best Practice Penghematan Versi:** Perubahan UI, JavaScript klien, CSS, atau HTML di front-end **TIDAK PERLU** dideploy ke Apps Script (cukup commit & push git ke Netlify PWA). Deploy Apps Script (`clasp deploy` / `auto-deploy.js`) hanya dilakukan jika file backend [Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) mengalami modifikasi.
+  - **Mitigasi jika mendekati 200:** Lakukan migrasi ke Proyek / Script ID baru via Clasp (`clasp clone` / new script ID), sehingga counter versi reset kembali ke `@1` tanpa kehilangan data Google Sheets.
 
 ---
 

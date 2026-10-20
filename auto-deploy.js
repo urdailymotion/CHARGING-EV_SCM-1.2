@@ -39,6 +39,23 @@ function deployNow() {
     const deployOutput = execSync(deployCmd, { encoding: 'utf8' });
     console.log(deployOutput.trim());
 
+    // Quota Tracker & Warning ketika mendekati batas 200 (Ambang Reminder: 180)
+    const versionMatch = deployOutput.match(/@(\d+)/);
+    if (versionMatch) {
+      const currentVer = parseInt(versionMatch[1], 10);
+      const remaining = 200 - currentVer;
+      console.log(`\n📊 Status Kuota Versi Apps Script: Versi @${currentVer} dari 200 (Tersisa: ${remaining} versi)`);
+      if (currentVer >= 180) {
+        console.log('\n' + '⚠️ '.repeat(28));
+        console.log(`🚨 [PERINGATAN KUOTA APPS SCRIPT: VERSI @${currentVer} TELAH MENCAPAI / MELEBIHI 180!]`);
+        console.log(`⚠️ Sisa kuota versi tinggal ${remaining} versi lagi sebelum mencapai batas keras 200!`);
+        console.log(`💡 Panduan Langkah Mitigasi:`);
+        console.log(`   1. Hindari deploy ke Apps Script jika hanya perubahan Frontend/UI/CSS (cukup git push ke Netlify).`);
+        console.log(`   2. Jika mencapai versi 195-200, lakukan Project Migration / New Project ID via Clasp agar hitungan kembali ke versi 1.`);
+        console.log('⚠️ '.repeat(28) + '\n');
+      }
+    }
+
     console.log('\n' + '⭐'.repeat(30));
     console.log('✅ DEPLOYMENT BERHASIL 100%!');
     console.log(`🔗 Web App URL: ${WEB_APP_URL}`);
