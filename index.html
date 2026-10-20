@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.17.v71';
+      var APP_BUILD_ID = '2026.10.21.v73';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -50,17 +50,50 @@
       { nik: "81230112", name: "BACHTIAR PUTRA DANANJAYA", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
       { nik: "81230103", name: "APRIL YULIUS PESSIWARISA", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
       { nik: "81230134", name: "INDRA ARIVYANTO", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
-      { nik: "11050104", name: "ANTON WAHYU ANTAT WULAN", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "21002786", name: "TONI PURWANTO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "22002555", name: "YUDA PUGUH WIDODO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "24006305", name: "AHMAD ZAENAL MUNTAHA", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "25001040", name: "MURY AGUNG PRASETYA", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "25001710", name: "LAURENSIUS APRI PRASETYO CALDAS", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "25001776", name: "ANDI MUHAMMAD ALFERY", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "26002909", name: "BAMBY PRASETYO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-      { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "SUPERVISOR", dept: "Operations Administration" }
+      { nik: "11050104", name: "ANTON WAHYU ANTAT WULAN", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "21002786", name: "TONI PURWANTO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "22002555", name: "YUDA PUGUH WIDODO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "24006305", name: "AHMAD ZAENAL MUNTAHA", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "25001040", name: "MURY AGUNG PRASETYA", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "25001710", name: "LAURENSIUS APRI PRASETYO CALDAS", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "25001776", name: "ANDI MUHAMMAD ALFERY", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "26002909", name: "BAMBY PRASETYO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+      { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "ADMIN", dept: "Operations Administration" }
     ];
     window.OPERATOR_USERS = window.MASTER_OPERATORS;
+
+    // RBAC Security Helpers (4-Tier: Operator, Leader, Supervisor, Administrator)
+    window.isUserPrivileged = function(u) {
+      u = u || window.currentAuthUser || ((typeof currentAuthUser !== 'undefined' && currentAuthUser) ? currentAuthUser : ((typeof window.getSavedAuthUser === 'function') ? window.getSavedAuthUser() : null));
+      if (!u) return false;
+      var role = String(u.role || '').toUpperCase();
+      var title = String(u.title || '').toUpperCase();
+      var nik = String(u.nik || '').trim();
+      return role === 'LEADER' || role === 'SUPERVISOR' || role === 'ADMIN' ||
+             title.includes('LEADER') || title.includes('SUPERVISOR') || title.includes('ADMIN') ||
+             nik === '81230177';
+    };
+
+    window.canAccessDatabaseManager = function(u) {
+      u = u || window.currentAuthUser || ((typeof currentAuthUser !== 'undefined' && currentAuthUser) ? currentAuthUser : ((typeof window.getSavedAuthUser === 'function') ? window.getSavedAuthUser() : null));
+      if (!u) return false;
+      var role = String(u.role || '').toUpperCase();
+      var title = String(u.title || '').toUpperCase();
+      var nik = String(u.nik || '').trim();
+
+      // 1. Super Admin bypass (Sriyanto NIK 81230177 / role ADMIN)
+      if (role === 'ADMIN' || title.includes('ADMIN') || nik === '81230177') return true;
+
+      // 2. Group Leader (title LEADER atau role LEADER) DILARANG akses Database Manager
+      if (role === 'LEADER' || title.includes('LEADER')) return false;
+
+      // 3. Role SUPERVISOR murni (pengawas non-leader) BOLEH akses Database Manager
+      if (role === 'SUPERVISOR') return true;
+
+      return false;
+    };
+
+    window.isUserAdmin = window.canAccessDatabaseManager;
 
     window.closeSplitLoginScreen = function() {
       try {
@@ -151,14 +184,27 @@
         var itemDb = document.getElementById('sidebarItemDatabase');
         var itemIntel = document.getElementById('sidebarItemIntelligence');
 
-        // Pengecekan Hak Akses untuk Role OPERATOR: Hanya boleh akses Input Data dan Operation
+        // Pengecekan Hak Akses Berdasarkan Role (3-Tier: Operator, Supervisor, Administrator)
         var u = (window.currentAuthUser) ? window.currentAuthUser : ((typeof currentAuthUser !== 'undefined' && currentAuthUser) ? currentAuthUser : ((typeof window.getSavedAuthUser === 'function') ? window.getSavedAuthUser() : null));
-        var isPrivileged = u && (u.role === 'SUPERVISOR' ||
-          String(u.title || '').toUpperCase().includes('LEADER') ||
-          String(u.title || '').toUpperCase().includes('ADMIN') ||
-          String(u.title || '').toUpperCase().includes('SUPERVISOR') ||
-          u.nik === '81230177');
+        var isPrivileged = (typeof window.isUserPrivileged === 'function') ? window.isUserPrivileged(u) : (u && (u.role === 'SUPERVISOR' || u.role === 'ADMIN' || String(u.title || '').toUpperCase().includes('LEADER') || String(u.title || '').toUpperCase().includes('ADMIN') || String(u.title || '').toUpperCase().includes('SUPERVISOR') || u.nik === '81230177'));
+        var isAdmin = (typeof window.isUserAdmin === 'function') ? window.isUserAdmin(u) : (u && (u.role === 'ADMIN' || String(u.title || '').toUpperCase().includes('ADMIN') || u.nik === '81230177'));
 
+        // Guard 1: Menu DATABASE MANAGER HANYA dapat diakses oleh ADMIN dan role SUPERVISOR (Group Leader ditolak)
+        var canAccessDb = (typeof window.canAccessDatabaseManager === 'function') ? window.canAccessDatabaseManager(u) : isAdmin;
+        if (viewName === 'database' && !canAccessDb) {
+          if (typeof window.showToast === 'function') {
+            window.showToast('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh ADMIN dan SUPERVISOR!', 'danger');
+          } else {
+            alert('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh ADMIN dan SUPERVISOR!');
+          }
+          if (viewSwap) viewSwap.style.display = 'block';
+          var linkSwapFallbackDb = document.getElementById('sublinkSwap');
+          if (linkSwapFallbackDb) linkSwapFallbackDb.classList.add('active');
+          if (itemOp) { itemOp.classList.add('open'); itemOp.classList.add('active'); }
+          return;
+        }
+
+        // Guard 2: Menu Populasi Unit & EV Intelligence hanya untuk SUPERVISOR / LEADER / ADMIN
         if (!isPrivileged && (viewName === 'populasi' || viewName.startsWith('intel-') || viewName === 'database')) {
           if (typeof window.showToast === 'function') {
             window.showToast('Akses Terbatas: Role Operator hanya diizinkan mengakses menu Input Data dan Operation!', 'warning');
@@ -280,18 +326,18 @@
 
           case 'database':
             var u = (window.currentAuthUser) ? window.currentAuthUser : ((typeof currentAuthUser !== 'undefined' && currentAuthUser) ? currentAuthUser : ((typeof window.getSavedAuthUser === 'function') ? window.getSavedAuthUser() : null));
-            var isPrivileged = u && (u.role === 'SUPERVISOR' ||
-              String(u.title || '').toUpperCase().includes('LEADER') ||
-              String(u.title || '').toUpperCase().includes('ADMIN') ||
-              String(u.title || '').toUpperCase().includes('SUPERVISOR') ||
-              u.nik === '81230177');
+            var canAccessDb = (typeof window.canAccessDatabaseManager === 'function') ? window.canAccessDatabaseManager(u) : ((typeof window.isUserAdmin === 'function') ? window.isUserAdmin(u) : (u && (u.role === 'ADMIN' || u.role === 'SUPERVISOR' || u.nik === '81230177')));
 
-            if (!isPrivileged) {
+            if (!canAccessDb) {
               if (typeof window.showToast === 'function') {
-                window.showToast('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh SUPERVISOR / LEADER / ADMIN!', 'danger');
+                window.showToast('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh ADMIN dan SUPERVISOR!', 'danger');
               } else {
-                alert('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh SUPERVISOR / LEADER / ADMIN!');
+                alert('Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh ADMIN dan SUPERVISOR!');
               }
+              if (viewSwap) viewSwap.style.display = 'block';
+              var linkSwapFallbackDb = document.getElementById('sublinkSwap');
+              if (linkSwapFallbackDb) linkSwapFallbackDb.classList.add('active');
+              if (itemOp) { itemOp.classList.add('open'); itemOp.classList.add('active'); }
               return;
             }
 
@@ -684,19 +730,19 @@
       if (modalLoc) modalLoc.textContent = activeLoc;
       if (modalShift) modalShift.textContent = 'Shift ' + activeShift;
 
-      // 4. Role permissions: Operator HANYA boleh akses Input Data & Operation
-      var isPrivilegedUser = (user.role === 'SUPERVISOR' ||
-        String(user.title || '').toUpperCase().includes('LEADER') ||
-        String(user.title || '').toUpperCase().includes('ADMIN') ||
-        String(user.title || '').toUpperCase().includes('SUPERVISOR') ||
-        user.nik === '81230177');
+      // 4. Role permissions (3-Tier RBAC):
+      // - Operator: HANYA boleh akses Input Data & Operation
+      // - Supervisor/Leader: Boleh akses Populasi & Intelligence
+      // - Administrator: Akses PENUH ke seluruh menu termasuk Database Manager
+      var isPrivilegedUser = (typeof window.isUserPrivileged === 'function') ? window.isUserPrivileged(user) : (user.role === 'LEADER' || user.role === 'SUPERVISOR' || user.role === 'ADMIN' || String(user.title || '').toUpperCase().includes('LEADER') || String(user.title || '').toUpperCase().includes('ADMIN') || user.nik === '81230177');
+      var canAccessDb = (typeof window.canAccessDatabaseManager === 'function') ? window.canAccessDatabaseManager(user) : ((typeof window.isUserAdmin === 'function') ? window.isUserAdmin(user) : (user.role === 'ADMIN' || user.nik === '81230177'));
 
       var sidebarItemDb = document.getElementById('sidebarItemDatabase');
       var sidebarItemPop = document.getElementById('sidebarItemPopulasi');
       var sidebarItemIntel = document.getElementById('sidebarItemIntelligence');
 
       if (sidebarItemDb) {
-        sidebarItemDb.style.setProperty('display', isPrivilegedUser ? 'block' : 'none', 'important');
+        sidebarItemDb.style.setProperty('display', canAccessDb ? 'block' : 'none', 'important');
       }
       if (sidebarItemPop) {
         sidebarItemPop.style.setProperty('display', isPrivilegedUser ? 'block' : 'none', 'important');
@@ -719,7 +765,10 @@
       if (formOpNik) formOpNik.textContent = '(' + user.nik + ')';
       if (formOpRole) {
         formOpRole.textContent = user.role;
-        formOpRole.className = 'status-pill ' + (user.role === 'SUPERVISOR' ? 'blue' : 'green');
+        var rUpper = String(user.role || '').toUpperCase();
+        var tUpper = String(user.title || '').toUpperCase();
+        var rolePillClass = (rUpper === 'ADMIN' || user.nik === '81230177') ? 'red' : ((rUpper === 'SUPERVISOR') ? 'amber' : ((rUpper === 'LEADER' || tUpper.includes('LEADER')) ? 'leader' : 'green'));
+        formOpRole.className = 'status-pill ' + rolePillClass;
       }
       if (formOpShift) {
         formOpShift.textContent = 'SHIFT ' + activeShift;
@@ -767,18 +816,25 @@
         matched = userList.find(function(u) { return raw.startsWith(String(u.nik).trim()); });
       }
       if (!matched && (raw === '81230177' || raw.includes('81230177'))) {
-        matched = { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "SUPERVISOR", dept: "Operations Administration" };
+        matched = { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "ADMIN", dept: "Operations Administration" };
       }
 
       if (matched) {
         if (indicator) {
           indicator.style.display = 'flex';
           indicator.className = 'nik-auto-indicator success';
-          var isSpv = (matched.role === 'SUPERVISOR');
-          var roleLabel = matched.title || matched.role;
-          indicator.innerHTML = '<span style="display:inline-flex;align-items:center;"><svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span><div class="indicator-body" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><span>Terverifikasi: <strong style="color: #15803d;">' + matched.name + '</strong></span><span class="indicator-role-tag" style="background: ' + (isSpv ? '#dbeafe' : '#dcfce7') + '; color: ' + (isSpv ? '#1d4ed8' : '#15803d') + '; border: 1px solid ' + (isSpv ? '#93c5fd' : '#86efac') + '; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">' + roleLabel + '</span></div>';
+          var rUpper = String(matched.role || '').toUpperCase();
+          var tUpper = String(matched.title || '').toUpperCase();
+          var isAdm = (rUpper === 'ADMIN' || matched.nik === '81230177' || tUpper.includes('ADMIN'));
+          var isLdr = !isAdm && (rUpper === 'LEADER' || tUpper.includes('LEADER'));
+          var isSpv = !isAdm && !isLdr && (rUpper === 'SUPERVISOR' || tUpper.includes('SUPERVISOR'));
+          var roleLabel = isAdm ? 'ADMINISTRATOR' : (isSpv ? 'SUPERVISOR' : (isLdr ? 'GROUP LEADER' : (matched.title || matched.role)));
+          var roleBadgeBg = isAdm ? '#fee2e2' : (isSpv ? '#fef3c7' : (isLdr ? '#e0e7ff' : '#dcfce7'));
+          var roleBadgeColor = isAdm ? '#b91c1c' : (isSpv ? '#b45309' : (isLdr ? '#3730a3' : '#15803d'));
+          var roleBadgeBorder = isAdm ? '#fca5a5' : (isSpv ? '#fde68a' : (isLdr ? '#c7d2fe' : '#86efac'));
+          indicator.innerHTML = '<span style="display:inline-flex;align-items:center;"><svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span><div class="indicator-body" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><span>Terverifikasi: <strong style="color: #15803d;">' + matched.name + '</strong></span><span class="indicator-role-tag" style="background: ' + roleBadgeBg + '; color: ' + roleBadgeColor + '; border: 1px solid ' + roleBadgeBorder + '; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">' + roleLabel + '</span></div>';
         }
-        if (matched.role === 'SUPERVISOR') {
+        if (matched.role === 'SUPERVISOR' || matched.role === 'ADMIN' || matched.nik === '81230177') {
           if (optSpv) optSpv.style.display = '';
         } else {
           if (optSpv) optSpv.style.display = 'none';
@@ -838,7 +894,7 @@
           matched = userList.find(function(u) { return raw.startsWith(String(u.nik).trim()); });
         }
         if (!matched && (raw === '81230177' || raw.includes('81230177'))) {
-          matched = { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "SUPERVISOR", dept: "Operations Administration" };
+          matched = { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "ADMIN", dept: "Operations Administration" };
         }
 
         if (!matched) {
@@ -5979,6 +6035,30 @@ html.needs-login .sidebar-backdrop {
   border-radius: 8px;
 }
 
+.status-pill.blue {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.status-pill.green {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-pill.red {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.status-pill.leader {
+  background: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
 .status-pill.amber {
   background: #fef3c7;
   color: #92400e;
@@ -7834,6 +7914,18 @@ html.needs-login .sidebar-backdrop {
   background: #fef3c7;
   color: #b45309;
   border: 1px solid #fde68a;
+}
+
+.role-badge-pill.adm {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.role-badge-pill.leader {
+  background: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
 }
 
 .role-badge-pill.op {
@@ -10724,7 +10816,7 @@ html, body {
           </ul>
         </li>
 
-        <!-- 5. DATABASE MANAGER (KHUSUS SUPERVISOR / LEADER / ADMIN) -->
+        <!-- 5. DATABASE MANAGER (KHUSUS ROLE ADMIN DAN SUPERVISOR) -->
         <li class="sidebar-item" id="sidebarItemDatabase" style="display: none;">
           <a class="sidebar-link" id="menuDatabaseManager" href="javascript:void(0);" onclick="window.switchAppView('database');">
             <svg class="sidebar-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -10734,7 +10826,7 @@ html, body {
             </svg>
             <div class="sidebar-link-content">
               <strong>Database Manager</strong>
-              <small>Sheets Master &amp; Cloud Firestore</small>
+              <small>Admin Master &amp; Cloud Database</small>
             </div>
           </a>
         </li>
@@ -14198,7 +14290,9 @@ html, body {
               <label class="form-label-ent" for="dbUserRole">Role / Hak Akses <span class="required-star">*</span></label>
               <select id="dbUserRole" class="form-control-ent" required>
                 <option value="OPERATOR">OPERATOR (Charging Man)</option>
-                <option value="SUPERVISOR">SUPERVISOR / LEADER / ADMIN</option>
+                <option value="LEADER">GROUP LEADER (Pengawas Lapangan)</option>
+                <option value="SUPERVISOR">SUPERVISOR (Pimpinan Operasional - Akses DB)</option>
+                <option value="ADMIN">ADMIN (Administrator Database)</option>
               </select>
             </div>
           </div>
@@ -17535,15 +17629,15 @@ const OPERATOR_USERS = [
   { nik: "81230112", name: "BACHTIAR PUTRA DANANJAYA", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
   { nik: "81230103", name: "APRIL YULIUS PESSIWARISA", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
   { nik: "81230134", name: "INDRA ARIVYANTO", title: "CHARGING MAN", role: "OPERATOR", dept: "Charging Operations" },
-  { nik: "11050104", name: "ANTON WAHYU ANTAT WULAN", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "21002786", name: "TONI PURWANTO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "22002555", name: "YUDA PUGUH WIDODO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "24006305", name: "AHMAD ZAENAL MUNTAHA", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "25001040", name: "MURY AGUNG PRASETYA", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "25001710", name: "LAURENSIUS APRI PRASETYO CALDAS", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "25001776", name: "ANDI MUHAMMAD ALFERY", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "26002909", name: "BAMBY PRASETYO", title: "GROUB LEADER", role: "SUPERVISOR", dept: "Operations Supervision" },
-  { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "SUPERVISOR", dept: "Operations Administration" }
+  { nik: "11050104", name: "ANTON WAHYU ANTAT WULAN", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "21002786", name: "TONI PURWANTO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "22002555", name: "YUDA PUGUH WIDODO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "24006305", name: "AHMAD ZAENAL MUNTAHA", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "25001040", name: "MURY AGUNG PRASETYA", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "25001710", name: "LAURENSIUS APRI PRASETYO CALDAS", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "25001776", name: "ANDI MUHAMMAD ALFERY", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "26002909", name: "BAMBY PRASETYO", title: "GROUB LEADER", role: "LEADER", dept: "Operations Supervision" },
+  { nik: "81230177", name: "SRIYANTO", title: "ADMIN", role: "ADMIN", dept: "Operations Administration" }
 ];
 
 let appUsersList = (function() {
@@ -17551,7 +17645,24 @@ let appUsersList = (function() {
     const stored = (typeof localStorage !== 'undefined') ? localStorage.getItem('voltswap_users_data') : null;
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Auto-sanitize: update Group Leaders from old SUPERVISOR cache to LEADER and Sriyanto to ADMIN
+        let changed = false;
+        parsed.forEach(u => {
+          if (String(u.title || '').toUpperCase().includes('LEADER') && u.role === 'SUPERVISOR') {
+            u.role = 'LEADER';
+            changed = true;
+          }
+          if (u.nik === '81230177' && u.role !== 'ADMIN') {
+            u.role = 'ADMIN';
+            changed = true;
+          }
+        });
+        if (changed && typeof localStorage !== 'undefined') {
+          try { localStorage.setItem('voltswap_users_data', JSON.stringify(parsed)); } catch (e) {}
+        }
+        return parsed;
+      }
     }
   } catch (e) {}
   return [...OPERATOR_USERS];
@@ -17737,7 +17848,8 @@ function applyAuthUserSession(user) {
     if (formOpNik) formOpNik.textContent = `(${user.nik})`;
     if (formOpRole) {
       formOpRole.textContent = user.role;
-      formOpRole.className = `status-pill ${user.role === 'SUPERVISOR' ? 'blue' : 'green'}`;
+      const roleClass = (user.role === 'ADMIN' || (typeof window.isUserAdmin === 'function' && window.isUserAdmin(user))) ? 'red' : ((user.role === 'SUPERVISOR' || (typeof window.isUserPrivileged === 'function' && window.isUserPrivileged(user))) ? 'blue' : 'green');
+      formOpRole.className = `status-pill ${roleClass}`;
     }
     if (formOpShift) {
       formOpShift.textContent = `SHIFT ${activeShift}`;
@@ -17791,19 +17903,24 @@ function applyAuthUserSession(user) {
       addProbShift.value = activeShift;
     }
 
-    // 4. Pembatasan Hak Akses Menu Berdasarkan Role: Operator HANYA boleh akses Input Data & Operation
-    const isPrivilegedUser = (user.role === 'SUPERVISOR' ||
-      String(user.title || '').toUpperCase().includes('LEADER') ||
-      String(user.title || '').toUpperCase().includes('ADMIN') ||
-      String(user.title || '').toUpperCase().includes('SUPERVISOR') ||
-      user.nik === '81230177');
+    // 4. Pembatasan Hak Akses Menu Berdasarkan Role (4-Tier RBAC):
+    // - Operator: HANYA boleh akses Input Data & Operation
+    // - Leader: Boleh akses Input Data, Operation, Populasi & Intelligence (DB Manager Terkunci)
+    // - Supervisor & Admin: Akses PENUH ke seluruh menu termasuk Database Manager
+    const isPrivilegedUser = (typeof window.isUserPrivileged === 'function')
+      ? window.isUserPrivileged(user)
+      : (user.role === 'LEADER' || user.role === 'SUPERVISOR' || user.role === 'ADMIN' || String(user.title || '').toUpperCase().includes('LEADER') || String(user.title || '').toUpperCase().includes('ADMIN') || user.nik === '81230177');
+
+    const canAccessDb = (typeof window.canAccessDatabaseManager === 'function')
+      ? window.canAccessDatabaseManager(user)
+      : ((typeof window.isUserAdmin === 'function') ? window.isUserAdmin(user) : (user.role === 'ADMIN' || user.role === 'SUPERVISOR' || user.nik === '81230177'));
 
     const sidebarItemDb = document.getElementById('sidebarItemDatabase');
     const sidebarItemPopulasi = document.getElementById('sidebarItemPopulasi');
     const sidebarItemIntel = document.getElementById('sidebarItemIntelligence');
 
     if (sidebarItemDb) {
-      sidebarItemDb.style.setProperty('display', isPrivilegedUser ? 'block' : 'none', 'important');
+      sidebarItemDb.style.setProperty('display', canAccessDb ? 'block' : 'none', 'important');
     }
     if (sidebarItemPopulasi) {
       sidebarItemPopulasi.style.setProperty('display', isPrivilegedUser ? 'block' : 'none', 'important');
@@ -17812,18 +17929,30 @@ function applyAuthUserSession(user) {
       sidebarItemIntel.style.setProperty('display', isPrivilegedUser ? 'block' : 'none', 'important');
     }
 
-    // Jika sedang login sebagai Operator biasa tetapi layar aktif berada di menu terlarang, kembalikan ke Transaksi Swap
+    // Jika sedang login sebagai user tanpa hak akses DB tetapi layar aktif berada di Database Manager, kembalikan ke Transaksi Swap
+    const viewDatabase = document.getElementById('viewDatabaseManager');
+    if (!canAccessDb && viewDatabase && viewDatabase.style.display !== 'none') {
+      viewDatabase.style.display = 'none';
+      const viewSwap = document.getElementById('viewSwapTransaction');
+      if (viewSwap) viewSwap.style.display = 'block';
+      const linkSwap = document.getElementById('sublinkSwap');
+      if (linkSwap) linkSwap.classList.add('active');
+      const itemOp = document.getElementById('sidebarItemOperation') || document.getElementById('menuOperation')?.closest('.sidebar-item');
+      if (itemOp) {
+        itemOp.classList.add('open');
+        itemOp.classList.add('active');
+      }
+    }
+
+    // Jika sedang login sebagai Operator biasa tetapi layar aktif berada di Populasi atau Intelligence, kembalikan ke Transaksi Swap
     if (!isPrivilegedUser) {
-      const viewDatabase = document.getElementById('viewDatabaseManager');
       const viewPopulasi = document.getElementById('viewPopulasiUnit');
       const viewEvIntel = document.getElementById('viewEvIntelligence');
 
-      const isForbiddenActive = (viewDatabase && viewDatabase.style.display !== 'none') ||
-                                (viewPopulasi && viewPopulasi.style.display !== 'none') ||
+      const isForbiddenActive = (viewPopulasi && viewPopulasi.style.display !== 'none') ||
                                 (viewEvIntel && viewEvIntel.style.display !== 'none');
 
       if (isForbiddenActive) {
-        if (viewDatabase) viewDatabase.style.display = 'none';
         if (viewPopulasi) viewPopulasi.style.display = 'none';
         if (viewEvIntel) viewEvIntel.style.display = 'none';
 
@@ -17879,11 +18008,17 @@ function initOperatorAuthModal() {
         statusBadge.innerHTML = `<span>Terverifikasi: <strong>${matched.name}</strong> (${matched.role})</span>`;
       }
 
-      if (matched.role === 'SUPERVISOR') {
+      if (matched.role === 'ADMIN' || matched.nik === '81230177') {
         if (optSpv) optSpv.style.display = '';
         if (stationSelect) stationSelect.value = 'SUPERVISOR';
         if (accessDesc) {
-          accessDesc.innerHTML = `<strong style="color:#00a65a;">Akses Penuh Supervisor:</strong> Semua menu terbuka termasuk Visual Analytics & KPI serta Populasi Unit EV.`;
+          accessDesc.innerHTML = `<strong style="color:#b91c1c;">Akses Penuh Administrator:</strong> Semua modul &amp; Database Manager terbuka penuh.`;
+        }
+      } else if (matched.role === 'SUPERVISOR') {
+        if (optSpv) optSpv.style.display = '';
+        if (stationSelect) stationSelect.value = 'SUPERVISOR';
+        if (accessDesc) {
+          accessDesc.innerHTML = `<strong style="color:#00a65a;">Akses Supervisor:</strong> Menu Operasi, Analytics, Populasi Unit &amp; EV Intelligence terbuka.`;
         }
       } else {
         if (optSpv) optSpv.style.display = 'none';
@@ -18111,18 +18246,25 @@ function initSplitCardLogin() {
       if (indicator) {
         indicator.style.display = 'flex';
         indicator.className = 'nik-auto-indicator success';
-        const isSpv = (matched.role === 'SUPERVISOR');
-        const roleLabel = matched.title || matched.role;
+        const rUpper = String(matched.role || '').toUpperCase();
+        const tUpper = String(matched.title || '').toUpperCase();
+        const isAdmin = (rUpper === 'ADMIN' || matched.nik === '81230177' || tUpper.includes('ADMIN'));
+        const isLeader = !isAdmin && (rUpper === 'LEADER' || tUpper.includes('LEADER'));
+        const isSpv = !isAdmin && !isLeader && (rUpper === 'SUPERVISOR' || tUpper.includes('SUPERVISOR'));
+        const roleLabel = isAdmin ? 'ADMINISTRATOR' : (isSpv ? 'SUPERVISOR' : (isLeader ? 'GROUP LEADER' : (matched.title || matched.role)));
+        const roleBadgeBg = isAdmin ? '#fee2e2' : (isSpv ? '#fef3c7' : (isLeader ? '#e0e7ff' : '#dcfce7'));
+        const roleBadgeColor = isAdmin ? '#b91c1c' : (isSpv ? '#b45309' : (isLeader ? '#3730a3' : '#15803d'));
+        const roleBadgeBorder = isAdmin ? '#fca5a5' : (isSpv ? '#fde68a' : (isLeader ? '#c7d2fe' : '#86efac'));
         indicator.innerHTML = `
           <span style="display:inline-flex;align-items:center;"><svg class="svg-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
           <div class="indicator-body" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span>Terverifikasi: <strong style="color: #15803d;">${matched.name}</strong></span>
-            <span class="indicator-role-tag" style="background: ${isSpv ? '#dbeafe' : '#dcfce7'}; color: ${isSpv ? '#1d4ed8' : '#15803d'}; border: 1px solid ${isSpv ? '#93c5fd' : '#86efac'}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${roleLabel}</span>
+            <span class="indicator-role-tag" style="background: ${roleBadgeBg}; color: ${roleBadgeColor}; border: 1px solid ${roleBadgeBorder}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${roleLabel}</span>
           </div>
         `;
       }
 
-      if (matched.role === 'SUPERVISOR') {
+      if (matched.role === 'SUPERVISOR' || matched.role === 'ADMIN' || matched.nik === '81230177') {
         if (optSpv) optSpv.style.display = '';
         if (stationSelect && !stationSelect.value) {
           stationSelect.value = 'SUPERVISOR';
@@ -18272,7 +18414,7 @@ function initSplitCardLogin() {
         matched = {
           nik: cleanDigits,
           name: cleanDigits === '81230177' ? 'SRIYANTO' : `OPERATOR (${cleanDigits})`,
-          role: cleanDigits === '81230177' ? 'SUPERVISOR' : 'OPERATOR',
+          role: cleanDigits === '81230177' ? 'ADMIN' : 'OPERATOR',
           title: cleanDigits === '81230177' ? 'ADMIN' : 'CHARGING MAN',
           dept: cleanDigits === '81230177' ? 'Operations Administration' : 'Charging Operations'
         };
@@ -28743,6 +28885,10 @@ const dbSchedulePerPage = 10;
 let dbPendingDeleteAction = null;
 
 window.initDatabaseManagerModule = function() {
+  if (typeof window.canAccessDatabaseManager === 'function' && !window.canAccessDatabaseManager()) {
+    console.warn('initDatabaseManagerModule blocked: user does not have database management privileges');
+    return;
+  }
   bindDbTabs();
   bindDbStatCardClicks();
   bindDbUserEvents();
@@ -28929,13 +29075,15 @@ function bindDbStatCardClicks() {
 
 function updateDbSummaryMetrics() {
   const users = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : OPERATOR_USERS;
+  const adminCount = users.filter(u => u.role === 'ADMIN' || u.nik === '81230177').length;
+  const spvCount = users.filter(u => u.role === 'SUPERVISOR' && !String(u.title || '').toUpperCase().includes('LEADER') && u.nik !== '81230177').length;
+  const leaderCount = users.filter(u => u.role === 'LEADER' || String(u.title || '').toUpperCase().includes('LEADER')).length;
   const opCount = users.filter(u => u.role === 'OPERATOR').length;
-  const spvCount = users.filter(u => u.role === 'SUPERVISOR').length;
 
   const elUsers = document.getElementById('dbStatUsers');
   const elUsersDetail = document.getElementById('dbStatUsersDetail');
   if (elUsers) elUsers.textContent = users.length;
-  if (elUsersDetail) elUsersDetail.textContent = `${opCount} Operator • ${spvCount} Spv`;
+  if (elUsersDetail) elUsersDetail.textContent = `${opCount} Op • ${leaderCount} Leader • ${spvCount} Spv • ${adminCount} Admin`;
 
   const elSwaps = document.getElementById('dbStatSwaps');
   if (elSwaps) elSwaps.textContent = swapsData ? swapsData.length : 0;
@@ -29249,17 +29397,21 @@ function renderDbUsersTable() {
   }
 
   tbody.innerHTML = filtered.map((u, idx) => {
-    const isSpv = u.role === 'SUPERVISOR';
-    const pwdMask = u.password ? '••••¢••' : String(u.nik);
+    const isAdm = u.role === 'ADMIN' || u.nik === '81230177' || String(u.title || '').toUpperCase().includes('ADMIN');
+    const isLdr = !isAdm && (u.role === 'LEADER' || String(u.title || '').toUpperCase().includes('LEADER'));
+    const isSpv = !isAdm && !isLdr && u.role === 'SUPERVISOR';
+    const pwdMask = u.password ? '••••••••' : String(u.nik);
+    const badgeClass = isAdm ? 'adm' : (isSpv ? 'spv' : (isLdr ? 'leader' : 'op'));
+    const badgeLabel = isAdm ? 'ADMIN' : (isSpv ? 'SUPERVISOR' : (isLdr ? 'GROUP LEADER' : 'OPERATOR'));
     return `
       <tr>
         <td style="text-align: center; color: #64748b;">${idx + 1}</td>
         <td><strong style="font-family: var(--font-mono); color: #0f172a;">${u.nik}</strong></td>
         <td><strong style="color: #1e293b;">${u.name}</strong></td>
-        <td><span style="font-size: 11.5px; color: #475569;">${u.title || 'CHARGING MAN'}</span></td>
+        <td><span style="font-size: 11.5px; color: #475569;">${u.title || (isAdmin ? 'ADMIN' : (isSpv ? 'GROUB LEADER' : 'CHARGING MAN'))}</span></td>
         <td>
-          <span class="role-badge-pill ${isSpv ? 'spv' : 'op'}">
-            ${isSpv ? 'SUPERVISOR' : 'OPERATOR'}
+          <span class="role-badge-pill ${badgeClass}">
+            ${badgeLabel}
           </span>
         </td>
         <td>
@@ -29292,6 +29444,10 @@ window.toggleViewUserPassword = function(nik) {
 };
 
 window.openDbUserModal = function(mode, nik) {
+  if (typeof window.canAccessDatabaseManager === 'function' && !window.canAccessDatabaseManager()) {
+    if (typeof showToast === 'function') showToast('Akses Ditolak: Hanya Admin dan Supervisor yang dapat mengelola data pengguna!', 'danger');
+    return;
+  }
   const modal = document.getElementById('modalDbUser');
   const title = document.getElementById('modalDbUserTitle');
   const inpMode = document.getElementById('dbUserMode');
@@ -29361,7 +29517,7 @@ function handleDbUserFormSubmit(e) {
       title: title,
       role: role,
       password: password,
-      dept: role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations'
+      dept: role === 'ADMIN' ? 'Operations Administration' : (role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')
     };
     users.push(targetUser);
     showToast(`Pengguna baru ${name} (${nik}) berhasil ditambahkan!`, 'success');
@@ -29381,7 +29537,7 @@ function handleDbUserFormSubmit(e) {
         title: title,
         role: role,
         password: password,
-        dept: role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations'
+        dept: role === 'ADMIN' ? 'Operations Administration' : (role === 'SUPERVISOR' ? 'Operations Supervision' : 'Charging Operations')
       };
       users[idx] = targetUser;
       // Jika user yang diedit sedang login, update sesi
@@ -29405,6 +29561,10 @@ function handleDbUserFormSubmit(e) {
 }
 
 window.confirmDeleteDbUser = function(nik, name) {
+  if (typeof window.canAccessDatabaseManager === 'function' && !window.canAccessDatabaseManager()) {
+    if (typeof showToast === 'function') showToast('Akses Ditolak: Hanya Admin dan Supervisor yang dapat menghapus data pengguna!', 'danger');
+    return;
+  }
   openDbConfirmModal(
     `Hapus Pengguna: ${name}?`,
     `Pengguna dengan NIK <strong>${nik}</strong> (${name}) akan dihapus dari sistem dan tidak bisa login lagi.`,

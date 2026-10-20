@@ -1,8 +1,44 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 17 Oktober 2026, Pukul 22:15 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v71.0) - Logika Remark, Status & Keterangan Sinkronisasi 2-Arah Operasional Berjalan Mulus Tanpa Gangguan.
+**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:20 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v73.0) - Pemisahan Role GROUP LEADER Menjadi Role LEADER; Menu Database Manager Eksklusif untuk Role ADMIN & SUPERVISOR.
 
 ---
+
+### 🛡️ Blueprint Pembaruan Hak Akses 4-Tier Role (Build v73.0):
+**Tujuan:** Memisahkan peran operasional Group Leader (role `LEADER`) dengan Pimpinan/Pengawas (role `SUPERVISOR`) dan Administrator (role `ADMIN`). Menu **Database Manager** kini secara eksklusif hanya dapat diakses oleh **ADMIN dan SUPERVISOR**, sedangkan Group Leader diblokir dari Database Manager namun tetap memiliki akses penuh ke modul pengawasan operasional (Input Data, Operation, Populasi Unit, dan EV Intelligence).
+
+#### 🎯 Matriks 4-Tier Role-Based Access Control (RBAC):
+1. **OPERATOR (Charging Man):**
+   - **Akses Diizinkan:**
+     - `Input Data`: Formulir swap baterai lapangan.
+     - `Operation`: Transaksi Swap, Riwayat Harian, Problem Log, Swap Schedule, dan Executive Analytics.
+   - **Akses Dibatasi / Disembunyikan:**
+     - ❌ `Populasi Unit`: Tersembunyi.
+     - ❌ `EV Intelligence`: Tersembunyi.
+     - ❌ `Database Manager`: Tersembunyi & diblokir.
+2. **GROUP LEADER (role `LEADER` - Anton, Toni, Yuda, Zaenal, Mury, Laurensius, Andi, Bamby):**
+   - **Akses Diizinkan:**
+     - ✅ Seluruh menu `Input Data` & `Operation`.
+     - ✅ `Populasi Unit`: Monitoring armada unit EV Dump Truck.
+     - ✅ `EV Intelligence`: Analisis performa stasiun swap, battery endurance, dan SLA cycle time.
+   - **Akses Dibatasi / Disembunyikan:**
+     - ❌ **`Database Manager`**: Tersembunyi dari sidebar dan diblokir dengan notifikasi tegas: *"Akses Ditolak: Menu DATABASE MANAGER hanya dapat diakses oleh ADMIN dan SUPERVISOR!"*.
+3. **SUPERVISOR (Pimpinan Operasional / Pengawas Murni):**
+   - **Akses Diizinkan:**
+     - ✅ **FULL ACCESS** ke modul operasional, analitik, serta **Database Manager** (pengelolaan master database, akun user, dan backup).
+4. **ADMINISTRATOR (Admin / Sriyanto - NIK 81230177):**
+   - **Akses Diizinkan:**
+     - ✅ **FULL ACCESS SUPER USER** ke seluruh modul aplikasi tanpa batasan.
+
+#### 🔧 Titik Sentuh Teknis Build v73.0:
+1. **Master User List:** Memperbarui role seluruh Group Leader dari `SUPERVISOR` menjadi `LEADER` pada [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dan [Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs).
+2. **Auto-Sanitize Local Cache:** Menambahkan sanitasi otomatis pada `appUsersList` agar akun Group Leader yang sebelumnya tersimpan di `localStorage` otomatis termutasi menjadi role `LEADER` tanpa perlu clear cache manual.
+3. **Pengecekan Berlapis `canAccessDatabaseManager(u)`:** Memeriksa kombinasi `role`, `title`, dan `nik`. Jika `role === 'LEADER'` atau `title.includes('LEADER')`, akses Database Manager langsung ditolak (`return false`), bahkan jika data cache lokal usang masih membawa string SUPERVISOR.
+4. **Modal Pengguna & Visual Badge:** Dropdown `#dbUserRole` mendukung 4 opsi (`OPERATOR`, `LEADER`, `SUPERVISOR`, `ADMIN`) dengan badge warna spesifik (`.role-badge-pill.leader` berwarna indigo elegan).
+5. **Cache Version Bump:** `APP_BUILD_ID = '2026.10.21.v73'` dan Service Worker `CACHE_NAME = 'charging-ev-v73'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+
+---
+
 
 ### 📋 Blueprint Kesepakatan Final: Logika Remark, Status & Keterangan Sinkronisasi 2-Arah (Persiapan Build v71):
 

@@ -536,7 +536,7 @@ function applyDatabaseFormattingAndValidations(ss) {
     const sUser = ss.getSheetByName('USER');
     if (sUser) {
       const ruleRole = SpreadsheetApp.newDataValidation()
-        .requireValueInList(['OPERATOR', 'SUPERVISOR', 'ADMIN'], true)
+        .requireValueInList(['OPERATOR', 'LEADER', 'SUPERVISOR', 'ADMIN'], true)
         .setAllowInvalid(true)
         .build();
       sUser.getRange('E2:E500').setDataValidation(ruleRole);
