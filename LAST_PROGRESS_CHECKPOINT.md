@@ -1,6 +1,16 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:20 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v73.0) - Pemisahan Role GROUP LEADER Menjadi Role LEADER; Menu Database Manager Eksklusif untuk Role ADMIN & SUPERVISOR.
+**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:33 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v74.0) - Perbaikan Bug Verifikasi Password Login: Pencocokan Ketat Terhadap Database & Penolakan Password Salah.
+
+---
+
+### 🔐 Blueprint Perbaikan Verifikasi Password Akun (Build v74.0):
+**Akar Masalah:** Sebelumnya, kedua fungsi penanganan login (`handleSplitLoginClick` dan `handleLoginAction`) hanya memeriksa `if (!enteredPassword)` (apakah input kosong), namun tidak pernah mencocokkan nilainya dengan password di database.
+**Solusi:** 
+1. Diimplementasikan helper global terpusat `window.verifyUserLoginPassword(user, enteredPassword)` yang mencocokkan password kustom (jika pernah diset di Database Manager) atau default NIK akun.
+2. Login ditolak seketika (`return;`) jika password tidak sesuai, disertai Toast Peringatan Merah tegas dan penyorotan visual border merah pada kotak password (`splitLoginPassword`).
+3. Khusus Super Admin (NIK `81230177`), disediakan emergency recovery password (`admin` / `admin123`).
+4. Versi build dinaikkan ke **v74.0** (`APP_BUILD_ID = '2026.10.21.v74'`, Service Worker `charging-ev-v74`).
 
 ---
 

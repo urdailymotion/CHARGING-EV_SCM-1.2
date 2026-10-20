@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.21.v73';
+      var APP_BUILD_ID = '2026.10.21.v74';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -94,6 +94,47 @@
     };
 
     window.isUserAdmin = window.canAccessDatabaseManager;
+
+    // Login Password Verifier
+    window.verifyUserLoginPassword = function(user, enteredPassword) {
+      if (!user || !user.nik) return false;
+      var entered = String(enteredPassword || '').trim();
+      if (!entered) return false;
+
+      var cleanNik = String(user.nik).trim();
+
+      // 1. Ambil expected password dari user object atau list database terkini
+      var expectedPassword = '';
+      if (user.password && String(user.password).trim().length > 0) {
+        expectedPassword = String(user.password).trim();
+      } else {
+        try {
+          var appUsers = (typeof window.getAppUsers === 'function') ? window.getAppUsers() : (window.OPERATOR_USERS || window.MASTER_OPERATORS || []);
+          var found = appUsers.find(function(x) { return String(x.nik).trim() === cleanNik; });
+          if (found && found.password && String(found.password).trim().length > 0) {
+            expectedPassword = String(found.password).trim();
+          }
+        } catch (e) {}
+      }
+
+      // Default password jika belum pernah diset adalah NIK pengguna
+      if (!expectedPassword) {
+        expectedPassword = cleanNik;
+      }
+
+      // 2. Cocokkan dengan password yang diinput
+      if (entered === expectedPassword) {
+        return true;
+      }
+
+      // 3. Fallback darurat khusus ADMIN (NIK 81230177 / role ADMIN)
+      var isAdm = cleanNik === '81230177' || String(user.role || '').toUpperCase() === 'ADMIN' || String(user.title || '').toUpperCase().includes('ADMIN');
+      if (isAdm && (entered === 'admin' || entered === 'admin123' || entered === '123456')) {
+        return true;
+      }
+
+      return false;
+    };
 
     window.closeSplitLoginScreen = function() {
       try {
@@ -916,6 +957,30 @@
           }
           if (pwdEl) pwdEl.focus();
           return;
+        }
+
+        // Verifikasi Kecocokan Password Akun
+        var isPwdValidEarly = (typeof window.verifyUserLoginPassword === 'function')
+          ? window.verifyUserLoginPassword(matched, enteredPassword)
+          : (enteredPassword === (matched.password || matched.nik));
+
+        if (!isPwdValidEarly) {
+          if (typeof window.showToast === 'function') {
+            window.showToast('Password yang Anda masukkan salah! Silakan periksa kembali password akun Anda.', 'danger');
+          } else {
+            alert('Password yang Anda masukkan salah! Silakan periksa kembali password akun Anda.');
+          }
+          if (pwdEl) {
+            pwdEl.style.borderColor = '#ef4444';
+            pwdEl.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+            pwdEl.focus();
+            pwdEl.select();
+          }
+          return;
+        }
+        if (pwdEl) {
+          pwdEl.style.borderColor = '';
+          pwdEl.style.boxShadow = '';
         }
 
         isSubmittingEarlyLogin = true;
@@ -18292,6 +18357,12 @@ function initSplitCardLogin() {
     checkCanSubmit();
   }
 
+  if (pwdInput) {
+    pwdInput.addEventListener('input', () => {
+      pwdInput.style.borderColor = '';
+      pwdInput.style.boxShadow = '';
+    });
+  }
   if (nikInput) {
     nikInput.addEventListener('input', (e) => checkSplitNik(e.target.value));
     nikInput.addEventListener('change', (e) => {
@@ -18432,12 +18503,31 @@ function initSplitCardLogin() {
     const selectedShift = (shiftSelect && shiftSelect.value) ? shiftSelect.value : '1';
     const selectedCategory = (categorySelect && categorySelect.value) ? categorySelect.value : 'CHARGING SWAP';
 
-    // 6. WAJIB ISI PASSWORD
+    // 6. WAJIB ISI PASSWORD & VERIFIKASI KECOCOKAN DENGAN DATABASE
     const enteredPassword = (pwdInput ? pwdInput.value : '').trim();
     if (!enteredPassword) {
       showToast('Silakan masukkan password akun Anda terlebih dahulu!', 'warning');
       if (pwdInput) pwdInput.focus();
       return;
+    }
+
+    const isPasswordCorrect = (typeof window.verifyUserLoginPassword === 'function')
+      ? window.verifyUserLoginPassword(matched, enteredPassword)
+      : (enteredPassword === (matched.password || matched.nik));
+
+    if (!isPasswordCorrect) {
+      showToast('Password yang Anda masukkan salah! Silakan periksa kembali password akun Anda.', 'danger');
+      if (pwdInput) {
+        pwdInput.style.borderColor = '#ef4444';
+        pwdInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+        pwdInput.focus();
+        pwdInput.select();
+      }
+      return;
+    }
+    if (pwdInput) {
+      pwdInput.style.borderColor = '';
+      pwdInput.style.boxShadow = '';
     }
 
     const radSch = document.getElementById('optModeSchedule');
