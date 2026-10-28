@@ -1,6 +1,32 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:25 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI (Build v76.0) - Tampilan Form Input Problem Dibuat Bersih (Semua Kolom Kosong/Blank Tanpa Auto-Fill Paksa), Perbaikan Kontras Header Modal, & Bumping PWA Cache.
+**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:40 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI (Build v77.0) - Perbaikan Alur Penyelesaian Tiket Problem (Jam Mulai Terkunci/Terisi Otomatis, Fokus Pengisian Jam Selesai Tanpa Terblokir), Normalisasi Format Waktu HH:mm:ss, & Penegasan Kontras Header Modal.
+
+---
+
+### 🌟 Blueprint Perbaikan Penutupan Tiket Gangguan & Normalisasi Waktu (Build v77.0):
+**Akar Masalah yang Ditemukan:**
+1. Di data historis Google Sheets / JSON, format `timeOpen` menggunakan pemisah titik (misal `"01.23.00"`).
+2. Standar elemen HTML5 `<input type="time">` pada browser **menolak** nilai dengan pemisah titik, sehingga field `editProbTimeOpen` menjadi kosong melompong (`--:--:-- --`).
+3. Karena atribut `required` terpasang pada `editProbTimeOpen`, browser memblokir penyimpanan tiket dengan peringatan *"Harap isi kolom ini"* pada Jam Mulai, padahal operator sedang ingin mengisi **Jam Selesai (Time Close)**.
+4. Perhitungan downtime otomatis menghasilkan nilai salah (selisih dari jam 00:00:00).
+
+#### 🎯 Realisasi & Solusi:
+1. **Helper Cerdas `normalizeTimeToHms(val)`:**
+   - Menormalisasi semua string jam dari format titik (`HH.mm.ss` / `HH.mm`) atau format tanpa detik menjadi standar `HH:mm:ss` dengan titik dua (`:`).
+   - Seluruh 44 catatan waktu di `INITIAL_DATA.problems` telah dinormalisasi bersih ke format `HH:mm:ss`.
+2. **Form Edit & Selesaikan Tiket (`#modalEditProblem`):**
+   - Field `editProbTimeOpen` kini otomatis menampilkan Jam Mulai yang valid dari rekaman tiket (`normOpen`), berlatar belakang `#f8fafc`, dan atribut `required` dihapus agar browser tidak memblokir penutupan tiket.
+   - Field `editProbTimeClose` menjadi fokus utama penyelesaian tiket dengan penanda warna biru dan tombol instan `Set Sekarang`.
+   - Handler submit `formEditProblem` mengambil `timeOpen` dengan fallback aman ke `item.timeOpen` sehingga tidak akan pernah kosong.
+   - Perhitungan downtime real-time menggunakan `computeDurationBetween` bekerja akurat menghitung selisih antara Jam Mulai asli dan Jam Selesai.
+3. **Penguatan Kontras Header Modal:**
+   - Menambahkan aturan CSS eksplisit `!important` untuk judul (`#ffffff`), subjudul (`#cbd5e1`), dan tombol close pada `#modalAddProblem` dan `#modalEditProblem` sehingga judul selalu kontras di latar belakang gelap.
+4. **Bumping Versi & PWA Cache:**
+   - `APP_BUILD_ID = '2026.10.28.v77'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+   - `CACHE_NAME = 'charging-ev-v77'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+   - Service worker registration URL di-bump ke `./sw.js?v=77`.
+   - 100% dari 9 script block inline lolos validasi sintaks Node.js (`vm.Script`).
 
 ---
 
