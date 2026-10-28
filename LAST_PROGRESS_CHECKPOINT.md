@@ -63,8 +63,8 @@
 ---
 
 ### 🚨 MONITORING KUOTA GOOGLE APPS SCRIPT (REMINDER AMBANG 180):
-- **Posisi Versi Saat Ini:** Versi **@117** (dari batas maksimum **200** versi Apps Script).
-- **Sisa Kuota Versi:** Tersisa **83 versi**.
+- **Posisi Versi Saat Ini:** Versi **@118** (dari batas maksimum **200** versi Apps Script).
+- **Sisa Kuota Versi:** Tersisa **82 versi**.
 - **Komitmen Pengingat (Reminder Threshold):** 
   - Bila counter deploy Apps Script mencapai angka **180** (tersisa 20 versi), sistem otomatis dan asisten akan **langsung memberikan peringatan / reminder tegas** kepada user.
   - Script [auto-deploy.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/auto-deploy.js) telah disuntikkan logika pendeteksi kuota otomatis: jika `currentVer >= 180`, banner peringatan merah akan muncul di terminal.
