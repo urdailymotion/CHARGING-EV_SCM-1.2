@@ -1,6 +1,38 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:05 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v75.0) - Perombakan Ergonomi Form Input Problem, Pemisahan Lokasi Swap (SWAP 01/02/03/HAULING), Pemisahan Akar Masalah Pemadaman Listrik (PLN vs PPA), & Migrasi Resmi Sheet DATA PROBLEM ke 9 Kolom Standar (Zero Downtime).
+**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:25 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI (Build v76.0) - Tampilan Form Input Problem Dibuat Bersih (Semua Kolom Kosong/Blank Tanpa Auto-Fill Paksa), Perbaikan Kontras Header Modal, & Bumping PWA Cache.
+
+---
+
+### 🌟 Blueprint Form Input Problem Bersih & Elegan (Build v76.0):
+**Kebutuhan User:**
+1. Kolom/field yang belum diisi dari hasil dropdown ataupun diisi manual harus **tetap kosong dan bersih** (tidak boleh ada auto-fill default seperti otomatis mengisi teks `"Pemadaman Listrik (PLN)"`, tidak memaksa unit `"POWER SUPPLY"`, dan tidak memaksa pilihan stasiun).
+2. Perbaikan kontras judul header modal Add/Edit Problem agar teks putih terbaca jelas dengan latar belakang gradien yang elegan.
+3. Eksekusi langsung tanpa Live Preview / browser test.
+
+#### 🎯 Realisasi & Hasil Eksekusi:
+1. **Form Input Gangguan Baru (`#modalAddProblem`):**
+   - **Stasiun / Lokasi:** Default `<option value="" selected>-- Pilih Stasiun / Lokasi --</option>` (bersih/kosong, operator memilih sesuai stasiun terkait).
+   - **Kategori Masalah:** Default `<option value="" selected>-- Pilih Kategori Masalah --</option>` (bersih/kosong).
+   - **Unit / Fasilitas:** Default `<option value="" selected>-- Pilih Unit / Fasilitas --</option>` (bersih/kosong), input manual bersih dengan placeholder `"Manual..."`.
+   - **Container Akar Masalah Listrik (`#wrapProbPowerSource`):** Default `display: none;` (tersembunyi hingga operator memilih kategori Pemadaman Listrik). Tombol PLN & PPA tidak ada yang aktif secara paksa, nilai input `#addProbSource` kosong `""`.
+   - **Deskripsi Gangguan:** Default kosong `""` dengan placeholder `"Ketik detail kendala atau kerusakan di sini..."`.
+2. **Form Edit Gangguan (`#modalEditProblem`):**
+   - Opsi Stasiun menyertakan opsi default netral `<option value="">-- Pilih Stasiun / Lokasi --</option>`.
+3. **Logika JavaScript Ergonomis & Validasi:**
+   - `openAddProblemModal()`: Mengosongkan seluruh field input saat modal dibuka sehingga operator selalu memulai dari kondisi form bersih tanpa gangguan auto-fill teks lama.
+   - Pemilihan tombol pill PLN/PPA hanya mengatur status aktif tombol dan tag sumber listrik, tanpa menimpa atau memaksakan teks pada textarea deskripsi dan unit.
+   - Validasi submit: Menampilkan peringatan ramah bila Stasiun / Lokasi, Unit, atau Deskripsi belum dipilih/diisi oleh operator.
+   - Badge stasiun & unit pada tabel: Jika field kosong/belum diisi, menampilkan dash `-` netral secara rapi (tidak lagi memaksakan badge SWAP 01).
+4. **Perbaikan Kontras Header Modal:**
+   - Menghilangkan `!important` latar belakang abu-abu muda (`#f8fafc`) yang sebelumnya menimpa header modal Add Problem.
+   - Menetapkan header `#modalAddProblem` dengan deep crimson gradient (`#7f1d1d` s/d `#b91c1c`) dan teks putih solid.
+   - Menetapkan header `#modalEditProblem` dengan slate dark gradient (`#1e293b` s/d `#334155`) dan teks putih solid.
+5. **Versi Cache & PWA:**
+   - `APP_BUILD_ID = '2026.10.28.v76'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+   - `CACHE_NAME = 'charging-ev-v76'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+6. **Validasi Sintaks Script:**
+   - 100% dari 9 script block inline di `index.html` lulus uji validasi sintaks Node.js (`vm.Script`) tanpa satupun error.
 
 ---
 

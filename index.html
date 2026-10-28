@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.28.v75';
+      var APP_BUILD_ID = '2026.10.28.v76';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -10394,9 +10394,19 @@ html, body {
 .modal-header-ent {
   flex-shrink: 0 !important;
   padding: clamp(10px, 2vw, 16px) !important;
-  background: #f8fafc !important;
+  background: #f8fafc;
   border-bottom: 1px solid #e2e8f0 !important;
   z-index: 2 !important;
+}
+
+#modalAddProblem .modal-header-ent {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+}
+
+#modalEditProblem .modal-header-ent {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  color: #ffffff !important;
 }
 
 .modal-body-ent {
@@ -14181,6 +14191,7 @@ html, body {
             <div class="form-group-ent">
               <label class="form-label-ent" style="font-weight: 700; font-size: 11.5px; color: #334155;">Stasiun / Lokasi <span style="color:#d32f2f;">*</span></label>
               <select id="addProbStation" class="form-control-ent" required style="font-size: 12.5px; font-weight: 600; color: #0f172a; border-color: #cbd5e1;">
+                <option value="" selected>-- Pilih Stasiun / Lokasi --</option>
                 <option value="SWAP 01">SWAP 01</option>
                 <option value="SWAP 02">SWAP 02</option>
                 <option value="SWAP 03">SWAP 03</option>
@@ -14194,6 +14205,7 @@ html, body {
             <div class="form-group-ent">
               <label class="form-label-ent" style="font-weight: 700; font-size: 11.5px; color: #334155;">Kategori Masalah <span style="color:#d32f2f;">*</span></label>
               <select id="addProbCategory" class="form-control-ent" style="font-size: 12px; font-weight: 600;">
+                <option value="" selected>-- Pilih Kategori Masalah --</option>
                 <option value="PEMADAMAN LISTRIK">⚡ Pemadaman Listrik</option>
                 <option value="FASILITAS SWAP">🏗️ Fasilitas Swap (Crane/Bay/Modul)</option>
                 <option value="UNIT DT">🚛 Unit Armada DT (EV Truk)</option>
@@ -14205,7 +14217,7 @@ html, body {
               <label class="form-label-ent" style="font-weight: 700; font-size: 11.5px; color: #334155;">Unit / Objek Terkendala <span style="color:#d32f2f;">*</span></label>
               <div style="display: flex; gap: 6px;">
                 <select id="addProbUnitSelect" class="form-control-ent" style="flex: 1.2; font-size: 12px;">
-                  <!-- Populated dynamically via JS -->
+                  <option value="" selected>-- Pilih Unit / Fasilitas --</option>
                 </select>
                 <input type="text" id="addProbUnitCustom" class="form-control-ent" placeholder="Manual..." style="flex: 0.8; font-size: 12px;" title="Ketik jika tidak ada di opsi">
               </div>
@@ -14213,13 +14225,13 @@ html, body {
           </div>
 
           <!-- Quick Root Cause Pill Buttons (PLN vs PPA) -->
-          <div id="wrapProbPowerSource" style="margin-bottom: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 9px; padding: 10px 12px;">
+          <div id="wrapProbPowerSource" style="display: none; margin-bottom: 14px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 9px; padding: 10px 12px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
               <span style="font-size: 11.5px; font-weight: 700; color: #334155;">Penyebab Pemadaman Listrik (Root Cause SLA):</span>
               <span style="font-size: 10.5px; color: #64748b;">Pilih salah satu tombol</span>
             </div>
             <div class="prob-source-toggle-wrap">
-              <button type="button" class="prob-source-btn active-pln" id="btnProbSourcePLN">
+              <button type="button" class="prob-source-btn" id="btnProbSourcePLN">
                 <div class="prob-source-title">⚡ PLN (Eksternal)</div>
                 <div class="prob-source-sub">Gangguan jaringan transmisi PLN luar</div>
               </button>
@@ -14228,12 +14240,12 @@ html, body {
                 <div class="prob-source-sub">Genset, trip panel, atau instalasi PPA</div>
               </button>
             </div>
-            <input type="hidden" id="addProbSource" value="PLN">
+            <input type="hidden" id="addProbSource" value="">
           </div>
 
           <div class="form-group-ent" style="margin-bottom: 12px;">
             <label class="form-label-ent" style="font-weight: 700; font-size: 11.5px; color: #334155;">Deskripsi Masalah / Indikasi Kerusakan <span style="color:#d32f2f;">*</span></label>
-            <textarea id="addProbDesc" class="form-control-ent" rows="2" placeholder="Detail kendala atau indikasi kerusakan di lapangan..." required style="resize: vertical; font-size: 12.5px; line-height: 1.4;"></textarea>
+            <textarea id="addProbDesc" class="form-control-ent" rows="2" placeholder="Ketik detail kendala atau kerusakan di sini..." required style="resize: vertical; font-size: 12.5px; line-height: 1.4;"></textarea>
           </div>
 
           <div class="form-group-ent" style="margin-bottom: 14px;">
@@ -14302,6 +14314,7 @@ html, body {
             <div class="form-group-ent">
               <label class="form-label-ent" style="font-weight: 700; font-size: 11.5px; color: #334155;">Stasiun / Lokasi <span style="color:#d32f2f;">*</span></label>
               <select id="editProbStation" class="form-control-ent" required style="font-size: 12.5px; font-weight: 600; color: #0f172a; border-color: #cbd5e1;">
+                <option value="">-- Pilih Stasiun / Lokasi --</option>
                 <option value="SWAP 01">SWAP 01</option>
                 <option value="SWAP 02">SWAP 02</option>
                 <option value="SWAP 03">SWAP 03</option>
@@ -22049,7 +22062,8 @@ function parseDateForSort(dStr) {
 }
 
 function formatProblemStationBadge(stn) {
-  const s = String(stn || 'SWAP 01').trim().toUpperCase();
+  if (!stn || !String(stn).trim() || stn === '-') return '<span class="prob-station-badge" style="background:#f1f5f9;color:#64748b;border-color:#cbd5e1;">-</span>';
+  const s = String(stn).trim().toUpperCase();
   if (s === 'SWAP 01') return '<span class="prob-station-badge badge-st-swap01">SWAP 01</span>';
   if (s === 'SWAP 02') return '<span class="prob-station-badge badge-st-swap02">SWAP 02</span>';
   if (s === 'SWAP 03') return '<span class="prob-station-badge badge-st-swap03">SWAP 03</span>';
@@ -22059,7 +22073,7 @@ function formatProblemStationBadge(stn) {
 }
 
 function formatProblemUnitDisplay(unit) {
-  if (!unit) return '-';
+  if (!unit || !String(unit).trim() || unit === '-') return '-';
   const u = String(unit).trim();
   if (/^\d{3,4}$/.test(u)) return `DT ${u}`;
   if (/^DT\s*\d+/i.test(u)) return u.toUpperCase();
@@ -22138,49 +22152,35 @@ function initProblemLogControls() {
   const btnPLN = document.getElementById('btnProbSourcePLN');
   const btnPPA = document.getElementById('btnProbSourcePPA');
   const inputSource = document.getElementById('addProbSource');
-  const descAdd = document.getElementById('addProbDesc');
   const catSelect = document.getElementById('addProbCategory');
-  const unitSel = document.getElementById('addProbUnitSelect');
 
   const activateSourceAdd = (src) => {
     if (src === 'PLN') {
       btnPLN?.classList.add('active-pln');
       btnPPA?.classList.remove('active-ppa');
       if (inputSource) inputSource.value = 'PLN';
-      if (unitSel) unitSel.value = 'POWER SUPPLY';
-      if (descAdd && (!descAdd.value || descAdd.value === 'Pemadaman Listrik (PPA)' || descAdd.value.startsWith('Pemadaman Listrik'))) {
-        descAdd.value = 'Pemadaman Listrik (PLN)';
-      }
-    } else {
+    } else if (src === 'PPA') {
       btnPPA?.classList.add('active-ppa');
       btnPLN?.classList.remove('active-pln');
       if (inputSource) inputSource.value = 'PPA';
-      if (unitSel) unitSel.value = 'POWER SUPPLY';
-      if (descAdd && (!descAdd.value || descAdd.value === 'Pemadaman Listrik (PLN)' || descAdd.value.startsWith('Pemadaman Listrik'))) {
-        descAdd.value = 'Pemadaman Listrik (PPA)';
-      }
+    } else {
+      btnPLN?.classList.remove('active-pln');
+      btnPPA?.classList.remove('active-ppa');
+      if (inputSource) inputSource.value = '';
     }
   };
   btnPLN?.addEventListener('click', () => activateSourceAdd('PLN'));
   btnPPA?.addEventListener('click', () => activateSourceAdd('PPA'));
 
-  // Category Switcher
+  // Category Switcher: clean handling
   catSelect?.addEventListener('change', (e) => {
     const cat = e.target.value;
     const wrapPower = document.getElementById('wrapProbPowerSource');
     if (cat === 'PEMADAMAN LISTRIK') {
       if (wrapPower) wrapPower.style.display = 'block';
-      activateSourceAdd(inputSource?.value || 'PLN');
     } else {
       if (wrapPower) wrapPower.style.display = 'none';
-      if (descAdd && (descAdd.value === 'Pemadaman Listrik (PLN)' || descAdd.value === 'Pemadaman Listrik (PPA)')) {
-        descAdd.value = '';
-      }
-      if (cat === 'FASILITAS SWAP') {
-        if (unitSel) unitSel.value = 'CRANE OHC';
-      } else if (cat === 'SISTEM KELISTRIKAN') {
-        if (unitSel) unitSel.value = 'POWER SUPPLY';
-      }
+      activateSourceAdd('');
     }
   });
 
@@ -22263,18 +22263,34 @@ function initProblemLogControls() {
       e.preventDefault();
       const rawDate = document.getElementById('addProbDate')?.value;
       const shift = document.getElementById('addProbShift')?.value || '1';
-      const swapStation = document.getElementById('addProbStation')?.value || 'SWAP 01';
+      const swapStation = document.getElementById('addProbStation')?.value;
       const customUnit = document.getElementById('addProbUnitCustom')?.value?.trim();
       const selUnit = document.getElementById('addProbUnitSelect')?.value;
-      const unit = customUnit || selUnit || 'POWER SUPPLY';
-      const desc = document.getElementById('addProbDesc')?.value?.trim();
+      const unit = customUnit || selUnit || '';
+      const inputSource = document.getElementById('addProbSource')?.value || '';
+      let desc = document.getElementById('addProbDesc')?.value?.trim() || '';
       const timeOpen = document.getElementById('addProbTimeOpen')?.value || '';
       const timeClose = document.getElementById('addProbTimeClose')?.value || '';
       const duration = timeClose ? computeDurationBetween(timeOpen, timeClose) : 'MASIH BERLANGSUNG';
 
-      if (!desc) {
-        showToast('Harap isi deskripsi masalah / gangguan', 'warning');
+      if (!swapStation) {
+        showToast('Harap pilih Stasiun / Lokasi terlebih dahulu!', 'warning');
         return;
+      }
+      if (!unit) {
+        showToast('Harap pilih atau ketik Unit / Fasilitas terkendala!', 'warning');
+        return;
+      }
+      if (!desc) {
+        showToast('Harap isi deskripsi masalah / gangguan!', 'warning');
+        return;
+      }
+
+      // Root cause tag if PLN or PPA was chosen and not yet in desc
+      if (inputSource === 'PLN' && !desc.toUpperCase().includes('PLN')) {
+        desc += ' (PLN)';
+      } else if (inputSource === 'PPA' && !desc.toUpperCase().includes('PPA')) {
+        desc += ' (PPA)';
       }
 
       // Format date to DD/MM/YYYY
@@ -22456,24 +22472,21 @@ function openAddProblemModal() {
   const today = new Date().toISOString().split('T')[0];
   if (dateInput) dateInput.value = today;
   if (shiftSelect) shiftSelect.value = '1';
+
+  // Keep fields completely blank and clean as requested by user
+  if (stationSelect) stationSelect.value = '';
+  if (catSelect) catSelect.value = '';
   if (customUnitInput) customUnitInput.value = '';
+  if (descInput) descInput.value = '';
 
-  // Station default
-  const defaultStation = (window.currentAuthUser && window.currentAuthUser.swapStation) ? window.currentAuthUser.swapStation : 'SWAP 01';
-  if (stationSelect) stationSelect.value = defaultStation;
-
-  // Default Category & Power Source
-  if (catSelect) catSelect.value = 'PEMADAMAN LISTRIK';
-  if (wrapPower) wrapPower.style.display = 'block';
-
+  // Hide power source container and reset selection
+  if (wrapPower) wrapPower.style.display = 'none';
   const btnPLN = document.getElementById('btnProbSourcePLN');
   const btnPPA = document.getElementById('btnProbSourcePPA');
   const inputSource = document.getElementById('addProbSource');
-  btnPLN?.classList.add('active-pln');
+  btnPLN?.classList.remove('active-pln');
   btnPPA?.classList.remove('active-ppa');
-  if (inputSource) inputSource.value = 'PLN';
-
-  if (descInput) descInput.value = 'Pemadaman Listrik (PLN)';
+  if (inputSource) inputSource.value = '';
 
   // Set default current time for open and leave close empty
   const now = new Date();
@@ -22483,10 +22496,10 @@ function openAddProblemModal() {
   if (timeClose) timeClose.value = '';
   if (durInput) durInput.value = 'MASIH BERLANGSUNG';
 
-  // Populate unit select
+  // Populate unit select with clean default empty option
   if (unitSelect) {
     const populasi = (window.INITIAL_DATA && window.INITIAL_DATA.populasi) ? window.INITIAL_DATA.populasi : [];
-    let opts = '<option value="POWER SUPPLY" selected>⚡ POWER SUPPLY / MAIN POWER</option>';
+    let opts = '<option value="" selected>-- Pilih Unit / Fasilitas --</option>';
     opts += `
       <optgroup label="Fasilitas & Sistem Swap">
         <option value="CRANE OHC">CRANE OHC (Overhead Crane)</option>
@@ -22496,6 +22509,7 @@ function openAddProblemModal() {
         <option value="OHC HOIST">OHC HOIST CABLE</option>
         <option value="PANEL AC/DC">PANEL AC/DC MCB</option>
         <option value="KOMUNIKASI/SINYAL">JARINGAN & SINYAL</option>
+        <option value="POWER SUPPLY">POWER SUPPLY / MAIN POWER</option>
       </optgroup>
       <optgroup label="Armada Truk EV (DT)">
     `;
@@ -22504,6 +22518,7 @@ function openAddProblemModal() {
     });
     opts += `</optgroup>`;
     unitSelect.innerHTML = opts;
+    unitSelect.value = '';
   }
 
   openModal('modalAddProblem');
