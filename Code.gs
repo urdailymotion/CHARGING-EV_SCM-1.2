@@ -53,6 +53,12 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (body.action === 'migrate_problem_9_cols') {
+      const result = apiMigrateDataProblemTo9Cols();
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Direct HTTP API Endpoints for PWA / Netlify External Clients
     if (body.action === 'save_swap' || body.action === 'push_transaction') {
       const rec = body.record || body.payload || body.data || body;
@@ -371,8 +377,8 @@ function ensureDatabaseStructure_(ss, forceFormat) {
   }
   setupSheetHeaders_(sheetSch, schHeaders, headerStyle, forceFormat);
 
-  // 4. DATA PROBLEM (Log Gangguan - 8 Kolom)
-  const probHeaders = ['NO PROBLEM', 'DATE', 'SHIFT', 'KODE UNIT', 'PROBLEM / KENDALA', 'TIME OPEN', 'TIME CLOSE', 'DOWNTIME (JAM)'];
+  // 4. DATA PROBLEM (Log Gangguan - 9 Kolom Standar Operasional)
+  const probHeaders = ['NO PROBLEM', 'DATE', 'SHIFT', 'SWAP STATION', 'KODE UNIT', 'PROBLEM / KENDALA', 'TIME OPEN', 'TIME CLOSE', 'DOWNTIME (JAM)'];
   let sheetProb = ss.getSheetByName('DATA PROBLEM');
   if (!sheetProb) {
     sheetProb = ss.insertSheet('DATA PROBLEM', 3);
@@ -573,28 +579,42 @@ function applyDatabaseFormattingAndValidations(ss) {
       res.validationsSet.push('SCEDHULE');
     }
 
-    // 4. Validasi & Format untuk DATA PROBLEM
+    // 4. Validasi & Format untuk DATA PROBLEM (Mendukung 9 Kolom Baru & 8 Kolom Lama)
     const sProb = ss.getSheetByName('DATA PROBLEM');
     if (sProb) {
+      const is9ColsProb = (sProb.getLastColumn() >= 9);
       const ruleShift = SpreadsheetApp.newDataValidation()
         .requireValueInList(['SIANG', 'MALAM', '1', '2'], true)
         .setAllowInvalid(true)
         .build();
       sProb.getRange('C2:C2000').setDataValidation(ruleShift);
 
-      const sPop = ss.getSheetByName('POPULASI UNIT');
-      if (sPop) {
-        const ruleUnit = SpreadsheetApp.newDataValidation()
-          .requireValueInRange(sPop.getRange('A2:A200'), true)
+      if (is9ColsProb) {
+        const ruleStation = SpreadsheetApp.newDataValidation()
+          .requireValueInList(['SWAP 01', 'SWAP 02', 'SWAP 03', 'SWAP 02 & 03', 'HAULING ROAD'], true)
           .setAllowInvalid(true)
           .build();
-        sProb.getRange('D2:D2000').setDataValidation(ruleUnit);
-      }
+        sProb.getRange('D2:D2000').setDataValidation(ruleStation);
 
-      sProb.getRange('B2:B2000').setNumberFormat('yyyy-mm-dd');
-      sProb.getRange('F2:F2000').setNumberFormat('hh:mm');
-      sProb.getRange('G2:G2000').setNumberFormat('hh:mm');
-      sProb.getRange('H2:H2000').setNumberFormat('#,##0.00');
+        sProb.getRange('B2:B2000').setNumberFormat('yyyy-mm-dd');
+        sProb.getRange('G2:G2000').setNumberFormat('hh:mm');
+        sProb.getRange('H2:H2000').setNumberFormat('hh:mm');
+        sProb.getRange('I2:I2000').setNumberFormat('#,##0.00');
+      } else {
+        const sPop = ss.getSheetByName('POPULASI UNIT');
+        if (sPop) {
+          const ruleUnit = SpreadsheetApp.newDataValidation()
+            .requireValueInRange(sPop.getRange('A2:A200'), true)
+            .setAllowInvalid(true)
+            .build();
+          sProb.getRange('D2:D2000').setDataValidation(ruleUnit);
+        }
+
+        sProb.getRange('B2:B2000').setNumberFormat('yyyy-mm-dd');
+        sProb.getRange('F2:F2000').setNumberFormat('hh:mm');
+        sProb.getRange('G2:G2000').setNumberFormat('hh:mm');
+        sProb.getRange('H2:H2000').setNumberFormat('#,##0.00');
+      }
       res.validationsSet.push('DATA PROBLEM');
     }
 
@@ -764,16 +784,21 @@ function handleSpreadsheetAutoEdit_(e) {
       }
     }
 
-    // 2. Auto di Sheet DATA PROBLEM
+    // 2. Auto di Sheet DATA PROBLEM (Mendukung 9 Kolom & 8 Kolom)
     if (sheetName === 'DATA PROBLEM') {
       const idProbCell = sheet.getRange(row, 1);
       if (!idProbCell.getValue()) {
         idProbCell.setValue(`PRB-${row - 1}`);
       }
 
-      const tOpenCell = sheet.getRange(row, 6);
-      const tCloseCell = sheet.getRange(row, 7);
-      const durHourCell = sheet.getRange(row, 8);
+      const pColCount = sheet.getLastColumn();
+      const openColIdx = (pColCount >= 9) ? 7 : 6;
+      const closeColIdx = (pColCount >= 9) ? 8 : 7;
+      const durColIdx = (pColCount >= 9) ? 9 : 8;
+
+      const tOpenCell = sheet.getRange(row, openColIdx);
+      const tCloseCell = sheet.getRange(row, closeColIdx);
+      const durHourCell = sheet.getRange(row, durColIdx);
 
       const tOpen = tOpenCell.getValue();
       const tClose = tCloseCell.getValue();
@@ -984,22 +1009,53 @@ function syncAllSheetsToFirestoreGAS() {
       }
     }
 
-    // 3. Problems
+    // 3. Problems (Dual-Support 9 Kolom & 8 Kolom)
     const probSheet = ss.getSheetByName('DATA PROBLEM');
     if (probSheet) {
       const prRows = probSheet.getDataRange().getValues();
+      const pHeader = prRows.length > 0 ? prRows[0].map(h => String(h || '').trim().toUpperCase()) : [];
+      const is9Cols = (pHeader.length >= 9 && pHeader[3] === 'SWAP STATION') || prRows[0].length >= 9;
+
       for (let i = 1; i < prRows.length; i++) {
         const pid = String(prRows[i][0] || `PRB-${i}`).trim();
         if (pid) {
+          let st = 'SWAP 01';
+          let u = '-';
+          let probDesc = '-';
+          let tOp = '';
+          let tCl = '';
+          let dur = '';
+
+          if (is9Cols) {
+            st = String(prRows[i][3] || 'SWAP 01').trim();
+            u = String(prRows[i][4] || '-').trim();
+            probDesc = String(prRows[i][5] || '-').trim();
+            tOp = formatTimeCell(prRows[i][6]);
+            tCl = formatTimeCell(prRows[i][7]);
+            dur = formatTimeCell(prRows[i][8]);
+          } else {
+            u = String(prRows[i][3] || '-').trim();
+            probDesc = String(prRows[i][4] || '-').trim();
+            tOp = formatTimeCell(prRows[i][5]);
+            tCl = formatTimeCell(prRows[i][6]);
+            dur = formatTimeCell(prRows[i][7]);
+            const comb = `${u} ${probDesc}`.toLowerCase();
+            if (/02.*03|02-03|02\/03/i.test(comb)) st = 'SWAP 02 & 03';
+            else if (/03|swb03|swp03|swap 03/i.test(comb)) st = 'SWAP 03';
+            else if (/02|swb02|swp02|swap 02/i.test(comb)) st = 'SWAP 02';
+            else if (/01|swb01|swp01|swap 01/i.test(comb)) st = 'SWAP 01';
+          }
+
           syncToFirestoreFromGas_('problems', pid, {
             id: pid,
             date: formatDateCell(prRows[i][1]),
             shift: String(prRows[i][2] || '1'),
-            unit: String(prRows[i][3] || '-'),
-            problem: String(prRows[i][4] || '-'),
-            timeOpen: formatTimeCell(prRows[i][5]),
-            timeClose: formatTimeCell(prRows[i][6]),
-            duration: formatTimeCell(prRows[i][7])
+            swapStation: st,
+            unit: u,
+            problem: probDesc,
+            timeOpen: tOp,
+            timeClose: tCl,
+            duration: dur
           });
           countProblems++;
         }
@@ -1109,26 +1165,60 @@ function apiGetAllSheetsData() {
       }
     }
 
-    // ---- 3. Sheet DATA PROBLEM ----
+    // ---- 3. Sheet DATA PROBLEM (Dual-Support 9 Kolom & 8 Kolom) ----
     const probSheet = ss.getSheetByName('DATA PROBLEM');
     const problems = [];
     if (probSheet) {
       const probRows = probSheet.getDataRange().getValues();
-      for (let i = 1; i < probRows.length; i++) {
-        const r = probRows[i];
-        if (r[0] === '' && r[3] === '') continue;
-        const probId = r[0] ? String(r[0]) : `PRB-${i}`;
-        problems.push({
-          id:        probId,
-          no:        String(i),
-          date:      formatDateCell(r[1]),
-          shift:     String(r[2] || '1'),
-          unit:      String(r[3] || '-'),
-          problem:   String(r[4] || '-'),
-          timeOpen:  formatTimeCell(r[5]),
-          timeClose: formatTimeCell(r[6]),
-          duration:  formatTimeCell(r[7])
-        });
+      if (probRows.length > 1) {
+        const pHeader = probRows[0].map(h => String(h || '').trim().toUpperCase());
+        const hasStationCol = (pHeader.length >= 9 && pHeader[3] === 'SWAP STATION') || probRows[0].length >= 9;
+
+        for (let i = 1; i < probRows.length; i++) {
+          const r = probRows[i];
+          if (r[0] === '' && r[3] === '') continue;
+          const probId = r[0] ? String(r[0]) : `PRB-${i}`;
+
+          let st = 'SWAP 01';
+          let u = '-';
+          let probDesc = '-';
+          let tOp = '';
+          let tCl = '';
+          let dur = '';
+
+          if (hasStationCol) {
+            st = String(r[3] || 'SWAP 01').trim();
+            u = String(r[4] || '-').trim();
+            probDesc = String(r[5] || '-').trim();
+            tOp = formatTimeCell(r[6]);
+            tCl = formatTimeCell(r[7]);
+            dur = formatTimeCell(r[8]);
+          } else {
+            u = String(r[3] || '-').trim();
+            probDesc = String(r[4] || '-').trim();
+            tOp = formatTimeCell(r[5]);
+            tCl = formatTimeCell(r[6]);
+            dur = formatTimeCell(r[7]);
+            const comb = `${u} ${probDesc}`.toLowerCase();
+            if (/02.*03|02-03|02\/03/i.test(comb)) st = 'SWAP 02 & 03';
+            else if (/03|swb03|swp03|swap 03/i.test(comb)) st = 'SWAP 03';
+            else if (/02|swb02|swp02|swap 02/i.test(comb)) st = 'SWAP 02';
+            else if (/01|swb01|swp01|swap 01/i.test(comb)) st = 'SWAP 01';
+          }
+
+          problems.push({
+            id:          probId,
+            no:          String(i),
+            date:        formatDateCell(r[1]),
+            shift:       String(r[2] || '1'),
+            swapStation: st,
+            unit:        u,
+            problem:     probDesc,
+            timeOpen:    tOp,
+            timeClose:   tCl,
+            duration:    dur
+          });
+        }
       }
     }
 
@@ -2247,7 +2337,161 @@ function apiMigrateDataInputTo21Cols() {
 }
 
 // =============================================================================
-// 4. SAVE PROBLEM LOG â†’ Sheet DATA PROBLEM
+// FUNGSI MIGRASI MANDIRI KE FORMAT 9 KOLOM DATA PROBLEM (DENGAN AUTO-BACKUP)
+// =============================================================================
+function apiMigrateDataProblemTo9Cols() {
+  const lock = LockService.getScriptLock();
+  try {
+    const hasLock = lock.tryLock(35000);
+    if (!hasLock) return { status: 'error', message: 'Database sedang sibuk, silakan coba sebentar lagi.' };
+
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName('DATA PROBLEM');
+    if (!sheet) return { status: 'error', message: 'Sheet DATA PROBLEM tidak ditemukan!' };
+
+    // 1. Buat backup otomatis sheet DATA PROBLEM terlebih dahulu
+    const timeStampStr = Utilities.formatDate(new Date(), 'Asia/Makassar', 'yyyyMMdd_HHmm');
+    const backupName = 'BACKUP_DATA_PROBLEM_' + timeStampStr;
+    let backupSheet = ss.getSheetByName(backupName);
+    if (!backupSheet) {
+      backupSheet = sheet.copyTo(ss).setName(backupName);
+    }
+
+    const dataRange = sheet.getDataRange();
+    const rows = dataRange.getValues();
+    if (rows.length <= 1) {
+      return { status: 'success', message: 'Sheet DATA PROBLEM kosong, tidak ada baris yang dimigrasikan.' };
+    }
+
+    const header = rows[0].map(h => String(h || '').trim().toUpperCase());
+    const isAlreadyMigrated = (header.length >= 9 && header[3] === 'SWAP STATION');
+    if (isAlreadyMigrated) {
+      return {
+        status: 'success',
+        alreadyMigrated: true,
+        message: 'Sheet DATA PROBLEM sudah dalam format 9 kolom resmi!',
+        rowCount: rows.length - 1,
+        backupCreated: backupName
+      };
+    }
+
+    const newHeaders = ['NO PROBLEM', 'DATE', 'SHIFT', 'SWAP STATION', 'KODE UNIT', 'PROBLEM / KENDALA', 'TIME OPEN', 'TIME CLOSE', 'DOWNTIME (JAM)'];
+    const newRows = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r[0] && !r[3]) continue;
+
+      const probId = String(r[0] || `PRB-${i}`).trim();
+      const dateVal = r[1] ? formatDateCell(r[1]) : '';
+      const shiftVal = String(r[2] || '1').trim();
+      const rawUnit = String(r[3] || '').trim();
+      const rawProblem = String(r[4] || '').trim();
+      const tOpen = r[5] ? formatTimeCell(r[5]) : '';
+      const tClose = r[6] ? formatTimeCell(r[6]) : '';
+      const durVal = r[7] ? formatTimeCell(r[7]) : (tClose ? '0:00:00' : 'MASIH BERLANGSUNG');
+
+      const combined = `${rawUnit} ${rawProblem}`.toLowerCase();
+
+      // 1. Deteksi Stasiun
+      let station = 'SWAP 01';
+      if (/02.*03|02-03|02\/03/i.test(combined)) {
+        station = 'SWAP 02 & 03';
+      } else if (/03|swb03|swp03|swap 03|swab 003|swab 03/i.test(combined)) {
+        station = 'SWAP 03';
+      } else if (/02|swb02|swp02|swap 02|swab 002|swab 02/i.test(combined)) {
+        station = 'SWAP 02';
+      } else if (/01|swb01|swp01|swap 01|swab 01/i.test(combined)) {
+        station = 'SWAP 01';
+      } else if (/hauling|jalan/i.test(combined)) {
+        station = 'HAULING ROAD';
+      }
+
+      // 2. Deteksi & Bersihkan Unit / Fasilitas
+      let cleanUnit = rawUnit;
+      const matchDT = rawUnit.match(/\b\d{4}\b/);
+      if (matchDT) {
+        cleanUnit = `DT ${matchDT[0]}`;
+      } else if (/crane|hoist|seling/i.test(combined)) {
+        cleanUnit = 'CRANE OHC';
+      } else if (/pemadaman|mati listrik|listrik/i.test(combined)) {
+        cleanUnit = 'POWER SUPPLY';
+      } else if (/module|charger|cas|port/i.test(combined)) {
+        cleanUnit = 'CHARGER BAY';
+      } else if (/panel|gripper|sensor|stuck|angkat batrai|tbox/i.test(combined)) {
+        cleanUnit = 'SWAP SYSTEM';
+      }
+
+      // 3. Deteksi & Rapikan Problem
+      let cleanProb = rawProblem;
+      if (/pemadaman|mati listrik/i.test(combined)) {
+        if (/ppa|genset|panel/i.test(combined)) {
+          cleanProb = 'Pemadaman Listrik (PPA)';
+        } else {
+          cleanProb = 'Pemadaman Listrik (PLN)';
+        }
+      }
+
+      newRows.push([
+        probId,
+        dateVal,
+        shiftVal,
+        station,
+        cleanUnit,
+        cleanProb,
+        tOpen,
+        tClose,
+        durVal
+      ]);
+    }
+
+    // 4. Bersihkan range dan tulis 9 kolom baru
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, 9).setValues([newHeaders]);
+    if (newRows.length > 0) {
+      sheet.getRange(2, 1, newRows.length, 9).setValues(newRows);
+    }
+
+    // 5. Beri style header merah marun korporat
+    const headerStyle = {
+      bg: '#b71c1c',
+      fg: '#ffffff',
+      fontSize: 10,
+      bold: true
+    };
+    setupSheetHeaders_(sheet, newHeaders, headerStyle, true);
+
+    // 6. Formatting & Auto-resize
+    if (newRows.length > 0) {
+      sheet.getRange(2, 2, newRows.length, 1).setNumberFormat('@'); // DATE
+      sheet.getRange(2, 7, newRows.length, 1).setNumberFormat('@'); // Time Open
+      sheet.getRange(2, 8, newRows.length, 1).setNumberFormat('@'); // Time Close
+      sheet.getRange(2, 9, newRows.length, 1).setNumberFormat('@'); // Duration
+    }
+
+    for (let c = 1; c <= 9; c++) {
+      try { sheet.autoResizeColumn(c); } catch(e) {}
+    }
+
+    SpreadsheetApp.flush();
+
+    return {
+      status: 'success',
+      backupCreated: backupName,
+      totalRowsMigrated: newRows.length,
+      message: `Sukses memigrasikan ${newRows.length} catatan problem ke format 9 kolom resmi!`
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
+  }
+}
+
+// =============================================================================
+// 4. SAVE PROBLEM LOG → Sheet DATA PROBLEM (Mendukung 9 Kolom & 8 Kolom)
 // =============================================================================
 function apiSaveProblemLog(prob) {
   try {
@@ -2257,24 +2501,44 @@ function apiSaveProblemLog(prob) {
 
     const targetRow = getLastDataRowInCol(sheet, 1) + 1;
     const probId = prob.id || `PRB-${targetRow - 1}`;
-    const row = [
-      probId,
-      prob.date      || '',
-      prob.shift     || '1',
-      prob.unit      || '',
-      prob.problem   || '',
-      prob.timeOpen  || '',
-      prob.timeClose || '',
-      prob.duration  || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
-    ];
+    const station = prob.swapStation || prob.station || prob.location || 'SWAP 01';
+    const lastCol = sheet.getLastColumn();
+    const is9Cols = (lastCol >= 9 || (sheet.getDataRange().getValues()[0] && sheet.getDataRange().getValues()[0][3] === 'SWAP STATION'));
 
-    sheet.getRange(targetRow, 1, 1, 8).setValues([row]);
+    let row;
+    if (is9Cols) {
+      row = [
+        probId,
+        prob.date        || '',
+        prob.shift       || '1',
+        station,
+        prob.unit        || '',
+        prob.problem     || '',
+        prob.timeOpen    || '',
+        prob.timeClose   || '',
+        prob.duration    || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
+      ];
+      sheet.getRange(targetRow, 1, 1, 9).setValues([row]);
+    } else {
+      row = [
+        probId,
+        prob.date        || '',
+        prob.shift       || '1',
+        prob.unit        || '',
+        prob.problem     || '',
+        prob.timeOpen    || '',
+        prob.timeClose   || '',
+        prob.duration    || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
+      ];
+      sheet.getRange(targetRow, 1, 1, 8).setValues([row]);
+    }
 
     // Sinkronkan juga ke Firebase Firestore via server backend GAS
     syncToFirestoreFromGas_('problems', probId, {
       id: probId,
       date: prob.date || '',
       shift: prob.shift || '1',
+      swapStation: station,
       unit: prob.unit || '',
       problem: prob.problem || '',
       timeOpen: prob.timeOpen || '',
@@ -2282,7 +2546,7 @@ function apiSaveProblemLog(prob) {
       duration: prob.duration || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
     });
 
-    return { status: 'success', no: targetRow - 1, id: probId };
+    return { status: 'success', no: targetRow - 1, id: probId, swapStation: station };
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
@@ -2297,20 +2561,37 @@ function apiUpdateProblem(prob) {
     const cleanId = String(prob.id || '').trim();
     const rows = sheet.getDataRange().getValues();
     let updated = false;
+    const is9Cols = rows.length > 0 && (rows[0].length >= 9 || rows[0][3] === 'SWAP STATION');
+    const station = prob.swapStation || prob.station || prob.location || 'SWAP 01';
 
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]).trim() === cleanId) {
-        const row = [
-          cleanId,
-          prob.date      || '',
-          prob.shift     || '1',
-          prob.unit      || '',
-          prob.problem   || '',
-          prob.timeOpen  || '',
-          prob.timeClose || '',
-          prob.duration  || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
-        ];
-        sheet.getRange(i + 1, 1, 1, 8).setValues([row]);
+        if (is9Cols) {
+          const row = [
+            cleanId,
+            prob.date        || '',
+            prob.shift       || '1',
+            station,
+            prob.unit        || '',
+            prob.problem     || '',
+            prob.timeOpen    || '',
+            prob.timeClose   || '',
+            prob.duration    || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
+          ];
+          sheet.getRange(i + 1, 1, 1, 9).setValues([row]);
+        } else {
+          const row = [
+            cleanId,
+            prob.date        || '',
+            prob.shift       || '1',
+            prob.unit        || '',
+            prob.problem     || '',
+            prob.timeOpen    || '',
+            prob.timeClose   || '',
+            prob.duration    || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
+          ];
+          sheet.getRange(i + 1, 1, 1, 8).setValues([row]);
+        }
         updated = true;
         break;
       }
@@ -2320,6 +2601,7 @@ function apiUpdateProblem(prob) {
       id: cleanId,
       date: prob.date || '',
       shift: prob.shift || '1',
+      swapStation: station,
       unit: prob.unit || '',
       problem: prob.problem || '',
       timeOpen: prob.timeOpen || '',
@@ -2327,7 +2609,7 @@ function apiUpdateProblem(prob) {
       duration: prob.duration || (prob.timeClose ? '0:00:00' : 'MASIH BERLANGSUNG')
     });
 
-    return { status: 'success', updated: updated };
+    return { status: 'success', updated: updated, swapStation: station };
   } catch (err) {
     return { status: 'error', message: err.toString() };
   }
@@ -3015,26 +3297,46 @@ function apiBackupAllToSheets(payload) {
     }
 
     // 2. BACKUP DATA PROBLEM (Log Gangguan)
+    // 2. BACKUP DATA PROBLEM (Log Gangguan - Mendukung 9 Kolom & 8 Kolom)
     if (payload && Array.isArray(payload.problems) && payload.problems.length > 0) {
       const probSheet = ss.getSheetByName('DATA PROBLEM');
       if (probSheet) {
+        const is9ColsProb = (probSheet.getLastColumn() >= 9);
+        const colCount = is9ColsProb ? 9 : 8;
+
         if (mode === 'full') {
           const lastR = Math.max(probSheet.getLastRow(), 2);
           if (lastR > 1) {
-            probSheet.getRange(2, 1, lastR - 1, 8).clearContent();
+            probSheet.getRange(2, 1, lastR - 1, colCount).clearContent();
           }
-          const pRows = payload.problems.map((p, idx) => [
-            p.id        || `PRB-${idx + 1}`,
-            p.date      || '',
-            p.shift     || '1',
-            p.unit      || '',
-            p.problem   || '',
-            p.timeOpen  || '',
-            p.timeClose || '',
-            p.duration  || '0:00:00'
-          ]);
+          const pRows = payload.problems.map((p, idx) => {
+            if (is9ColsProb) {
+              return [
+                p.id          || `PRB-${idx + 1}`,
+                p.date        || '',
+                p.shift       || '1',
+                p.swapStation || 'SWAP 01',
+                p.unit        || '',
+                p.problem     || '',
+                p.timeOpen    || '',
+                p.timeClose   || '',
+                p.duration    || '0:00:00'
+              ];
+            } else {
+              return [
+                p.id        || `PRB-${idx + 1}`,
+                p.date      || '',
+                p.shift     || '1',
+                p.unit      || '',
+                p.problem   || '',
+                p.timeOpen  || '',
+                p.timeClose || '',
+                p.duration  || '0:00:00'
+              ];
+            }
+          });
           if (pRows.length > 0) {
-            probSheet.getRange(2, 1, pRows.length, 8).setValues(pRows);
+            probSheet.getRange(2, 1, pRows.length, colCount).setValues(pRows);
             addedProblems = pRows.length;
           }
         } else {
@@ -3049,23 +3351,37 @@ function apiBackupAllToSheets(payload) {
           payload.problems.forEach((p, idx) => {
             const pid = String(p.id || '').trim();
             if (pid && !existingProbIds.has(pid)) {
-              newPRows.push([
-                p.id        || `PRB-${idx + 1}`,
-                p.date      || '',
-                p.shift     || '1',
-                p.unit      || '',
-                p.problem   || '',
-                p.timeOpen  || '',
-                p.timeClose || '',
-                p.duration  || '0:00:00'
-              ]);
+              if (is9ColsProb) {
+                newPRows.push([
+                  p.id          || `PRB-${idx + 1}`,
+                  p.date        || '',
+                  p.shift       || '1',
+                  p.swapStation || 'SWAP 01',
+                  p.unit        || '',
+                  p.problem     || '',
+                  p.timeOpen    || '',
+                  p.timeClose   || '',
+                  p.duration    || '0:00:00'
+                ]);
+              } else {
+                newPRows.push([
+                  p.id        || `PRB-${idx + 1}`,
+                  p.date      || '',
+                  p.shift     || '1',
+                  p.unit      || '',
+                  p.problem   || '',
+                  p.timeOpen  || '',
+                  p.timeClose || '',
+                  p.duration  || '0:00:00'
+                ]);
+              }
               existingProbIds.add(pid);
             }
           });
 
           if (newPRows.length > 0) {
             const startPR = getLastDataRowInCol(probSheet, 1) + 1;
-            probSheet.getRange(startPR, 1, newPRows.length, 8).setValues(newPRows);
+            probSheet.getRange(startPR, 1, newPRows.length, colCount).setValues(newPRows);
             addedProblems = newPRows.length;
           }
         }

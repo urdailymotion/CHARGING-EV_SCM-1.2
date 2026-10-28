@@ -1,17 +1,57 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 21 Oktober 2026, Pukul 06:45 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v74.0) - Perbaikan Bug Verifikasi Password Login: Pencocokan Ketat Terhadap Database & Penolakan Password Salah.
+**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:05 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI & DIVERIFIKASI (Build v75.0) - Perombakan Ergonomi Form Input Problem, Pemisahan Lokasi Swap (SWAP 01/02/03/HAULING), Pemisahan Akar Masalah Pemadaman Listrik (PLN vs PPA), & Migrasi Resmi Sheet DATA PROBLEM ke 9 Kolom Standar (Zero Downtime).
 
 ---
 
 ### 🚨 MONITORING KUOTA GOOGLE APPS SCRIPT (REMINDER AMBANG 180):
-- **Posisi Versi Saat Ini:** Versi **@115** (dari batas maksimum **200** versi Apps Script).
-- **Sisa Kuota Versi:** Tersisa **85 versi**.
+- **Posisi Versi Saat Ini:** Versi **@116** (dari batas maksimum **200** versi Apps Script).
+- **Sisa Kuota Versi:** Tersisa **84 versi**.
 - **Komitmen Pengingat (Reminder Threshold):** 
   - Bila counter deploy Apps Script mencapai angka **180** (tersisa 20 versi), sistem otomatis dan asisten akan **langsung memberikan peringatan / reminder tegas** kepada user.
   - Script [auto-deploy.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/auto-deploy.js) telah disuntikkan logika pendeteksi kuota otomatis: jika `currentVer >= 180`, banner peringatan merah akan muncul di terminal.
   - **Best Practice Penghematan Versi:** Perubahan UI, JavaScript klien, CSS, atau HTML di front-end **TIDAK PERLU** dideploy ke Apps Script (cukup commit & push git ke Netlify PWA). Deploy Apps Script (`clasp deploy` / `auto-deploy.js`) hanya dilakukan jika file backend [Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) mengalami modifikasi.
   - **Mitigasi jika mendekati 200:** Lakukan migrasi ke Proyek / Script ID baru via Clasp (`clasp clone` / new script ID), sehingga counter versi reset kembali ke `@1` tanpa kehilangan data Google Sheets.
+
+---
+
+### ⚡ Blueprint Perombakan Form Problem & Migrasi Database 9 Kolom (Build v75.0):
+**Latar Belakang & Kebutuhan Bisnis:**
+1. Form input problem sebelumnya belum memiliki kolom terpisah untuk lokasi/stasiun kejadian (sebelumnya operator menulis campur aduk di kolom unit seperti `"Pemadaman listrik swab 01"`).
+2. Pemadaman listrik mendominasi >60% insiden operasional. Manajemen membutuhkan pembedaan tegas antara gangguan eksternal grid (`PLN` - tidak chargeable ke SLA PPA) vs kendala internal site (`PPA` - genset / panel trip / MCB).
+3. Database Google Sheets sheet `DATA PROBLEM` resmi dimigrasikan dari 8 kolom ke 9 kolom standar tanpa mengganggu operasional charging man shift 2 malam yang sedang aktif bertransaksi di sheet `DATA INPUT`.
+
+#### 🎯 Realisasi & Hasil Eksekusi:
+1. **Migrasi Database Live (Google Sheets):**
+   - **Cadangan Aman:** Berhasil membuat snapshot sheet `BACKUP_DATA_PROBLEM_20261028_2121` sebelum modifikasi.
+   - **Header 9 Kolom Resmi:** `['NO PROBLEM', 'DATE', 'SHIFT', 'SWAP STATION', 'KODE UNIT', 'PROBLEM / KENDALA', 'TIME OPEN', 'TIME CLOSE', 'DOWNTIME (JAM)']`.
+   - **Mapping 44 Catatan Historis:** 100% data historis berhasil diekstrak dan dipetakan rapi ke stasiun spesifik (`SWAP 01`, `SWAP 02`, `SWAP 03`, `SWAP 02 & 03`), unit fasilitas (`POWER SUPPLY`, `CRANE OHC`, `CHARGER BAY`, `SWAP SYSTEM`, `DT 1619`), dan deskripsi bersih (`Pemadaman Listrik (PLN)`).
+2. **Backend Dual-Compatibility ([Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) - Versi @116):**
+   - Menambahkan endpoint `apiMigrateDataProblemTo9Cols()` dan trigger `migrate_problem_9_cols` di `doPost(e)`.
+   - Dual support membaca & menyimpan otomatis 9 kolom maupun fallback 8 kolom di `apiSaveProblemLog`, `apiUpdateProblem`, dan `apiReadProblems_`.
+3. **Penyempurnaan UI/UX Ergonomis ([index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html)):**
+   - **Modal Lapor Gangguan Baru (`#modalAddProblem`):**
+     * Header dark-crimson gradient dengan indikator radar pulsing red dot `🔴`.
+     * Baris 1 (Grid 3 Kolom): Tanggal Kejadian, Shift Kerja (Shift 1/2), dan **Stasiun / Lokasi** (`SWAP 01`, `SWAP 02`, `SWAP 03`, `SWAP 02 & 03`, `HAULING ROAD`).
+     * Baris 2: Kategori Kendala & Unit/Fasilitas Terkendala (pilihan unit armada DT atau fasilitas swap dengan opsi custom manual).
+     * **Tombol Cepat Akar Masalah Listrik:** Dua tombol pill interaktif `[ ⚡ PLN (Eksternal) ]` (highlight biru elektrik) dan `[ 🏢 PPA (Internal Site) ]` (highlight amber) yang otomatis mengisi deskripsi standar dan unit `POWER SUPPLY`.
+     * Tombol `🕒 Set Jam Sekarang` untuk input instan Time Open.
+     * Kartu status transparan `TIKET OPEN (MASIH BERLANGSUNG)`.
+   - **Modal Edit Gangguan (`#modalEditProblem`):**
+     * Mendukung pemilihan Stasiun / Lokasi dan deteksi otomatis badge PLN/PPA dari deskripsi gangguan.
+   - **Tabel Problem Incident Log (`#mainProblemTable`):**
+     * Menambahkan kolom `Stasiun` ber-badge warna (`SWAP 01` biru, `SWAP 02` hijau, `SWAP 03` ungu, `SWAP 02 & 03` oranye).
+     * Badge `⚡ PLN` dan `🏢 PPA` ditampilkan rapi di kolom deskripsi masalah.
+     * Nama unit diformat bersih (mencegah duplikasi `"DT POWER SUPPLY"`).
+     * Search filter & header sorting mendukung sorting berdasarkan Stasiun.
+     * Mobile Cards Container menampilkan badge stasiun & pill PLN/PPA secara responsif.
+   - **Ekspor Excel (.xlsx):**
+     * Kolom `Stasiun / Lokasi` kini disertakan lengkap dalam unduhan laporan.
+   - **Database Manager Admin:**
+     * Tabel log problem admin kini memiliki kolom Stasiun dan mendukung pencarian stasiun.
+4. **Verifikasi Browser Subagent:**
+   - Telah diuji secara langsung di browser lokal (`http://localhost:8085`): buka halaman Problem Log, buka form Add Problem, klik pill PLN dan PPA, tes respons deskripsi, buka form Edit Problem, dan verifikasi tampilan tabel. Semua berjalan mulus tanpa error.
+5. **Cache Version Bump:** `APP_BUILD_ID = '2026.10.28.v75'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html) dan Service Worker `CACHE_NAME = 'charging-ev-v75'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
 
 ---
 
