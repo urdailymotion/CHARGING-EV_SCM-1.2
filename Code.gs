@@ -2081,7 +2081,22 @@ function apiSaveSwapTransaction(rec) {
         finalMode,
         rec.operator      || '',
         rec.operatorNik   || '',
-        rec.timeDeviasi   || '-'
+        (function() {
+          let dev = String(rec.timeDeviasi || '').trim();
+          if (!dev || dev === '-') {
+            const jIn = String(rec.jamIn || '').trim();
+            const sTm = String(rec.timeSch || '').trim();
+            const isNon = String(rec.statusRemark || '').toLowerCase().includes('non') || String(finalMode || '').toUpperCase().includes('NON') || !sTm || sTm === '-';
+            if (!isNon && jIn && sTm && sTm !== '-') {
+              const diff = calculateMinutesDiffGAS_(jIn, sTm);
+              if (diff > 0) return '+' + diff;
+              if (diff < 0) return '-' + Math.abs(diff);
+              return '0';
+            }
+            return '-';
+          }
+          return dev;
+        })()
       ];
       sheet.getRange(targetRow, 1, 1, 22).setValues([row]);
     } else {
@@ -2182,7 +2197,23 @@ function apiUpdateTransaction(rec) {
             finalMode,
             rec.operator      || '',
             rec.operatorNik   || '',
-            rec.timeDeviasi   || (rows[i][21] !== undefined ? String(rows[i][21]).trim() : '-') || '-'
+            (function() {
+              let dev = String(rec.timeDeviasi || '').trim();
+              if (!dev || dev === '-') {
+                const jIn = String(rec.jamIn || '').trim();
+                const sTm = String(rec.timeSch || '').trim();
+                const isNon = String(rec.statusRemark || '').toLowerCase().includes('non') || String(finalMode || '').toUpperCase().includes('NON') || !sTm || sTm === '-';
+                if (!isNon && jIn && sTm && sTm !== '-') {
+                  const diff = calculateMinutesDiffGAS_(jIn, sTm);
+                  if (diff > 0) return '+' + diff;
+                  if (diff < 0) return '-' + Math.abs(diff);
+                  return '0';
+                }
+                const oldVal = (rows[i][21] !== undefined ? String(rows[i][21]).trim() : '-');
+                return oldVal || '-';
+              }
+              return dev;
+            })()
           ];
           sheet.getRange(i + 1, 1, 1, 22).setValues([row]);
         } else {

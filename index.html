@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.29.v78';
+      var APP_BUILD_ID = '2026.10.30.v79';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -19845,10 +19845,10 @@ function initTableControls() {
         timeDeviasi: (function() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
           if (!isSchOn || statusVal === 'Non-Schedule') return '-';
-          const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
-          if (dForm && dForm.dataset.currentTimeDeviasi) return dForm.dataset.currentTimeDeviasi;
-          const jamIn = document.getElementById('dedSwapJamIn')?.value;
-          const sch = document.getElementById('dedSwapTimeSch')?.value;
+          const aForm = document.getElementById('formAddSwap') || document.getElementById('modalAddSwap');
+          if (aForm && aForm.dataset.currentTimeDeviasi) return aForm.dataset.currentTimeDeviasi;
+          const jamIn = document.getElementById('newSwapJamIn')?.value;
+          const sch = document.getElementById('newSwapTimeSch')?.value;
           if (jamIn && sch && sch !== '-' && typeof calculateMinutesDifference === 'function') {
             const diff = calculateMinutesDifference(jamIn, sch);
             if (diff > 0) return '+' + diff;
@@ -21837,10 +21837,10 @@ function initDedicatedInputForm() {
         timeDeviasi: (function() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
           if (!isSchOn || statusVal === 'Non-Schedule') return '-';
-          const aForm = document.getElementById('formAddSwap') || document.getElementById('modalAddSwap');
-          if (aForm && aForm.dataset.currentTimeDeviasi) return aForm.dataset.currentTimeDeviasi;
-          const jamIn = document.getElementById('newSwapJamIn')?.value;
-          const sch = document.getElementById('newSwapTimeSch')?.value;
+          const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
+          if (dForm && dForm.dataset.currentTimeDeviasi) return dForm.dataset.currentTimeDeviasi;
+          const jamIn = document.getElementById('dedSwapJamIn')?.value;
+          const sch = document.getElementById('dedSwapTimeSch')?.value;
           if (jamIn && sch && sch !== '-' && typeof calculateMinutesDifference === 'function') {
             const diff = calculateMinutesDifference(jamIn, sch);
             if (diff > 0) return '+' + diff;
@@ -32449,7 +32449,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=78')
+      navigator.serviceWorker.register('./sw.js?v=79')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka

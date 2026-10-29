@@ -1,4 +1,42 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
+**Tanggal Pencatatan:** 30 Oktober 2026, Pukul 03:15 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI (Build v79.0) - Perbaikan Elemen ID Form Dedicated Swap, Penambahan Dual-Guard Backend Calculation di Google Apps Script (Versi @121), dan Sukses Re-Backfill 5.795 Baris Database Google Sheets.
+
+---
+
+### 🌟 Blueprint Perbaikan Kolom 22 TIME DEVIASI & Dual-Guard Backend (Build v79.0):
+**Kebutuhan Operasional & Investigasi:**
+1. **Laporan Lapangan:** Pada database Google Sheets (`DATA INPUT`), transaksi shift 2 (pukul 22:44 - 02:30 WITA) menampilkan tanda strip (`-`) pada Kolom V (`TIME DEVIASI`), meskipun unit memiliki jadwal resmi (`SCHEDULE`) dan status deviasi waktu (misal unit 1625 terlambat/lebih awal).
+2. **Akar Masalah (Root Cause):**
+   - **Frontend Bug:** Pada `formDedicatedSwap` di `index.html`, payload `timeDeviasi` membaca ID elemen `newSwapJamIn` & `newSwapTimeSch` (milik modal secondary `formAddSwap`), bukan elemen `dedSwapJamIn` & `dedSwapTimeSch`. Akibatnya, `formDedicatedSwap` selalu mengirim nilai `'-'` ke server.
+   - **Backend Guard Absence:** Pada `Code.gs`, `apiSaveSwapTransaction` hanya mempercayai nilai yang dikirim dari klien (`rec.timeDeviasi || '-'`) tanpa melakukan kalkulasi otomatis fallback di sisi server.
+   - **Waktu Input:** Transaksi yang dilaporkan masuk pada pukul 22:44 - 02:30 WITA, yaitu setelah proses backfill v78.0 selesai pada 22:39 WITA.
+
+#### 🎯 Realisasi & Hasil Eksekusi:
+1. **Perbaikan Frontend ([index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html)):**
+   - Mengoreksi penargetan elemen form `formDedicatedSwap` ke `dedSwapJamIn` dan `dedSwapTimeSch`, serta dataset `dForm.dataset.currentTimeDeviasi`.
+   - Mengoreksi penargetan elemen form `formAddSwap` ke `newSwapJamIn` dan `newSwapTimeSch`, serta dataset `aForm.dataset.currentTimeDeviasi`.
+   - Bumping versi aplikasi ke `APP_BUILD_ID = '2026.10.30.v79'` dan Service Worker `./sw.js?v=79`.
+2. **Penguatan Backend Google Apps Script ([Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) - Versi @121):**
+   - Menambahkan **Dual-Guard Auto-Calculation** di `apiSaveSwapTransaction` dan `apiUpdateTransaction`.
+   - Jika `rec.timeDeviasi` bernilai kosong atau `'-'`, backend secara cerdas memvalidasi `jamIn` dan `timeSch`. Jika transaksi berjadwal (`SCHEDULE`), backend langsung menghitung deviasi menit secara otomatis menggunakan `calculateMinutesDiffGAS_`.
+   - Menambahkan action handler `backfill_time_deviasi` di `doPost` untuk sinkronisasi live data tanpa downtime.
+   - Status deploy Google Apps Script: Versi **@121** (Web App URL aktif, sisa kuota aman: 79 versi).
+3. **Re-Backfill & Verifikasi Data Database Google Sheets:**
+   - Menjalankan re-backfill menyeluruh terhadap seluruh baris database `DATA INPUT`.
+   - Total **5.795 baris** berhasil direkalkulasi dan diperbarui 100%.
+   - Verifikasi langsung via `scratch/inspect_rows.js`:
+     * Unit 1625 (Jam In: 02.47, Sch: 03.00.00, Status: Datang lebih awal) -> Deviasi: `"-13"` (valid).
+     * Unit 1617 (Jam In: 02.55, Sch: 03.00.00, Status: Datang lebih awal) -> Deviasi: `"-5"` (valid).
+     * Unit 1657 (Jam In: 03.05, Sch: -, Status: Non-Schedule) -> Deviasi: `"-"` (valid).
+4. **Bumping PWA Cache & Validasi:**
+   - `CACHE_NAME = 'charging-ev-v79'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+   - Seluruh 16 blok skrip JavaScript inline diuji dan 100% lulus uji validasi sintaks Node.js VM.
+   - Tanpa Live Preview sesuai instruksi pengguna.
+
+---
+
+# 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
 **Tanggal Pencatatan:** 29 Oktober 2026, Pukul 22:45 WITA  
 **Status Sesi:** SUKSES DIEKSEKUSI (Build v78.0) - Penambahan Kolom V (22) Database Google Sheets `TIME DEVIASI`, Backfill 5.746 Data Historis, Otomatisasi Remark (`Unit datang terlambat`, `Unit datang lebih awal`, `Unit tidak ada di Schedule`, `13.NO PROBLEM`), dan Deploy Backend GAS Versi @120.
 
