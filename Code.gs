@@ -53,6 +53,12 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (body.action === 'migrate_22_cols' || body.action === 'backfill_time_deviasi') {
+      const result = apiMigrateDataInputTo22Cols();
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (body.action === 'migrate_problem_9_cols') {
       const result = apiMigrateDataProblemTo9Cols();
       return ContentService.createTextOutput(JSON.stringify(result))
@@ -319,13 +325,13 @@ function ensureDatabaseStructure_(ss, forceFormat) {
     alignment: 'center'
   };
 
-  // 1. DATA INPUT (Transaksi Swap - 21 Kolom Standar Operasional)
+  // 1. DATA INPUT (Transaksi Swap - 22 Kolom Standar Operasional)
   const inputHeaders = [
     'TRANSACTION ID', 'DATE', 'SHIFT', 'CATEGORY', 'LOCATION',
     'KODE UNIT', 'HM', 'BATTERY BEFORE', 'JAM IN SWAP', 'BATTERY AFTER',
     'JAM OUT SWAP', 'CHARGING TIME (MENIT)', 'ENERGY (KWH)', 'STATUS REMARK',
     'PROBLEM REMARK', 'KETERANGAN', 'TIME SCH', 'SWAP STATION', 'OPERATIONAL MODE',
-    'MANPOWER', 'NIK'
+    'MANPOWER', 'NIK', 'TIME DEVIASI'
   ];
   let sheetInput = ss.getSheetByName('DATA INPUT');
   if (!sheetInput) {
@@ -1375,7 +1381,8 @@ function apiReadTransactions_(ss) {
         swapStation:     String(r[17] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim(),
         operationalMode: opMode,
         operator:        String(r[19] || '-').trim(),
-        operatorNik:     String(r[20] || '-').trim()
+        operatorNik:     String(r[20] || '-').trim(),
+        timeDeviasi:     (r[21] !== undefined && r[21] !== null && String(r[21]).trim() !== '') ? String(r[21]).trim() : '-'
       });
     } else {
       // Format Lama 20 Kolom (Fallback Kompatibel: 15=Manpower, 16=NIK, 17=Keterangan, 18=TimeSch, 19=SwapStation)
@@ -1404,7 +1411,8 @@ function apiReadTransactions_(ss) {
         swapStation:     String(r[19] || (String(r[4] || '').toUpperCase().includes('A2') ? 'SWAP 02' : 'SWAP 01')).trim(),
         operationalMode: isNon ? 'NON SCHEDULE' : 'SCHEDULE',
         operator:        String(r[15] || '-').trim(),
-        operatorNik:     String(r[16] || '-').trim()
+        operatorNik:     String(r[16] || '-').trim(),
+        timeDeviasi:     '-'
       });
     }
   }
@@ -1986,9 +1994,12 @@ function apiSaveSwapTransaction(rec) {
     let sheet = ss.getSheetByName('DATA INPUT');
     if (!sheet) sheet = ss.getSheets()[0];
 
-    // Pastikan header Kolom 20 (Swap Station) terpasang jika belum ada
+    // Pastikan header Kolom 20 (Swap Station) & Kolom 22 (Time Deviasi) terpasang jika belum ada
     if (sheet.getLastColumn() < 20 || !sheet.getRange(1, 20).getValue()) {
       sheet.getRange(1, 20).setValue('SWAP STATION');
+    }
+    if (sheet.getLastColumn() < 22 || !sheet.getRange(1, 22).getValue()) {
+      sheet.getRange(1, 22).setValue('TIME DEVIASI');
     }
 
     // Ambil data baris terakhir untuk mencari max sequence & mendeteksi duplikasi
@@ -2069,9 +2080,10 @@ function apiSaveSwapTransaction(rec) {
         finalStation,
         finalMode,
         rec.operator      || '',
-        rec.operatorNik   || ''
+        rec.operatorNik   || '',
+        rec.timeDeviasi   || '-'
       ];
-      sheet.getRange(targetRow, 1, 1, 21).setValues([row]);
+      sheet.getRange(targetRow, 1, 1, 22).setValues([row]);
     } else {
       // Fallback 20 Kolom lama jika sheet belum dimigrasi
       row = [
@@ -2169,9 +2181,10 @@ function apiUpdateTransaction(rec) {
             finalStation,
             finalMode,
             rec.operator      || '',
-            rec.operatorNik   || ''
+            rec.operatorNik   || '',
+            rec.timeDeviasi   || (rows[i][21] !== undefined ? String(rows[i][21]).trim() : '-') || '-'
           ];
-          sheet.getRange(i + 1, 1, 1, 21).setValues([row]);
+          sheet.getRange(i + 1, 1, 1, 22).setValues([row]);
         } else {
           const row = [
             cleanId,
@@ -2326,6 +2339,109 @@ function apiMigrateDataInputTo21Cols() {
       backupCreated: backupName,
       totalRowsMigrated: newRows.length,
       message: `Sukses memigrasikan ${newRows.length} transaksi ke format 21 kolom resmi!`
+    };
+  } catch (err) {
+    return { status: 'error', message: err.toString() };
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch(e) {}
+  }
+}
+
+// =============================================================================
+// FUNGSI MIGRASI MANDIRI KE FORMAT 22 KOLOM & BACKFILL TIME DEVIASI (DATA INPUT)
+// =============================================================================
+function calculateMinutesDiffGAS_(timeA, timeB) {
+  function parseMin(t) {
+    if (!t) return null;
+    const str = String(t).trim().replace('.', ':');
+    const p = str.split(':');
+    if (p.length < 2) return null;
+    const hh = parseInt(p[0], 10);
+    const mm = parseInt(p[1], 10);
+    if (isNaN(hh) || isNaN(mm)) return null;
+    return hh * 60 + mm;
+  }
+  const minA = parseMin(timeA);
+  const minB = parseMin(timeB);
+  if (minA === null || minB === null) return 0;
+  let diff = minA - minB;
+  if (diff > 720) diff -= 1440;
+  if (diff < -720) diff += 1440;
+  return diff;
+}
+
+function apiMigrateDataInputTo22Cols() {
+  const lock = LockService.getScriptLock();
+  try {
+    const hasLock = lock.tryLock(35000);
+    if (!hasLock) return { status: 'error', message: 'Database sedang sibuk, silakan coba sebentar lagi.' };
+
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName('DATA INPUT');
+    if (!sheet) return { status: 'error', message: 'Sheet DATA INPUT tidak ditemukan!' };
+
+    // 1. Pastikan Header Kolom 22 adalah 'TIME DEVIASI'
+    sheet.getRange(1, 22).setValue('TIME DEVIASI');
+
+    // Beri format header konsisten
+    sheet.getRange(1, 22).setBackground('#1e293b').setFontColor('#ffffff').setFontWeight('bold').setFontSize(10).setHorizontalAlignment('center');
+
+    const dataRange = sheet.getDataRange();
+    const rows = dataRange.getValues();
+    if (rows.length <= 1) {
+      return { status: 'success', message: 'Header TIME DEVIASI diset, data masih kosong.', count: 0 };
+    }
+
+    // 2. Baca Kolom 9 (Jam In), Kolom 17 (Time Sch), Kolom 19 (Operational Mode), Kolom 14 (Status Remark)
+    const deviasiValues = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r[0] && !r[1] && !r[5]) {
+        deviasiValues.push(['-']);
+        continue;
+      }
+
+      const jamInRaw = r[8];
+      const timeSchRaw = r[16];
+      const opModeRaw = String(r[18] || '').toUpperCase();
+      const statusRaw = String(r[13] || '').toLowerCase();
+
+      const jamInStr = formatTimeHHMM(jamInRaw);
+      let schStr = '';
+      if (timeSchRaw) {
+        schStr = formatTimeCell(timeSchRaw) || String(timeSchRaw).trim();
+      }
+
+      let deviasi = '-';
+      const isNonSch = opModeRaw.includes('NON') || statusRaw.includes('non') || !schStr || schStr === '-';
+
+      if (!isNonSch && jamInStr && schStr && schStr !== '-') {
+        const diffMins = calculateMinutesDiffGAS_(jamInStr, schStr);
+        if (diffMins > 0) {
+          deviasi = '+' + diffMins;
+        } else if (diffMins < 0) {
+          deviasi = '-' + Math.abs(diffMins);
+        } else {
+          deviasi = '0';
+        }
+      } else {
+        deviasi = '-';
+      }
+
+      deviasiValues.push([deviasi]);
+    }
+
+    // 3. Tulis batch ke kolom 22 (V2:V)
+    if (deviasiValues.length > 0) {
+      sheet.getRange(2, 22, deviasiValues.length, 1).setValues(deviasiValues);
+    }
+
+    return {
+      status: 'success',
+      message: 'Sukses menyiapkan Kolom 22 (TIME DEVIASI) dan membackfill ' + deviasiValues.length + ' baris transaksi.',
+      count: deviasiValues.length
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };

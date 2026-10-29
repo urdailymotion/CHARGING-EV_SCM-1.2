@@ -3,7 +3,7 @@
 <head>
   <script>
     (function() {
-      var APP_BUILD_ID = '2026.10.28.v77';
+      var APP_BUILD_ID = '2026.10.29.v78';
       try {
         var lastBuild = localStorage.getItem('ppa_ev_app_build');
         if (lastBuild !== APP_BUILD_ID) {
@@ -11239,6 +11239,8 @@ html, body {
                   <label class="form-label-ent">Problem Remark</label>
                   <select id="dedSwapRemark2" class="form-control-ent">
                     <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
+                    <option value="Unit datang lebih awal">Unit datang lebih awal</option>
+                    <option value="Unit datang terlambat">Unit datang terlambat</option>
                     <option value="Unit tidak ada di Schedule">Unit tidak ada di Schedule</option>
                     <option value="">- Kosong (Ketik di Keterangan) -</option>
                     <option value="15.BATTERY LOW POWER">15.BATTERY LOW POWER</option>
@@ -13668,6 +13670,8 @@ html, body {
               <label class="form-label-ent">Problem Remark</label>
               <select id="newSwapRemark2" class="form-control-ent">
                 <option value="13.NO PROBLEM" selected>13.NO PROBLEM</option>
+                <option value="Unit datang lebih awal">Unit datang lebih awal</option>
+                <option value="Unit datang terlambat">Unit datang terlambat</option>
                 <option value="Unit tidak ada di Schedule">Unit tidak ada di Schedule</option>
                 <option value="">- Kosong (Ketik di Keterangan) -</option>
                 <option value="15.BATTERY LOW POWER">15.BATTERY LOW POWER</option>
@@ -19289,9 +19293,11 @@ function initTableControls() {
     if (!rEl.dataset.twoWayBound) {
       rEl.dataset.twoWayBound = 'true';
       rEl.addEventListener('change', () => {
+        rEl.dataset.userEdited = 'true';
         const selectedVal = rEl.value.trim();
         if (selectedVal && selectedVal !== '-') {
           kEl.value = selectedVal;
+          kEl.dataset.userEdited = 'true';
         }
         if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
         if (typeof window.updateNewSwapKeteranganRequirement === 'function') window.updateNewSwapKeteranganRequirement();
@@ -19301,6 +19307,7 @@ function initTableControls() {
     if (!kEl.dataset.twoWayBound) {
       kEl.dataset.twoWayBound = 'true';
       kEl.addEventListener('input', () => {
+        kEl.dataset.userEdited = 'true';
         const typedVal = kEl.value.trim();
         if (!typedVal) {
           if (sEl && sEl.value === 'On Time') {
@@ -19353,7 +19360,27 @@ function initTableControls() {
       return;
     }
 
-    // Kasus Out Off Time:
+    // Kasus Out Off Time - Klasifikasi Spesifik:
+    if (remarkVal === 'Unit datang terlambat' || input.value.trim() === 'Unit datang terlambat') {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#dc2626';
+      badge.innerHTML = '⚠️ Datang Terlambat';
+      input.placeholder = 'Unit datang terlambat...';
+      input.style.borderColor = '#fca5a5';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
+    if (remarkVal === 'Unit datang lebih awal' || input.value.trim() === 'Unit datang lebih awal') {
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#b45309';
+      badge.innerHTML = 'ℹ️ Datang Lebih Awal';
+      input.placeholder = 'Unit datang lebih awal...';
+      input.style.borderColor = '#fde68a';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
     if (remarkVal === 'Unit tidak ada di Schedule' || input.value.trim() === 'Unit tidak ada di Schedule') {
       badge.style.background = '#fee2e2';
       badge.style.color = '#dc2626';
@@ -19471,41 +19498,56 @@ function initTableControls() {
         let isEarly = false;
         let isLate = false;
         let statusResult = 'On Time';
+        let deviasiStr = '-';
+
+        if (diffMins > 0) {
+          deviasiStr = '+' + diffMins;
+        } else if (diffMins < 0) {
+          deviasiStr = '-' + Math.abs(diffMins);
+        } else {
+          deviasiStr = '0';
+        }
 
         if (diffMins >= 0 && diffMins <= 55) {
           statusResult = 'On Time';
           isEarly = false;
           isLate = false;
-        } else if (diffMins < 0 && diffMins >= -55) {
+        } else if (diffMins < 0) {
           statusResult = 'Out Off Time';
           isEarly = true;
-          isLate = true;
+          isLate = false;
         } else {
           statusResult = 'Out Off Time';
           isEarly = false;
           isLate = true;
         }
 
+        const addForm = document.getElementById('formAddSwap') || document.getElementById('modalAddSwap');
+        if (addForm) addForm.dataset.currentTimeDeviasi = deviasiStr;
+
         if (statusSelect) statusSelect.value = statusResult;
+        const ketInput = document.getElementById('newSwapKeterangan');
+
         if (statusResult === 'On Time') {
-          if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
-          const ketInput = document.getElementById('newSwapKeterangan');
-          if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Out Off Time')) {
+          if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === 'Unit datang terlambat' || remarkSelect.value === 'Unit datang lebih awal' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+            remarkSelect.value = '13.NO PROBLEM';
+          }
+          if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang terlambat' || ketInput.value === 'Unit datang lebih awal' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
             ketInput.value = '13.NO PROBLEM';
           }
-        }
-
-        // Auto update keterangan di modal regular swap jika datang awal
-        const ketInput = document.getElementById('newSwapKeterangan');
-        if (ketInput) {
-          if (isEarly) {
-            if (!ketInput.value || ketInput.value === '13.NO PROBLEM' || ketInput.dataset.autoEarly) {
-              ketInput.value = 'Datang awal';
-              ketInput.dataset.autoEarly = 'true';
-            }
-          } else if (ketInput.dataset.autoEarly && ketInput.value === 'Datang awal') {
-            ketInput.value = '';
-            delete ketInput.dataset.autoEarly;
+        } else if (isEarly) {
+          if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === '13.NO PROBLEM' || remarkSelect.value === 'Unit datang terlambat' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+            remarkSelect.value = 'Unit datang lebih awal';
+          }
+          if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === '13.NO PROBLEM' || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang terlambat' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
+            ketInput.value = 'Unit datang lebih awal';
+          }
+        } else if (isLate) {
+          if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === '13.NO PROBLEM' || remarkSelect.value === 'Unit datang lebih awal' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+            remarkSelect.value = 'Unit datang terlambat';
+          }
+          if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === '13.NO PROBLEM' || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang lebih awal' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
+            ketInput.value = 'Unit datang terlambat';
           }
         }
 
@@ -19578,6 +19620,12 @@ function initTableControls() {
   };
 
   window.initModalAddSwapForm = function() {
+    const aForm = document.getElementById('formAddSwap') || document.getElementById('modalAddSwap');
+    if (aForm) delete aForm.dataset.currentTimeDeviasi;
+    const rEl = document.getElementById('newSwapRemark2');
+    if (rEl) delete rEl.dataset.userEdited;
+    const kEl = document.getElementById('newSwapKeterangan');
+    if (kEl) delete kEl.dataset.userEdited;
     window.initModalSearchableUnitCombobox();
     if (typeof attachEnergyHintLive === 'function') {
       attachEnergyHintLive('newSwapEnergy', 'hintNewSwapEnergy');
@@ -19793,6 +19841,21 @@ function initTableControls() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
           if (statusVal === 'Non-Schedule') return 'NON SCHEDULE';
           return isSchOn ? 'SCHEDULE' : 'NON SCHEDULE';
+        })(),
+        timeDeviasi: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (!isSchOn || statusVal === 'Non-Schedule') return '-';
+          const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
+          if (dForm && dForm.dataset.currentTimeDeviasi) return dForm.dataset.currentTimeDeviasi;
+          const jamIn = document.getElementById('dedSwapJamIn')?.value;
+          const sch = document.getElementById('dedSwapTimeSch')?.value;
+          if (jamIn && sch && sch !== '-' && typeof calculateMinutesDifference === 'function') {
+            const diff = calculateMinutesDifference(jamIn, sch);
+            if (diff > 0) return '+' + diff;
+            if (diff < 0) return '-' + Math.abs(diff);
+            return '0';
+          }
+          return '-';
         })()
       };
 
@@ -21400,6 +21463,12 @@ function formatBatteryPercentage(val) {
 }
 
 window.resetDedicatedInputForm = function() {
+  const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
+  if (dForm) delete dForm.dataset.currentTimeDeviasi;
+  const rEl = document.getElementById('dedSwapRemark2');
+  if (rEl) delete rEl.dataset.userEdited;
+  const kEl = document.getElementById('dedSwapKeterangan');
+  if (kEl) delete kEl.dataset.userEdited;
   const form = document.getElementById('formDedicatedInputSwap');
   if (form) {
     try { form.reset(); } catch (e) {}
@@ -21576,7 +21645,27 @@ function initDedicatedInputForm() {
       return;
     }
 
-    // Kasus Out Off Time:
+    // Kasus Out Off Time - Klasifikasi Spesifik:
+    if (remarkVal === 'Unit datang terlambat' || input.value.trim() === 'Unit datang terlambat') {
+      badge.style.background = '#fee2e2';
+      badge.style.color = '#dc2626';
+      badge.innerHTML = '⚠️ Datang Terlambat';
+      input.placeholder = 'Unit datang terlambat...';
+      input.style.borderColor = '#fca5a5';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
+    if (remarkVal === 'Unit datang lebih awal' || input.value.trim() === 'Unit datang lebih awal') {
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#b45309';
+      badge.innerHTML = 'ℹ️ Datang Lebih Awal';
+      input.placeholder = 'Unit datang lebih awal...';
+      input.style.borderColor = '#fde68a';
+      input.style.boxShadow = 'none';
+      return;
+    }
+
     if (remarkVal === 'Unit tidak ada di Schedule' || input.value.trim() === 'Unit tidak ada di Schedule') {
       badge.style.background = '#fee2e2';
       badge.style.color = '#dc2626';
@@ -21744,6 +21833,21 @@ function initDedicatedInputForm() {
           const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
           if (statusVal === 'Non-Schedule') return 'NON SCHEDULE';
           return isSchOn ? 'SCHEDULE' : 'NON SCHEDULE';
+        })(),
+        timeDeviasi: (function() {
+          const isSchOn = ((typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('voltswap_schedule_mode') : null) || (window.currentAuthUser && window.currentAuthUser.scheduleMode) || 'OFF') === 'ON';
+          if (!isSchOn || statusVal === 'Non-Schedule') return '-';
+          const aForm = document.getElementById('formAddSwap') || document.getElementById('modalAddSwap');
+          if (aForm && aForm.dataset.currentTimeDeviasi) return aForm.dataset.currentTimeDeviasi;
+          const jamIn = document.getElementById('newSwapJamIn')?.value;
+          const sch = document.getElementById('newSwapTimeSch')?.value;
+          if (jamIn && sch && sch !== '-' && typeof calculateMinutesDifference === 'function') {
+            const diff = calculateMinutesDifference(jamIn, sch);
+            if (diff > 0) return '+' + diff;
+            if (diff < 0) return '-' + Math.abs(diff);
+            return '0';
+          }
+          return '-';
         })()
       };
 
@@ -27036,7 +27140,11 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
       remarkSelect.value = 'Unit tidak ada di Schedule';
     }
     const ketInput = document.getElementById('dedSwapKeterangan');
-    if (ketInput) ketInput.value = 'Unit tidak ada di Schedule';
+    if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === '13.NO PROBLEM' || ketInput.value === 'Unit datang lebih awal' || ketInput.value === 'Unit datang terlambat')) {
+      ketInput.value = 'Unit tidak ada di Schedule';
+    }
+    const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
+    if (dForm) dForm.dataset.currentTimeDeviasi = '-';
     if (typeof window.updateKeteranganRequirement === 'function') window.updateKeteranganRequirement();
     return;
   }
@@ -27092,39 +27200,66 @@ function updateDedSwapScheduleTarget(selectedSpecificTime) {
       }).join('') + '</div>';
   }
 
-  // Evaluasi On Time vs Out Off Time berdasarkan Aturan Operasional:
+  // Evaluasi On Time vs Out Off Time & Kalkulasi TIME DEVIASI:
   // - On Time: diffMins >= 0 && diffMins <= 55 (Jadwal s/d +55 menit)
-  // - Datang awal (Out Off Time): diffMins < 0 && diffMins >= -55
-  // - Out Off Time lainnya: diffMins > 55 atau diffMins < -55
+  // - Datang lebih awal: diffMins < 0
+  // - Datang terlambat: diffMins > 55
   let isEarly = false;
+  let isLate = false;
   let statusResult = 'On Time';
+  let deviasiStr = '-';
 
   if (jamInTime) {
     const diffMins = calculateMinutesDifference(jamInTime, displayTime);
+    if (diffMins > 0) {
+      deviasiStr = '+' + diffMins;
+    } else if (diffMins < 0) {
+      deviasiStr = '-' + Math.abs(diffMins);
+    } else {
+      deviasiStr = '0';
+    }
+
     if (diffMins >= 0 && diffMins <= 55) {
       statusResult = 'On Time';
       isEarly = false;
-    } else if (diffMins < 0 && diffMins >= -55) {
+      isLate = false;
+    } else if (diffMins < 0) {
       statusResult = 'Out Off Time';
       isEarly = true;
+      isLate = false;
     } else {
       statusResult = 'Out Off Time';
       isEarly = false;
+      isLate = true;
     }
+
+    const dForm = document.getElementById('formDedicatedSwap') || document.getElementById('dedSwapForm');
+    if (dForm) dForm.dataset.currentTimeDeviasi = deviasiStr;
 
     if (statusSelect) statusSelect.value = statusResult;
     const ketInput = document.getElementById('dedSwapKeterangan');
+
+    // Otomatisasi Remark & Keterangan sesuai kondisi kedatangan
     if (statusResult === 'On Time') {
-      if (remarkSelect) remarkSelect.value = '13.NO PROBLEM';
-      if (ketInput && (!ketInput.value || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Out Off Time')) {
+      if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === 'Unit datang terlambat' || remarkSelect.value === 'Unit datang lebih awal' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+        remarkSelect.value = '13.NO PROBLEM';
+      }
+      if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang terlambat' || ketInput.value === 'Unit datang lebih awal' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
         ketInput.value = '13.NO PROBLEM';
       }
-    } else {
-      if (remarkSelect && (remarkSelect.value === '13.NO PROBLEM' || !remarkSelect.value)) {
-        remarkSelect.value = '15.BATTERY LOW POWER';
-        if (ketInput && (!ketInput.value || ketInput.value === '13.NO PROBLEM')) {
-          ketInput.value = '15.BATTERY LOW POWER';
-        }
+    } else if (isEarly) {
+      if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === '13.NO PROBLEM' || remarkSelect.value === 'Unit datang terlambat' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+        remarkSelect.value = 'Unit datang lebih awal';
+      }
+      if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === '13.NO PROBLEM' || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang terlambat' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
+        ketInput.value = 'Unit datang lebih awal';
+      }
+    } else if (isLate) {
+      if (remarkSelect && (!remarkSelect.dataset.userEdited || remarkSelect.value === '13.NO PROBLEM' || remarkSelect.value === 'Unit datang lebih awal' || remarkSelect.value === 'Unit tidak ada di Schedule' || !remarkSelect.value)) {
+        remarkSelect.value = 'Unit datang terlambat';
+      }
+      if (ketInput && (!ketInput.dataset.userEdited || ketInput.value === '13.NO PROBLEM' || ketInput.value === 'Unit tidak ada di Schedule' || ketInput.value === 'Unit datang lebih awal' || ketInput.value === 'Out Off Time' || !ketInput.value)) {
+        ketInput.value = 'Unit datang terlambat';
       }
     }
 
@@ -32314,7 +32449,7 @@ if (typeof window.updateDbStorageUI === 'function') {
   // PWA Service Worker Registration & Instant Auto-Update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('./sw.js?v=77')
+      navigator.serviceWorker.register('./sw.js?v=78')
         .then(function(reg) {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
           // Paksa periksa update setiap kali aplikasi dibuka

@@ -1,9 +1,46 @@
 # 📌 CHECKPOINT PROGRES TERAKHIR (CHARGING EV APP)
-**Tanggal Pencatatan:** 28 Oktober 2026, Pukul 22:40 WITA  
-**Status Sesi:** SUKSES DIEKSEKUSI (Build v77.0) - Perbaikan Alur Penyelesaian Tiket Problem (Jam Mulai Terkunci/Terisi Otomatis, Fokus Pengisian Jam Selesai Tanpa Terblokir), Normalisasi Format Waktu HH:mm:ss, & Penegasan Kontras Header Modal.
+**Tanggal Pencatatan:** 29 Oktober 2026, Pukul 22:45 WITA  
+**Status Sesi:** SUKSES DIEKSEKUSI (Build v78.0) - Penambahan Kolom V (22) Database Google Sheets `TIME DEVIASI`, Backfill 5.746 Data Historis, Otomatisasi Remark (`Unit datang terlambat`, `Unit datang lebih awal`, `Unit tidak ada di Schedule`, `13.NO PROBLEM`), dan Deploy Backend GAS Versi @120.
 
 ---
 
+### 🌟 Blueprint Penambahan Kolom 22 TIME DEVIASI & Otomatisasi Remark (Build v78.0):
+**Kebutuhan Operasional & Latar Belakang:**
+1. Pada form transaksi swap, saat unit datang terlambat (misal Target 20:00, Masuk 21:30 | Terlambat: +90 mnt), kolom Problem Remark dan Keterangan sebelumnya sempat tertahan pada teks keliru `Unit tidak ada di Schedule`.
+2. Manajemen operasional memerlukan pemisahan bersih antara deviasi waktu numerik (sebagai KPI ketepatan waktu armada) dengan kolom Keterangan dan Problem Remark.
+3. Seluruh alur harus berjalan tanpa mengganggu atau menggeser struktur kolom 1 s/d 21 yang sudah ada di database.
+
+#### 🎯 Realisasi & Hasil Eksekusi:
+1. **Kolom Baru V (22) di Database Google Sheets (`DATA INPUT`):**
+   - Penambahan Kolom ke-22 resmi: **`TIME DEVIASI`** (Kolom V).
+   - Posisi paling kanan (setelah Kolom U: NIK), sehingga **100% aman dan tidak menggeser rumus/formula spreadsheet yang sudah ada**.
+   - **Sukses Auto-Backfill 5.746 Baris Transaksi Historis:**
+     * Transaksi berjadwal: Otomatis dihitung selisih menitnya (`+90`, `-50`, `0`).
+     * Transaksi Non-Schedule / tanpa jadwal: Otomatis terisi tanda strip **`-`**.
+2. **Backend Google Apps Script ([Code.gs](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/Code.gs) - Versi @120):**
+   - Memperbarui `inputHeaders` master menjadi 22 kolom resmi.
+   - Endpoint `apiSaveSwapTransaction` dan `apiUpdateTransaction` mendukung penyimpanan 22 kolom termasuk `rec.timeDeviasi`.
+   - Endpoint `apiReadTransactions_` membaca kolom ke-22 (`r[21]`) sebagai `timeDeviasi`.
+   - Menambahkan fungsi mandiri `apiMigrateDataInputTo22Cols()` dan helper `calculateMinutesDiffGAS_`.
+   - Status deploy Apps Script: Versi **@120** (tersisa 80 versi aman).
+3. **Form Input & Otomatisasi Remark ([index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html)):**
+   - **Opsi Resmi Dropdown Problem Remark:**
+     * Menambahkan opsi `Unit datang lebih awal` dan `Unit datang terlambat` pada Form Cepat (`#dedSwapRemark2`) dan Form Regular (`#newSwapRemark2`).
+   - **Logika Otomatisasi Real-Time (`updateDedSwapScheduleTarget` & `updateNewSwapScheduleTarget`):**
+     * Terlambat (> +55 mnt): Problem Remark & Keterangan otomatis terisi **`Unit datang terlambat`**, Time Deviasi = `+XX`.
+     * Lebih Awal (< 0 mnt): Problem Remark & Keterangan otomatis terisi **`Unit datang lebih awal`**, Time Deviasi = `-XX`.
+     * Tepat Waktu (0 s/d +55 mnt): Problem Remark & Keterangan otomatis terisi **`13.NO PROBLEM`**, Time Deviasi = `+XX` (atau `0`).
+     * Unit Tidak Ada di Schedule: Problem Remark & Keterangan otomatis terisi **`Unit tidak ada di Schedule`**, Time Deviasi = `-`.
+     * Mode Bebas Jadwal (Non-Schedule): Status `Non-Schedule`, Time Deviasi = `-`.
+   - **Ergonomi Pelindung Edit Manual (`userEdited`):** Jika operator secara sengaja memilih kendala teknis spesifik (misal *15.BATTERY LOW POWER* atau mengetik kendala antrean khusus), sistem tidak akan menimpa pilihan operator.
+   - **Badge Keterangan Dinamis:** Menampilkan badge `⚠️ Datang Terlambat`, `ℹ️ Datang Lebih Awal`, `⚠️ Unit tidak ada di Schedule`, atau `Opsional (On Time)` dengan warna kontras yang serasi.
+4. **Bumping Versi & PWA Cache:**
+   - `APP_BUILD_ID = '2026.10.29.v78'` di [index.html](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/index.html).
+   - `CACHE_NAME = 'charging-ev-v78'` di [sw.js](file:///e:/APLIKASI%20SRY/CHARGING%20EV%202/sw.js).
+   - Registrasi Service Worker di-bump ke `./sw.js?v=78`.
+   - 100% dari 16 script block inline lulus uji validasi sintaks Node.js (`vm.Script`).
+
+---
 ### 🌟 Blueprint Perbaikan Penutupan Tiket Gangguan & Normalisasi Waktu (Build v77.0):
 **Akar Masalah yang Ditemukan:**
 1. Di data historis Google Sheets / JSON, format `timeOpen` menggunakan pemisah titik (misal `"01.23.00"`).
